@@ -1,0 +1,539 @@
+<!doctype html>
+<html>
+  <head>
+  	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  	<script type="text/javascript">
+  		var globalTableSize;
+  		var reservedSits = [];
+  		var totalPots = 1;
+		async function fButtonAction(action, amount=0)
+		{
+			//console.log("action: " + action);
+			//console.log("amount: " + amount);
+			await CefSharp.BindObjectAsync("buttonEvents");
+			if (action == "Fold") {
+				buttonEvents.fFold();
+			}
+			else if (action == "Check"){
+				buttonEvents.fCheck();
+			}
+			else if (action == "Call"){
+				buttonEvents.fCall();
+			}
+			else if (action == "Raise"){
+				buttonEvents.fRaise(parseFloat(amount));
+			}
+			//The default is to camel case method names (the first letter of the method name is changed to lowercase)
+		};
+
+		async function fAskStackAmount(minStack, maxStack)
+		{
+			fHideEmptySeats();
+			var stackAmount = prompt(`How much do you like to buy? \n Min: ${minStack} - Max: ${maxStack}`, `${minStack}`);
+			await CefSharp.BindObjectAsync("buttonEvents");
+			if (stackAmount != "" && parseFloat(stackAmount)>=0) {
+				buttonEvents.fSit(parseFloat(stackAmount));
+			}
+		};
+
+		async function fConnect(host)
+		{
+			//console.log("host: " + host)
+			await CefSharp.BindObjectAsync("buttonEvents");
+			if (host != "") {
+				buttonEvents.fConnect(host);
+				
+			}
+		};
+		async function fReserveSit(position)
+		{
+			//console.log(`Seat Pos: ${position}`);
+			document.getElementById(`buttonSeat${position}`).disabled = "true";
+			reservedSits.push(position)
+
+			await CefSharp.BindObjectAsync("buttonEvents");
+			buttonEvents.fReserveSit(parseInt(position))
+		};
+		async function fEnterTable(tableId)
+		{
+			fToggleHideTable();
+			//console.log(`Enter Table: ${tableId}`);
+			
+			await CefSharp.BindObjectAsync("buttonEvents");
+			buttonEvents.fEnterTable(parseInt(tableId));
+		};
+
+		async function fEnterPool(stackAmount)
+		{
+			fToggleHideTable();
+			//console.log(`Enter Pool: ${stackAmount}`);
+			await CefSharp.BindObjectAsync("buttonEvents");
+			buttonEvents.fEnterPool(parseFloat(stackAmount));
+		};
+		
+		async function fSitOutNextHand()
+		{
+			//console.log(`fSitOutNextHand: ${document.getElementById('sitOutNextHand').checked}`);
+			
+			//await CefSharp.BindObjectAsync("buttonEvents");
+			//buttonEvents.fEnterTable(parseInt(tableId));
+
+			await CefSharp.BindObjectAsync("buttonEvents");
+			if (document.getElementById('sitOutNextHand').checked==true){
+				buttonEvents.fSitOutNextHand(1);
+			} else {
+				buttonEvents.fSitOutNextHand(0);
+			}			
+		};
+
+		async function fSitOutNextBlind()
+		{
+			//console.log(`fSitOutNextBlind: ${document.getElementById('sitOutNextBlind').checked}`);
+			
+			//await CefSharp.BindObjectAsync("buttonEvents");
+			//buttonEvents.fEnterTable(parseInt(tableId));
+
+			await CefSharp.BindObjectAsync("buttonEvents");
+			if (document.getElementById('sitOutNextBlind').checked==true){
+				buttonEvents.fSitOutNextBB(1);
+			} else {
+				buttonEvents.fSitOutNextBB(0);
+			}
+			
+		};
+		
+		
+		function fCreateTable(tableSize){
+			//console.log(`fCreateTable ${tableSize}`)
+			globalTableSize = parseInt(tableSize);
+			var i;
+			for (i = 0; i <= tableSize-1; i++){
+				fCreateSit(i);
+			}
+
+		};
+
+		function fCreateSit(position){
+			//console.log(`fCreateSit ${position}`)
+			line = document.createElement('I');
+			line.innerHTML = "-------------------------------";
+			seat = document.createElement('DIV');
+			seat.id = `seat${position}`;
+			//seat.style.display="block";
+			document.getElementById('seats').appendChild(seat);
+			seatName = document.createElement('I');
+			seatName.id = `seatName${position}`;
+			seatName.innerHTML = `Seat ${position}`;
+			document.getElementById(`seat${position}`).appendChild(seatName);
+			dealer = document.createElement('I');
+			dealer.id=`dealer${position}`;
+			dealer.innerHTML = ` | DEALER`;
+			dealer.style.display="none";
+			document.getElementById(`seat${position}`).appendChild(dealer);
+			sitOut = document.createElement('I');
+			sitOut.id=`sitOut${position}`;
+			sitOut.innerHTML = ` (SIT OUT)`;
+			sitOut.style.display="none";
+			document.getElementById(`seat${position}`).appendChild(sitOut);
+			cards = document.createElement('DIV');
+			cards.id = `playerCards${position}`;
+			cards.style.display = "inline"
+			document.getElementById(`seat${position}`).appendChild(cards);
+			document.getElementById(`playerCards${position}`).appendChild(document.createElement("br"));
+			//4 cards if omaha
+			card1 = document.createElement('I');
+			card1.id=`card1Seat${position}`;
+			card1.innerHTML = ``;
+			card1.style.display = "none"
+			document.getElementById(`playerCards${position}`).appendChild(card1);
+			card2 = document.createElement('I');
+			card2.id=`card2Seat${position}`;
+			card2.innerHTML = ``;
+			card2.style.display = "none"
+			document.getElementById(`playerCards${position}`).appendChild(card2);
+			stackSeat = document.createElement('I');
+			stackSeat.id=`stackSeat${position}`;
+			stackSeat.innerHTML = `<br/>Stack: `;
+			stackSeat.style.display="none";
+			document.getElementById(`seat${position}`).appendChild(stackSeat);
+			stackAmountSeat = document.createElement('I');
+			stackAmountSeat.id=`stackAmountSeat${position}`;
+			stackAmountSeat.innerHTML = "";
+			stackAmountSeat.style.display="none";
+			document.getElementById(`seat${position}`).appendChild(stackAmountSeat);
+			bet = document.createElement('I');
+			bet.id=`betSeat${position}`;
+			bet.innerHTML = ` | Bet: `;
+			bet.style.display="none";
+			document.getElementById(`seat${position}`).appendChild(bet);
+			betAmount = document.createElement('I');
+			betAmount.id=`betAmountSeat${position}`;
+			betAmount.innerHTML = "";
+			betAmount.style.display="none";
+			document.getElementById(`seat${position}`).appendChild(betAmount);
+			document.getElementById(`seat${position}`).appendChild(document.createElement("br"));
+			//document.getElementById(`seat${position}`).appendChild(br);
+			//buttonSeat = document.createElement('BUTTON'); 
+			//buttonSeat.id=`buttonSeat${position}`; //use this for text
+			//buttonSeat.innerHTML = `Seat`;
+			//buttonSeat.setAttribute("onclick", `fReserveSit(${position})`); //use this for functions
+			//document.getElementById(`seat${position}`).appendChild(buttonSeat);
+			document.getElementById(`seat${position}`).appendChild(line);
+			document.getElementById(`seat${position}`).appendChild(document.createElement("br"));
+		}
+
+		function fToggleHideTable() {
+		  //console.log("fToggleHideTable")
+		  
+		  var x = document.getElementById("tableDiv");
+		  if (x.style.display === "none") {
+		    x.style.display = "inline";
+		  } else {
+		    x.style.display = "none";
+		  }
+		};
+
+		function fShowPlayerPool() {
+		  playerPool = document.createElement('I');
+		  playerPool.innerHTML = ""
+		  playerPool.id = "playerPool"
+		  document.getElementById('body').appendChild(playerPool)
+		};
+
+		function fHideEmptySeats(Sit = -1) {
+			//console.log(`fHideEmptySeats(${Sit})`)
+			var i;
+			//console.log(`reservedSits: ${reservedSits}`)
+			if (Sit == -1){
+				for (i = 0; i <= globalTableSize-1; i++){
+					//var element = document.getElementById(`buttonSeat${i}`);
+					//element.parentNode.removeChild(element);
+					if (!reservedSits.includes(i)){
+						////console.log(`hiding seat: ${i}`)
+						document.getElementById(`seat${i}`).style.display = "none";
+					}
+
+				}
+			} else {
+				if (!reservedSits.includes(Sit)){
+					////console.log(`hiding seat: ${Sit}`)
+					document.getElementById(`seat${Sit}`).style.display = "none";
+				}
+			}
+		};
+		function fRemovePlayer(position) {
+			////console.log(`fRemovePlayer ${position}`)
+			var element = document.getElementById(`seat${i}`);
+			element.parentNode.removeChild(element);
+			//fCreateSit(position);
+			//reservedSits.pop(position);
+			//fHideEmptySeats(position);
+		};
+		function isNumberKey(evt){
+	    var charCode = (evt.which) ? evt.which : evt.keyCode
+	    if (charCode > 31 && (charCode < 48 || charCode > 57))
+	        return false;
+	    return true;
+		};
+		function fUpdateValueOnSliderChange(){
+			var slider = document.getElementById("raiseSlider");
+			var output = document.getElementById('raiseAmount');
+			output.value = slider.value; // Display the default slider value
+
+			// Update the current slider value (each time you drag the slider handle)
+			slider.oninput = function() {
+			  output.innerHTML = this.value;
+			}
+		};
+
+		function fUpdateValueOnSliderInput(){
+			var slider = document.getElementById("raiseSlider");
+			var valueToAdd = 2;
+			var output = document.getElementById('raiseAmount');
+			output.value = slider.value;
+			return output.value;
+			//if (true) {}
+			//output.value = slider.value; // Display the default slider value
+
+			// Update the current slider value (each time you drag the slider handle)
+			//slider.oninput = function() {
+			//  output.innerHTML = this.value;
+			//}
+		};
+		function fUpdateSliderOnValueChange(){
+			var input = document.getElementById("raiseAmount");
+			var output = document.getElementById('raiseSlider');
+			output.value = input.value; // Display the default slider value
+			// Update the current slider value (each time you drag the slider handle)
+		};
+
+		
+		function fClearTable(){
+			//TODO limpar a mesa
+			//console.log("fClearTable");
+			var i;
+			//limpa os betsizes, cartas
+			for (i = 0; i<= globalTableSize-1;i++){
+				if (reservedSits.includes(i)){
+					document.getElementById(`betAmountSeat${i}`).innerHTML = 0;
+					document.getElementById(`card1Seat${i}`).innerHTML = "";
+					document.getElementById(`card1Seat${i}`).style.display = "none";
+					document.getElementById(`card2Seat${i}`).innerHTML = "";
+					document.getElementById(`card2Seat${i}`).style.display = "none";
+					document.getElementById(`dealer${i}`).style.display = "none";
+				}
+			}
+			console.log("limpou os jogadores");
+			//limpa os potes
+			for (i=totalPots-1; i >= 0;i--){
+				console.log(`limpando pot${i}`);
+				document.getElementById(`pot${i}Amount`).innerHTML = 0;
+				if (i!=0){
+					document.getElementById(`pot${i}`).style.display = "none";
+					document.getElementById(`pot${i}Amount`).style.display = "none";
+					var element = document.getElementById(`pot${i}`);
+					element.parentNode.removeChild(element);
+					var element1 = document.getElementById(`pot${i}Amount`);
+					element1.parentNode.removeChild(element1);
+					totalPots--;
+				}
+			}
+			console.log("limpou os potes");
+			//limpa o bordo
+			for (i=1; i<=5;i++){
+				document.getElementById(`boardC${i}`).innerHTML = "";
+				document.getElementById(`boardC${i}`).style.display = "none";
+			}
+			console.log("limpou o bordo");
+		};
+		function fResetTable(){
+			//TODO Atualiza as informacoes da nova mao
+			//console.log("fResetTable");
+			reservedSits = [];
+			fClearTable()
+			console.log("limpou a mesa");
+			fHideEmptySeats()
+			console.log("escondeu os assentos vazios");
+			for (i = 0; i<= globalTableSize-1;i++){
+				fRemovePlayer(i)
+			}
+			console.log("removeu os jogadores da mesa");
+		};
+		function fNewHand(handNumber, smallBlind, bigBlind, ante=0){
+			//TODO Atualiza as informacoes da nova mao
+			//console.log("fNewHand");
+		};
+		function fShowWinner(sitPosition, wonAmount){
+			//TODO paga o vencedor
+			//console.log(`fShowWinner position: ${sitPosition} amount: ${wonAmount}`);
+			document.getElementById(`betAmountSeat${sitPosition}`).innerHTML = `+${wonAmount}`;
+
+		};
+		function fFoldPlayerCards(sitPosition){
+			//TODO Folda as cartas do jogador
+			//console.log(`fFoldPlayerCards position ${sitPosition}`);
+			document.getElementById(`card1Seat${sitPosition}`).style.display = "none";
+			document.getElementById(`card2Seat${sitPosition}`).style.display = "none";
+		};
+		function fDisableActionButtons(){
+			//TODO Esconde os botoes de acoes
+			//console.log("fDisableActionButtons");
+			document.getElementById(`actionButtons`).style.display = "none";
+		};
+		function fAddCardToSlot(cardSlot, card){
+			//TODO Mostra as cartas do jogador
+			//console.log(`fAddCardToSlot slot: ${cardSlot} card: ${card}`);
+			cardSlot.innerHTML = card;
+			cardSlot.style.display = "inline";
+			if (!(card == "card" || card == "<br/>card")){
+				cardSlot.style.fontWeight="bold";
+			}
+		};
+		function fUpdatePotAmount(potNumber, potAmount){
+			//console.log(`fUpdatePotAmount(${potNumber}, ${potAmount})`);
+			if (potNumber != 0 && potAmount != 0) {
+				if (document.getElementById(`pot${potNumber}`) == null){
+					var newPot = document.createElement("I");
+					newPot.id = `pot${potNumber}`;
+					newPot.innerHTML = `Pot${potNumber}: `;
+					var newPotAmount = document.createElement("I");
+					newPotAmount.id = `pot${potNumber}Amount`;
+					newPotAmount.innerHTML = `${potAmount}`;
+					document.getElementById("pots").appendChild(newPot);
+					document.getElementById("pots").appendChild(newPotAmount);
+					totalPots++;
+				}
+			}
+			if (document.getElementById(`pot${potNumber}`) != null){
+				document.getElementById(`pot${potNumber}Amount`).innerHTML = potAmount;
+				document.getElementById(`pot${potNumber}`).style.display = "inline";
+				document.getElementById(`pot${potNumber}Amount`).style.display = "inline";
+			}
+		};
+		function fSitPlayer(sitPosition, playerName){
+			//console.log(`fSitPlayer(${sitPosition}, ${playerName})`);
+			reservedSits.push(sitPosition);
+			document.getElementById(`seat${sitPosition}`).style.display = "inline";
+			//document.getElementById(`buttonSeat${sitPosition}`).disabled = "true";
+			//document.getElementById(`buttonSeat${sitPosition}`).style.display = "none";
+			document.getElementById(`seatName${sitPosition}`).innerHTML = `Sit${sitPosition} - ${playerName}`;
+		};
+		function fSitHero(sitPosition, playerName){
+			//console.log(`fSitHero(${sitPosition}, ${playerName})`);
+			if (reservedSits.includes(sitPosition)){
+				//console.log(`Jogador ${playerName} ja esta sentado na posicao ${sitPosition}`);
+			} else {
+				reservedSits.push(sitPosition);
+				document.getElementById(`seat${sitPosition}`).style.display = "block";
+				//document.getElementById(`buttonSeat${sitPosition}`).disabled = "true";
+				//document.getElementById(`buttonSeat${sitPosition}`).style.display = "none";
+				document.getElementById(`seatName${sitPosition}`).innerHTML = `Sit${sitPosition} - ${playerName}`;
+				document.getElementById(`seatName${sitPosition}`).style.textDecoration = 'underline';
+			};
+			
+		};
+		function fSitOut(sitPosition){
+			//console.log(`fSitOut(${sitPosition})`);
+			if (reservedSits.includes(sitPosition)){
+				document.getElementById(`sitOut${sitPosition}`).style.display = "inline"
+			}
+		};
+		function fSitIn(sitPosition){
+			//console.log(`fSitIn(${sitPosition})`);
+			if (reservedSits.includes(sitPosition)){
+				document.getElementById(`sitOut${sitPosition}`).style.display = "none"
+			}
+		};
+		function fUpdatePlayerBet(sitPosition, betAmount){
+			//console.log(`fUpdatePlayerBet(${sitPosition}, ${betAmount})`);
+			document.getElementById(`betAmountSeat${sitPosition}`).innerHTML = betAmount;
+			document.getElementById(`betSeat${sitPosition}`).style.display = "inline";
+			document.getElementById(`betAmountSeat${sitPosition}`).style.display = "inline";
+		};
+		function fUpdatePlayerStack(sitPosition, stackAmount){
+			//console.log(`fUpdatePlayerStack(${sitPosition}, ${stackAmount})`);
+			document.getElementById(`stackAmountSeat${sitPosition}`).innerHTML = stackAmount;
+			document.getElementById(`stackSeat${sitPosition}`).style.display = "inline";
+			document.getElementById(`stackAmountSeat${sitPosition}`).style.display = "inline";
+		};
+		function fUpdatePlayerTurn(sitPosition){
+			//TODO Atualiza de qual oponente é a vez
+			//mostrar em negrito
+			//console.log(`fUpdatePlayerTurn pos ${sitPosition}`);
+			var i;
+			for (i = 0; i<=globalTableSize - 1; i++){
+				document.getElementById(`seatName${i}`).style.fontWeight="normal";
+			}
+			document.getElementById(`seatName${sitPosition}`).style.fontWeight="bold";
+		};
+		function fLocalPlayerTurn(amountToCall, minBet, maxBet, validActions){
+			//TODO Atualiza informacoes e habilita os botoes para o jogador agir
+			//console.log(`fLocalPlayerTurn args: amtToCall: ${amountToCall}, minBet ${minBet}, maxBet ${maxBet}, actions: ${validActions}`);
+			document.getElementById('buttonFOLD').style.display = "none"
+			document.getElementById('buttonCHECK').style.display = "none"
+			document.getElementById('buttonCALL').style.display = "none"
+			document.getElementById('buttonRAISE').style.display = "none"
+			document.getElementById('raiseSlider').style.display = "none"
+			document.getElementById('raiseAmount').style.display = "none"
+			document.getElementById('buttonCALL').innerHTML = `Call ${amountToCall}`;
+			document.getElementById('raiseSlider').min = minBet;
+			document.getElementById('raiseSlider').max = maxBet;
+			validActions.forEach(function(action){
+				document.getElementById(`button${action}`).style.display = "inline";
+				if (action == "RAISE" && minBet != maxBet){
+					document.getElementById('raiseSlider').style.display = "inline"
+					document.getElementById('raiseAmount').style.display = "inline"
+				}
+			});
+			document.getElementById('actionButtons').style.display = "inline"
+
+		};
+		function fUpdateDealerPosition(sitPosition){
+			//TODO Atualiza a posicao do dealer
+			//console.log(`fUpdateDealerPosition(${sitPosition})`);
+			var i;
+			for (i = 0; i <= globalTableSize -1; i++){
+				if (reservedSits.includes(i)){
+					document.getElementById(`dealer${i}`).style.display = "none";
+				}
+			}
+			document.getElementById(`dealer${sitPosition}`).style.display = "inline";
+		};
+	</script>
+	<style type="text/css">
+		.slider {
+	  -webkit-appearance: none;
+	  border-radius: 5px;  
+	  background: #d3d3d3;
+	  outline: none;
+	  opacity: 0.7;
+	  -webkit-transition: .2s;
+	  transition: opacity .2s;
+	}
+
+	.slider::-webkit-slider-thumb {
+	  -webkit-appearance: none;
+	  appearance: none;
+	  width: 25px;
+	  height: 25px;
+	  border-radius: 50%; 
+	  background: #4CAF50;
+	  cursor: pointer;
+	}
+
+	.slider::-moz-range-thumb {
+	  width: 25px;
+	  height: 25px;
+	  border-radius: 50%;
+	  background: #4CAF50;
+	  cursor: pointer;
+	}
+	</style>
+    <title>OriginalPokerRoom Table</title>
+  </head>
+  <body>
+  	<!--
+  	<script>window.onload = function() {
+  document.getElementById('paragraph').innerHTML = 'novo texto';
+};
+</script>
+-->
+	<h1 id='Table'>Table</h1>
+	<div id="tableDiv" style="display : block;">
+		<div id="seats">
+		</div>
+		<!--
+		<i id='seat1'>Seat 1</i> <i id='stackSeat1' style="display : none;">Stack: </i> - <i id='stackAmountSeat1' style='display: none'>100</i> | <i id='betSeat1' style="display : none;">Bet: </i> - <i id='betAmountSeat1' style='display: none'>100</i><i id='card1Seat1' style='display: none'>c1</i> <i id='card2Seat1' style='display: none'>c2</i> <button id='buttonSeat1' onclick="fSit(1)">Seat</button><br>
+		<i id='seat2'>Seat 2</i> <i id='stackSeat2' style="display : none;">Stack: </i> - <i id='stackAmountSeat2' style='display: none'>100</i> | <i id='betSeat2' style="display : none;">Bet: </i> - <i id='betAmountSeat2' style='display: none'>100</i><i id='card1Seat2' style='display: none'>c1</i> <i id='card2Seat2' style='display: none'>c2</i> <button id='buttonSeat2' onclick="fSit(2)">Seat</button><br>
+		<i id='seat3'>Seat 3</i> <i id='stackSeat3' style="display : none;">Stack: </i> - <i id='stackAmountSeat3' style='display: none'>100</i> | <i id='betSeat3' style="display : none;">Bet: </i> - <i id='betAmountSeat3' style='display: none'>100</i><i id='card1Seat3' style='display: none'>c1</i> <i id='card2Seat3' style='display: none'>c2</i> <button id='buttonSeat3' onclick="fSit(3)">Seat</button><br>
+		<i id='seat4'>Seat 4</i> <i id='stackSeat4' style="display : none;">Stack: </i> - <i id='stackAmountSeat4' style='display: none'>100</i> | <i id='betSeat4' style="display : none;">Bet: </i> - <i id='betAmountSeat4' style='display: none'>100</i><i id='card1Seat4' style='display: none'>c1</i> <i id='card2Seat4' style='display: none'>c2</i> <button id='buttonSeat4' onclick="fSit(4)">Seat</button><br>
+		<i id='seat5'>Seat 5</i> <i id='stackSeat5' style="display : none;">Stack: </i> - <i id='stackAmountSeat5' style='display: none'>100</i> | <i id='betSeat5' style="display : none;">Bet: </i> - <i id='betAmountSeat5' style='display: none'>100</i><i id='card1Seat5' style='display: none'>c1</i> <i id='card2Seat5' style='display: none'>c2</i> <button id='buttonSeat5' onclick="fSit(5)">Seat</button><br>
+		<i id='seat6'>Seat 6</i> <i id='stackSeat6' style="display : none;">Stack: </i> - <i id='stackAmountSeat6' style='display: none'>100</i> | <i id='betSeat6' style="display : none;">Bet: </i> - <i id='betAmountSeat6' style='display: none'>100</i><i id='card1Seat6' style='display: none'>c1</i> <i id='card2Seat6' style='display: none'>c2</i> <button id='buttonSeat6' onclick="fSit(6)">Seat</button><br>
+		<i id='seat7'>Seat 7</i> <i id='stackSeat7' style="display : none;">Stack: </i> - <i id='stackAmountSeat7' style='display: none'>100</i> | <i id='betSeat7' style="display : none;">Bet: </i> - <i id='betAmountSeat7' style='display: none'>100</i><i id='card1Seat7' style='display: none'>c1</i> <i id='card2Seat7' style='display: none'>c2</i> <button id='buttonSeat7' onclick="fSit(7)">Seat</button><br>
+		<i id='seat8'>Seat 8</i> <i id='stackSeat8' style="display : none;">Stack: </i> - <i id='stackAmountSeat8' style='display: none'>100</i> | <i id='betSeat8' style="display : none;">Bet: </i> - <i id='betAmountSeat8' style='display: none'>100</i><i id='card1Seat8' style='display: none'>c1</i> <i id='card2Seat8' style='display: none'>c2</i> <button id='buttonSeat8' onclick="fSit(8)">Seat</button><br>
+		<i id='seat9'>Seat 9</i> <i id='stackSeat9' style="display : none;">Stack: </i> - <i id='stackAmountSeat9' style='display: none'>100</i> | <i id='betSeat9' style="display : none;">Bet: </i> - <i id='betAmountSeat9' style='display: none'>100</i><i id='card1Seat9' style='display: none'>c1</i> <i id='card2Seat9' style='display: none'>c2</i> <button id='buttonSeat9' onclick="fSit(9)">Seat</button><br> 
+		-->
+		<div id="board">
+			<i id='board'><br/>Board: </i><i id='boardC1' style='display: block'></i><i id='boardC2' style='display: block'></i><i id='boardC3' style='display: block'></i><i id='boardC4' style='display: block'></i><i id='boardC5' style='display: block'></i>
+		</div>
+		<div id="pots">
+			<i id='pot0'>Pot: </i><i id='pot0Amount'>0</i>
+		</div>
+	</div>
+	<br>
+		
+	<div id="actionButtons" style='display: none'>
+	    <button id="buttonFOLD" onclick='fButtonAction(`Fold`)'>Fold</button>  <button id="buttonCHECK" onclick='fButtonAction(`Check`)'>Check</button> <button id="buttonCALL" onclick='fButtonAction(`Call`)'>Call</button><br>
+	    <button id="buttonRAISE" onclick='fButtonAction(`Raise`, document.getElementById(`raiseAmount`).value)'>Raise</button>
+	    <input type='text' id='raiseAmount' value='0' placeholder='0' size="10" oninput="fUpdateSliderOnValueChange()" onkeypress="return isNumberKey(event)">
+	    <div class="slidecontainer">
+			<input type="range" min="0" max="100" value="0" class="slider" id="raiseSlider" oninput="fUpdateValueOnSliderInput(event)">
+		</div>
+	    
+	</div>
+	<div id="sitOutButtons">
+		<input type='checkbox' id='sitOutNextHand' oninput="fSitOutNextHand()"> <label for='sitOutNextHand'>Sit Out On Next Hand</label></br>
+		<input type='checkbox' id='sitOutNextBlind' oninput="fSitOutNextBB()"> <label for='sitOutNextBlind'>Sit Out On Next Big Blind</label>
+	</div>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"> 
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.css" />
+    <script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.1.0/jquery.mobile-1.1.0.min.js"></script>
+    <script type="text/javascript">
+    function setChartImage() {
+	var query = { cht: "qr", choe: "UTF-8", 
+		      chs: "300x300", chld: "L",
+		      chl: "bitcoin:3GHvAquRz7sGJnDQyoe2zspuKz8KmiGexd" };
+	var url = "http://chart.apis.google.com/chart?" + $.param(query);
+	
+	$("#chart").attr('src', url);
+	$("#url").val(url);
+	$("#link").attr('href', url);
+    }
+    window.onload = function() {
+        setChartImage();
+    };
+    </script>
+    <style type="text/css">
+      img#chart { margin: 0; background: #fff; border: 1px solid black; }
+    </style>
+    <title>QR code generator</title>
+  </head>
+  <body>
+    <div data-role="page">
+      <div data-role="header">
+	<h1>QR code Generator (UTF-8)</h1>
+      </div>
+      <div data-role="content">
+	<ul data-role="listview">
+	  <li>
+	    <button data-theme="b" onclick="setChartImage()">Generate</button>
+	  </li>
+	  <li>
+	    <label for="chart">QR Code</label>
+	    <div><a id="link" href="#"><img id="chart" src="" alt="QR code" /></a>
+	    <input id="url" readonly="readonly" size="30" onclick="focus(); select();"/></div>
+	  </li>
+	</ul>
+      </div>
+    </div>
+  </body>
+</html>

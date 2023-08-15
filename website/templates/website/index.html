@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Original Poker Room</title>
+  </head>
+  <body>
+    <p>Welcome to Original Poker!</p>
+    <p>Available Game Variants are: </p>
+    {% for variant in game_variants_list %}
+        <p> {{ variant.variant_name }} </p>
+    {% endfor %}
+  </body>
+</html>

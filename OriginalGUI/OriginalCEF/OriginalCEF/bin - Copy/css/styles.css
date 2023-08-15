@@ -1,0 +1,462 @@
+* {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: 'Roboto Condensed', sans-serif;
+}
+
+body {
+  background-image:url(../img/bg.png);
+  background-size: contain auto;
+  background-repeat: no-repeat;
+}
+#table-container{
+	display:block;
+	position: absolute;
+	width:100%;
+	top:50px;
+	height:calc(100% - 50px);
+    background:url(../img/mesa.png) center no-repeat;
+	background-size:contain;
+}
+#betbar-container {
+	position:absolute;
+	width:35%;
+	max-width:380px;
+	min-width:150px;
+	height:30px;
+	right:0px;
+	bottom:calc(10% + 5px);
+}
+#range-container{
+	float:left;
+	width:calc(77% - 16px);
+	background:#000;
+	border-radius:4px;
+	height:24px;
+	opacity: 0.7;
+	padding:3px 8px;
+}
+#value-container {
+	float:right;
+	width:calc(23% - 5px);
+	height:30px;
+}
+#value-container input {
+	width:calc(100% - 19px);
+	height:22px;
+	border-radius:4px;
+	border:0px;
+	padding:3px 5px;
+	background:#000;
+	color:#FFF;
+	opacity:0.7;
+	font-family: 'Roboto Condensed', sans-serif;
+	font-weight:bold;
+	border-bottom:solid 1px #666;
+}
+#marcador {
+	width:100%;
+}
+#buttons-container {
+	position:absolute;
+	width:55%;
+	max-width:532px;
+	height:8%;
+	min-height:35px;
+	max-height:90px;
+	right:0px;
+	bottom:12px;
+}
+.btn {
+	float:right;
+	width:calc(33.3% - 8px);
+	height:100%;
+	padding-right:8px;
+	
+}
+.btn a {
+	display: table;
+	width:100%;
+	height:100%;
+	background:#FFF;
+	border-radius:10px;
+	text-align: center;
+	color:#000;
+	font-weight:bold;
+	font-size:18px;
+	text-decoration: none;
+	letter-spacing: 0.2em;
+	border-bottom:solid 2px #C1C1C1;
+}
+.btn a:hover {
+	background:#D9D9D9;
+	border-bottom:solid 2px #B3B3B3;
+}
+.btn a span {
+	display:table-cell;
+	width:100%;
+	height:100%;
+	vertical-align: middle;
+}
+
+/* Display de jogadores */
+#players-container {
+	position: absolute;
+	width:980px;
+	height:100%;
+	left:50%;
+	margin-left:-490px;
+}
+.player-display {
+	position: absolute;
+	width: 16%;
+	max-width:148px;
+	min-width:95px;
+	max-height:103px;
+	min-height:67px;
+	height:13%
+}
+.player-cards {
+	width:100%;
+	position:absolute;
+	max-height:86px;
+	height:85%;
+}
+.c1{
+	position:absolute;
+	width:37%;
+	height:85%;
+	max-height: 86px;
+	left:18%;
+	background-size: 100% auto;
+	box-shadow: 0px 0px 4px 0px rgba(0,0,0,0.4);
+	border-radius:7%;
+}
+.c2{
+	position:absolute;
+	width:37%;
+	height:85%;
+	max-height: 86px;
+	right:18%;
+	background-size: 100% auto;
+	box-shadow: 0px 0px 4px 0px rgba(0,0,0,0.4);
+	border-radius:4px;
+}
+.player-block {
+	position:absolute;
+	width:100%;
+	background: url(../img/display.png) top center no-repeat;
+	background-size: 100% 100%;
+	top:43%;
+	height:57%;
+	font-size:14px;
+	color:#F4F4F4;
+}
+.display-name {
+	text-align: center;
+	display:block;
+	height:35%;
+	padding-top:5%;
+
+}
+.display-stack {
+	padding-top:1%;
+	text-align: center;
+	display:block;
+	font-weight:bold;
+}
+.cardback {
+	position:absolute;
+	left:14%;
+	background:url(../img/cardback.png) center top no-repeat;
+	background-size: 100% auto;
+	width:72%;
+	max-width: 106px;
+	height: 86px;
+}
+
+
+#seat0 {
+	left:42%;
+	bottom:15%;
+}
+#seat1 {
+	left:6%;
+	bottom:35%;
+}
+#seat2 {
+	left:8%;
+	top:20%;
+}
+#seat3 {
+	left:42%;
+	top:20px;
+}
+#seat4 {
+	right:8%;
+	top:20%;
+}
+#seat5 {
+	right:6%;
+	bottom:35%;
+}
+
+
+@media screen and (max-width: 980px) {
+	#players-container {
+		width:100%;
+		left:auto;
+		margin-left:auto;
+	}
+	.display-name {
+		padding-top:4%;
+	}
+}
+
+@media screen and (max-width: 820px) {
+	.player-block {	font-size:13px;	}
+	#range-container{width:calc(72% - 16px);}
+	#value-container {width:calc(28% - 5px);}
+}
+@media screen and (max-width: 750px) {
+	.player-block {	font-size:12px;	}
+}
+@media screen and (max-width: 700px) {
+	.btn a {
+		font-size:15px;
+		letter-spacing: 0.1em;
+	}
+	.player-block {	font-size:11px;	}
+	#range-container{width:calc(65% - 16px);}
+	#value-container {width:calc(35% - 5px);}
+}
+@media screen and (max-width: 600px) {
+	.btn a {
+		font-size:13px;
+		letter-spacing: 0em;
+	}
+	.player-block {	font-size:10px;	}
+	#range-container{width:calc(57% - 16px);}
+	#value-container {width:calc(43% - 5px);}
+}
+
+@media screen and (max-height: 620px) {
+	#betbar-container {
+		bottom:calc(10% + 9px);
+	}
+}
+@media screen and (max-height: 500px) {
+	#betbar-container {
+		bottom:calc(10% + 10px);
+	}
+}
+@media screen and (max-height: 450px) {
+	#betbar-container {
+		bottom:calc(10% + 12px);
+	}
+}
+@media screen and (max-height: 400px) {
+	#betbar-container {
+		bottom:calc(10% + 15px);
+		width:32%;
+	}
+}
+/*Ícones*/
+#icons-container {
+	position: absolute;
+	width:100%;
+	height:32px;
+}
+.iconl, .iconr { 
+	width:32px;
+	height:32px;
+	margin:2px;
+}
+.iconl { float:left; }
+.iconr { float:right; }
+
+.iconl a, .iconr a {
+	display: block;
+	overflow: hidden;
+	height:32px;
+	cursor:pointer;
+	background-image: url(../img/sprites.png);
+}
+
+#ico-replay a { background-position: 0px 0px; }
+#ico-replay a:hover { background-position: 0px -32px; }
+
+#ico-tables a { background-position: -32px 0px; }
+#ico-tables a:hover { background-position: -32px -32px; }
+
+#ico-config a { background-position: -64px 0px; }
+#ico-config a:hover { background-position: -64px -32px; }
+
+#ico-cash a { background-position: -96px 0px; }
+#ico-cash a:hover { background-position: -96px -32px; }
+
+#ico-minimize a { background-position: -128px 0px; }
+#ico-minimize a:hover { background-position: -128px -32px; }
+
+#ico-close a { background-position: -160px 0px; }
+#ico-close a:hover { background-position: -160px -32px; }
+
+/*Cartas*/
+.cAd { background-image:url(../img/cards/Ad.png); }
+.cAc { background-image:url(../img/cards/Ac.png); }
+.cAh { background-image:url(../img/cards/Ah.png); }
+.cAs { background-image:url(../img/cards/As.png); }
+.cKd { background-image:url(../img/cards/Kd.png); }
+.cKc { background-image:url(../img/cards/Kc.png); }
+.cKh { background-image:url(../img/cards/Kh.png); }
+.cKs { background-image:url(../img/cards/Ks.png); }
+.cQd { background-image:url(../img/cards/Qd.png); }
+.cQc { background-image:url(../img/cards/Qc.png); }
+.cQh { background-image:url(../img/cards/Qh.png); }
+.cQs { background-image:url(../img/cards/Qs.png); }
+.cJd { background-image:url(../img/cards/Jd.png); }
+.cJc { background-image:url(../img/cards/Jc.png); }
+.cJh { background-image:url(../img/cards/Jh.png); }
+.cJs { background-image:url(../img/cards/Js.png); }
+.cTd { background-image:url(../img/cards/Td.png); }
+.cTc { background-image:url(../img/cards/Tc.png); }
+.cTh { background-image:url(../img/cards/Th.png); }
+.cTs { background-image:url(../img/cards/Ts.png); }
+.c9d { background-image:url(../img/cards/9d.png); }
+.c9c { background-image:url(../img/cards/9c.png); }
+.c9h { background-image:url(../img/cards/9h.png); }
+.c9s { background-image:url(../img/cards/9s.png); }
+.c8d { background-image:url(../img/cards/8d.png); }
+.c8c { background-image:url(../img/cards/8c.png); }
+.c8h { background-image:url(../img/cards/8h.png); }
+.c8s { background-image:url(../img/cards/8s.png); }
+.c7d { background-image:url(../img/cards/7d.png); }
+.c7c { background-image:url(../img/cards/7c.png); }
+.c7h { background-image:url(../img/cards/7h.png); }
+.c7s { background-image:url(../img/cards/7s.png); }
+.c6d { background-image:url(../img/cards/6d.png); }
+.c6c { background-image:url(../img/cards/6c.png); }
+.c6h { background-image:url(../img/cards/6h.png); }
+.c6s { background-image:url(../img/cards/6s.png); }
+.c5d { background-image:url(../img/cards/5d.png); }
+.c5c { background-image:url(../img/cards/5c.png); }
+.c5h { background-image:url(../img/cards/5h.png); }
+.c5s { background-image:url(../img/cards/5s.png); }
+.c4d { background-image:url(../img/cards/4d.png); }
+.c4c { background-image:url(../img/cards/4c.png); }
+.c4h { background-image:url(../img/cards/4h.png); }
+.c4s { background-image:url(../img/cards/4s.png); }
+.c3d { background-image:url(../img/cards/3d.png); }
+.c3c { background-image:url(../img/cards/3c.png); }
+.c3h { background-image:url(../img/cards/3h.png); }
+.c3s { background-image:url(../img/cards/3s.png); }
+.c2d { background-image:url(../img/cards/2d.png); }
+.c2c { background-image:url(../img/cards/2c.png); }
+.c2h { background-image:url(../img/cards/2h.png); }
+.c2s { background-image:url(../img/cards/2s.png); }
+
+
+
+
+
+
+
+
+
+
+
+/* Código para colorir o range*/
+input[type=range] {
+  width: 100%;
+  margin: 3.5px 0;
+  background-color: transparent;
+  -webkit-appearance: none;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+  background: #444444;
+  border: 0;
+  border-radius: 1px;
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+}
+input[type=range]::-webkit-slider-thumb {
+  margin-top: -3.5px;
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border: 0px solid rgba(0, 0, 0, 0);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  -webkit-appearance: none;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+  background: #535353;
+}
+input[type=range]::-moz-range-track {
+  background: #444444;
+  border: 0;
+  border-radius: 1px;
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+}
+input[type=range]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border: 0px solid rgba(0, 0, 0, 0);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+input[type=range]::-ms-track {
+  background: transparent;
+  border-color: transparent;
+  border-width: 3.5px 0;
+  color: transparent;
+  width: 100%;
+  height: 3px;
+  cursor: pointer;
+}
+input[type=range]::-ms-fill-lower {
+  background: #353535;
+  border: 0;
+  border-radius: 2px;
+}
+input[type=range]::-ms-fill-upper {
+  background: #444444;
+  border: 0;
+  border-radius: 2px;
+}
+input[type=range]::-ms-thumb {
+  width: 10px;
+  height: 10px;
+  background: #ffffff;
+  border: 0px solid rgba(0, 0, 0, 0);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 0px;
+  /*Needed to keep the Edge thumb centred*/
+}
+input[type=range]:focus::-ms-fill-lower {
+  background: #444444;
+}
+input[type=range]:focus::-ms-fill-upper {
+  background: #535353;
+}
+/*TODO: Use one of the selectors from https://stackoverflow.com/a/20541859/7077589 and figure out
+how to remove the virtical space around the range input in IE*/
+@supports (-ms-ime-align:auto) {
+  /* Pre-Chromium Edge only styles, selector taken from hhttps://stackoverflow.com/a/32202953/7077589 */
+  input[type=range] {
+    margin: 0;
+    /*Edge starts the margin from the thumb, not the track as other browsers do*/
+  }
+}

@@ -1,0 +1,106 @@
+<! DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="css/new.css?v=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Cabin+Condensed:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src='js/animacoes.js'></script>
+
+</head>
+
+<body id="table">
+    <div id='mesa' style='overflow:hidden;position:absolute;background-repeat: no-repeat;margin-top:0px;margin-left:0px'>
+        <div>
+            <div id="board" unselectable="on" onselectstart="return false;" onmousedown="return false;">
+                <div class="board-card c2c" id="boardC1" style="visibility:hidden;"></div>
+                <div class="board-card c2d" id="boardC2" style="visibility:hidden;"></div>
+                <div class="board-card c2h" id="boardC3" style="visibility:hidden;"></div>
+                <div class="board-card c2s" id="boardC4" style="visibility:hidden;"></div>
+                <div class="board-card c2c" id="boardC5" style="visibility:hidden;"></div>
+            </div>
+	        <div id="pots"  unselectable="on" onselectstart="return false;" onmousedown="return false;">
+		        <div class="pot" id="pot3Amount" style="visibility:hidden;">$1.382,30</div>
+		        <div class="pot" id="pot1Amount" style="visibility:hidden;">$1.987,73</div>
+		        <div class="pot" id="pot0Amount" style="visibility:hidden;">$1.999,99</div>
+		        <div class="pot" id="pot2Amount" style="visibility:hidden;">$1.858,22</div>
+		        <div class="pot" id="pot4Amount" style="visibility:hidden;">$1.457,99</div>
+	        </div>
+        </div>
+        
+        <div id='title-bar' unselectable='on' onselectstart='return false;' onmousedown='return false;'>
+            <h1>Helenos III - $0.10/$0.20 NLH</h1>
+        </div>
+
+        <div id='icons-container' unselectable='on' onselectstart='return false;' onmousedown='return false;'>
+            <div class='iconl' id='ico-replay'>
+                <a title='Replay'></a>
+            </div>
+            <div class='iconl' id='ico-tables' onclick='fOrganizerTables()'>
+                <a title='Ajustar mesas'></a>
+            </div>
+            <div class='iconl' id='ico-config'>
+                <a title='Ajustes'></a>
+            </div>
+            <div class='iconl' id='ico-cash'>
+                <a title='Depositar'></a>
+            </div>
+
+            <div class='iconr' id='ico-close' onclick='fFechar()'>
+                <a title='Fechar'></a>
+            </div>
+            <div class='iconr' id='ico-minimize' onclick='fMinimizar()'>
+                <a title='Minimizar'></a>
+            </div>
+        </div>
+
+        <!-- Cartas -->
+        <!--div id="board" unselectable="on" onselectstart="return false;" onmousedown="return false;">
+        <div class="board-card c2c" id="boardC1" style="visibility:hidden;"></div>
+        <div class="board-card c2d" id="boardC2" style="visibility:hidden;"></div>
+        <div class="board-card c2h" id="boardC3" style="visibility:hidden;"></div>
+        <div class="board-card c2s" id="boardC4" style="visibility:hidden;"></div>
+        <div class="board-card c2c" id="boardC5" style="visibility:hidden;"></div>
+    </div-->
+
+        <!-- Barra de aposta -->
+        <div id="betbar-container">
+
+            <div id="betbar-left">
+                <div id="shortcuts-container" style="visibility:hidden;" unselectable="on" onselectstart="return false;" onmousedown="return false;">
+                    <div class="shortbtn" id="sc1"><a href="javascript:fBtnBetPerc(100)"><span>POT</span></a></div>
+                    <div class="shortbtn" id="sc2"><a href="javascript:fBtnBetPerc(75)"><span>75%</span></a></div>
+                    <div class="shortbtn" id="sc3"><a href="javascript:fBtnBetPerc(50)"><span>50%</span></a></div>
+                    <div class="shortbtn" id="sc4"><a href="javascript:fBtnBetPerc(25)"><span>25%</span></a></div>
+                </div>
+                <div id="range-container" style="visibility:hidden;">
+                    <input type="range" min="0" max="100" value="0" step="0.01" class="slider" id="raiseSlider" name="a">
+                </div>
+            </div>
+
+            <div id="value-container" style="visibility:hidden;">
+                <input type="text" id="raiseAmount" name="valor" value="$0.00" placeholder='$0' oninput="fUpdateSliderOnValueChange()" onkeypress="return isNumberOrDecSepKey(event)">
+            </div>
+
+        </div>
+        <div id="buttons-container" style="visibility:hidden;" unselectable="on" onselectstart="return false;" onmousedown="return false;">
+            <div class="btn" id="buttonRAISE"><a href="javascript:fButtonAction('RAISE', document.getElementById('raiseAmount').value.substring(1, document.getElementById('raiseAmount').value.length))"><span id="buttonRAISESpan">RAISE TO<br>$0.00</span></a></div>
+            <div class="btn" id="buttonCHECKorCALL"><a href="javascript:fButtonAction(document.getElementById('buttonCHECKorCALLSpan').innerHTML)"><span id="buttonCHECKorCALLSpan">CALL<br>$0.00</span></a></div>
+            <div class="btn" id="buttonFOLD"><a href="javascript:fButtonAction('FOLD')"><span>FOLD</span></a></div>
+        </div>
+
+
+        <div id="chat-container" unselectable="on" onselectstart="return false;" onmousedown="return false;">
+            <div id="sitout-hand" onclick="fSitOutNextHand();return false;"><input id="chkSitOutNHand" type="checkbox" class="chatcheck"><span class="spancheck">SIT OUT NEXT HAND</span></div>
+            <div id="sitout-bb" onclick="fSitOutNextBlind();return false;"><input id="chkSitOutNBig" type="checkbox" class="chatcheck"><span class="spancheck">SIT OUT NEXT BB</span></div>
+            <!--<div id="chatbox"></div>
+<div id="chathere">
+    <input type="text" value="Type here..." id="chat">
+    <a href="#">☻</a>
+</div>-->
+        </div>
+    </div>
+</body>
+
+</html>

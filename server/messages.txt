@@ -1,0 +1,159 @@
+
+Mensagens trocadas entre server-client
+
+
+Note: "Messages purpose is stated fully in uppercase such as: UPDATE_POT_AMOUNT"
+Note: "Messages passed arguments are stated in lowercase"
+Note: Using ; (semi-collon) to separate arguments inside message.
+Note: Character to end messages: #
+
+#### Variables Conventions ####
+
+Table Sit Positions values: 1~10
+Card Slots:
+	flop
+	turn
+	river
+	hand
+
+SIGN_IN;97#RESERVE_SIT;1#SIT;1997#
+SIGN_IN;98#RESERVE_SIT;2#SIT;1998#
+SIGN_IN;99#RESERVE_SIT;3#SIT;1999#
+
+Sample Messages
+SIGN_IN;98#
+SIGN_IN;connected#
+RESERVE_SIT;1#
+RESERVE_SIT;ok;1000;9999999#
+SIT;2000#
+SIT;ok#
+RESERVE_SIT;2;Player99#
+SIT;2;1999.0#
+UPDATE_DEALER;1#
+BLIND;1#
+UPDATE_PLAYER_STACK;1;1999.0#
+UPDATE_PLAYER_BET;1;1.0#
+BLIND;2#
+UPDATE_PLAYER_STACK;2;1997.0#
+UPDATE_PLAYER_BET;2;2.0#
+PLAYER_CARD;1;JcKc#
+PLAYER_CARD;2#
+PLAYER_TURN;1;2;4;1999.0;Fold;Call;Raise#
+
+#### Login (Temporary) ####
+
+[Client - Request]		Sign In		"SIGN_IN;unique_id"	"SIGN_IN;6785391"
+[Server - Response]	Success		"SIGN_IN;connected"
+[Server - Response]	Rejected		"SIGN_IN;denied"
+
+#### Pré-Table (In Lobby) ####
+
+[Client - Request]		Create/Open Table		"????"	(TO-Design) (Não vai ser feito por aqui. vai ser feito por requisicao web (json))
+
+[Client - Request]		Enter Table			"ENTER_TABLE;table_id"		"ENTER_TABLE;452187"
+[Server - Response]	Confirm Enter Table	"ENTER_TABLE;table_id;ok"	
+
+#### In-Table ####
+
+	[Client - Request]		Request RESERVE_SIT		"RESERVE_SIT;sit_position"	"SIT;1"
+	[Server - Response]		Reserve Sit		"RESERVE_SIT;ok;min_balance;max_balance" "RESERVE_SIT;ok;50;100"
+	[Server - Broadcast]	Announce Reserved	"RESERVE_SIT;sit_position;player_name"
+	[Client - Request]		Sit				"SIT;balance"	"SIT;75"
+	[Server - Response]		Confirm Amount	"SIT;ok"
+	[Server - Broadcast]	Announce Sit	"SIT;sit_position;player_balance"
+
+	[Client - Request]		Exit table		"EXIT"
+	[Server - Response]		Confirm Exit	"EXIT;ok"	
+	[Server - Broadcast]	Announce Exit	"EXIT;sit_position"
+
+	[Client - Request]		SitOut Next Hand	"SITOUT_NEXT_HAND;activate" "SITOUTNEXTHAND;1"
+	[Server - Response]		Confirm SITOUT Next Hand	"SITOUTNEXTHAND;ok"
+
+	[Client - Request]		SitOut Next Blind	"SITOUT_NEXT_BLIND;activate" "SITOUTNEXTBLIND;1"
+	[Server - Response]		Confirm SITOUT Next Blind	"SITOUTNEXTBLIND;ok"	
+
+	[Client - Request]		Back on next Hand	"BACK_NEXT_HAND;activate" "BACKNEXTHAND;1"
+	[Server - Response]		Confirm Back on next Hand	"BACKNEXTHAND;ok"	
+
+	[Client - Request]		Back on next Blind	"BACK_NEXT_BLIND;activate" "BACKNEXTBLIND;1"
+	[Server - Response]		Confirm Back on next Blind	"BACKNEXTBLIND;ok"	
+
+	[Client - Request]		Request Buy Chips		"REQUEST_BUY"
+	[Server - Response]		Amount To Buy	"REQUEST_BUY;min;max"	"REQUEST_BUY;50;100"
+	[Client - Request]		Send Amount to Buy	"BUY;amount"	"BUY;75"	
+	[Server - Response]		Confirm Buy	"BUY;ok"	
+	[Server - Broadcast]	Update Player Balance	"UPDATE_PLAYER_STACK;sit_position;player_balance"	
+
+	[Server - Response]		Buy more Chips when lost all chips	"REQUEST_BUY;min;max"	"REQUEST_BUY;50;100"
+	[Client - Request]		Send Amount to Buy	"BUY;amount"	"BUY;75"	
+	[Server - Response]		Confirm Buy	"BUY;ok"	
+	[Server - Broadcast]	Update Player Balance	"UPDATE_PLAYER_STACK;sit_position;player_balance"		
+
+	(TO BE IMPLEMENTED LATER)
+	[Client - Request]		Send Chat 		"SEND_CHAT;message"	"SENDCHAT;hello world"
+	[Server - Response]		Confirm Send Chat	"SEND_CHAT;ok"	
+	[Server - Broadcast]	Announce Chat	"SEND_CHAT;sit_position;message"
+
+	(TO BE IMPLEMENTED LATER)
+	[Client - Request]		Request Hand History	"REQUEST_HH"
+	[Server - Response]		Return last hand History	"REQUEST_HH;hand_history_text"	
+
+	#### Table Game Flow ####
+
+	[Server - Broadcast]	Start New Hand		"NEW_HAND;hand_number;small_blind;big_blind"			"NEW_HAND;22;1;2"
+				(Remember to remove all cards in the board, pot value, player bets, player cards)
+	[Server - Broadcast]	Player Turn		"PLAYER_TURN;sit_position;amountToCall;minBet;maxBet;valid_action1;valid_action2;valid_action3"	"PLAYER_TURN;2;5;10;100;fold;call;raise"
+	[Server - Broadcast]	Player Timeout	"PLAYER_TIMEOUT;sit_position;action"	"PLAYER_TIMEOUT;2;check or fold"
+	[Server - Broadcast]	Round Winner(s)		"WINNER;sit_position;value"				"WINNER;5;15.00"
+	[Server - Broadcast]	Clear Table		"CLEAR_TABLE"			"CLEAR_TABLE"
+
+	#### Updating Table State ####
+
+	[Client - Request]		Request Table Status		"..."		(TO-DO * Objective is to obtain all table state in a single message for reconnecting purposes)
+	[Server - Response]		Table Status Response		(Multiplas responses. To-DO: definir quais responses)
+
+	[Server - Broadcast]	Update Dealer Position		"UPDATE_DEALER;sit_position"
+	[Server - Broadcast]	Update Player Bet Chips		"UPDATE_PLAYER_BET;sit_position;value"
+	[Server - Broadcast]	Update Player Balance		"UPDATE_PLAYER_STACK;sit_position;value"
+	[Server - Broadcast]	Update Pot Amount			"UPDATE_POT_AMOUNT;value"
+	[Server - Broadcast]	Announce SITOUT				"SITOUT;sit_position"
+	[Server - Broadcast]	Announce Sit				"SIT;sit_position;player_balance"
+	(TO BE IMPLEMENTED LATER)
+	[Server - Broadcast]	Show winning percentages	"WINPERC(;sit_position;perc)*(n)"		"WINPERC;2;20;3;80"
+
+	[Server - Broadcast]	Show Table Card			"SHOW_TABLE_CARD;cardslot;card"				"SHOW_TABLE_CARD;river;Qc"
+	[Server - Broadcast]	Show Player Card			"PLAYER_CARD;sit_position;cardslot;card"		"PLAYER_CARD;2;Ad9c"
+						(Remember to show hidden cards when card not specified:  PLAYER_CARD;2)   
+			
+
+
+	#### In-Game Player Actions ####
+
+	[Client - Request]		Call BLIND			"BLIND"
+	[Server - Response]		Confirm BLIND		"BLIND;ok"	
+	[Server - Broadcast]	Announce BLIND		"BLIND;sit_position"
+				(Única coisa diferente é que vai passar uma mensagem diferente quando for as blinds(Mostra que pagou as Blinds e nao que deu um call))
+
+	[Client - Request]		Fold Hand		"FOLD"
+	[Server - Response]		Confirm Fold		"FOLD;ok"	
+	[Server - Broadcast]	Announce Fold	"FOLD;sit_position"
+				(Remember to remove player cards)
+	
+	[Client - Request]		Check 			"CHECK"
+	[Server - Response]		Confirm Check	"CHECK;ok"	
+	[Server - Broadcast]	Announce Check	"CHECK;sit_position"
+
+	[Client - Request]		Raise			"RAISE;value"
+	[Server - Response]		Confirm Raise		"RAISE;ok"	
+	[Server - Broadcast]	Announce Raise 	"RAISE;sit_position"
+				(Remember to pass player balance and bet in other messages)
+
+	(TO BE IMPLEMENTED LATER)
+	[Client - Request]		Show My Cards		"SHOW_MY_CARDS;card_number1;card_number2;card_number3;card_number4;" (enviar somente a posição das cartas que o jogador escolher)
+	[Server - Response]		Confirm Show My Cards	"SHOW_MY_CARDS;ok"	
+	[Server - Broadcast]	Show Player Card	"PLAYER_CARD;sit_position;cardslot;card"		"PLAYER_CARD;2;Ad9c"
+				(If you want, you can show your cards when the hand finish)
+
+####
+
+

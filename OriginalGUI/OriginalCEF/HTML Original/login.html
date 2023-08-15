@@ -1,0 +1,86 @@
+<!doctype html>
+
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+
+  <title>Login - Original Poker</title>
+  <meta name="description" content="Login - Original Poker">
+  <meta name="author" content="Original Poker">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="css/login.css?v=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Cabin+Condensed:wght@400;700&display=swap" rel="stylesheet"> 
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet"> 
+  
+<script type="text/javascript">	
+
+	
+	document.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      fLogin('server', document.getElementById('login').value, document.getElementById('password').value)	
+    }
+	});
+
+	async function fConnect(host)
+	{
+		console.log("host: " + host)
+		await CefSharp.BindObjectAsync("buttonEvents");
+		if (host != "") {
+			buttonEvents.fConnect(host);
+				
+		}
+	};
+	async function fLogin(host, user, password)
+	{
+		fConnect(host)
+		console.log("User: " + user + " Password: " + password)
+		await CefSharp.BindObjectAsync("buttonEvents");
+		if (user != "" && password != "") {
+			buttonEvents.fLogin(user, password);				
+		}
+	};
+	function fSetDecimalSeparator(separator){
+		globalDecimalSeparator = separator;
+	}
+</script>
+</head>
+
+<body>
+	
+	<div id="login-container">
+	
+		<div id="login-block">
+			
+			<div id="logo"><img src="img/logo@10x.png" width="180" alt="Original Poker" /></div>
+
+			<div id="Usuario">
+				<input type="text" id="login" class="input" placeholder="Usuário" size="20" maxlength="20">
+			</div>
+			
+			<div id="Senha">
+				<input type="password" id="password" class="input" placeholder="Senha" size="20" maxlength="20">
+			</div>
+			
+			<div id="Login" onclick="fLogin('server', document.getElementById('login').value, document.getElementById('password').value)">
+				<span>LOGIN</span>
+			</div>
+			
+			<div id="Esqueci_minha_senha">
+				<span>Esqueci minha senha</span>
+			</div>
+			
+
+		</div>
+		<div id="cadastro-block">
+			<div id="Ainda">Ainda não tem conta?</div>
+			<div id="Cadastro">
+				<span>CADASTRE-SE</span>
+			</div>
+		</div>
+	
+	
+	</div>
+	
+</body>
+</html>

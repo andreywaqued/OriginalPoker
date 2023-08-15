@@ -1,0 +1,20 @@
+De-para:
+OK - num_jogador=->sitPosition
+
+id=seat<num_jogador> = conjunto geral / class="player-display"
+id=avSeat<num_jogador> = imagem / class="avatar"
+
+class="player-cards" ?/
+id=playerCards<num_jogador> class=player-cardsContainer -> caixa_cartas_jogador
+
+id="card1Seat<num_jogador>" class=c1 cAs
+id="card2Seat<num_jogador>" class=c2 c9d
+
+id="seatName<num_jogador>" = nome
+id="stackAmountSeat<num_jogador>" = totalpot
+*mudanças de valores afeta campofichas
+
+timerSeat = barra_tempo
+
+
+Incluir: "pisca"

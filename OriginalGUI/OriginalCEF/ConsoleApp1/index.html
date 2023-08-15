@@ -1,0 +1,87 @@
+<!doctype html>
+<html>
+  <head>
+  	<script type="text/javascript">
+	async function buttonAction(action, amount=0)
+	{
+		console.log("action: " + action)
+		console.log("amount: " + amount)
+		//await CefSharp.BindObjectAsync("buttonEvents");
+		if (action == "Fold") {
+		//	buttonEvents.Fold();
+		}
+		else if (action == "Check"){
+		//	buttonEvents.Check();
+		}
+		else if (action == "Call"){
+		//	buttonEvents.Call();
+		}
+		else if (action == "Raise"){
+		//	buttonEvents.Raise(amount);
+		}
+		//The default is to camel case method names (the first letter of the method name is changed to lowercase)
+	};
+	async function Connect(host)
+	{
+		console.log("host: " + host)
+		//await CefSharp.BindObjectAsync("buttonEvents");
+		if (host != "") {
+			//buttonEvents.Connect(host);
+			ToggleHideTable();
+			document.getElementById('connectButtons').style.display = "none";
+		}
+	};
+	async function Seat(position)
+	{
+		console.log(`Seat Pos: ${position}`)
+		document.getElementById(`buttonSeat${position}`).disabled = "true";
+		//await CefSharp.BindObjectAsync("buttonEvents");
+	};
+	function ToggleHideTable() {
+	  var x = document.getElementById("tableDiv");
+	  if (x.style.display === "none") {
+	    x.style.display = "block";
+	  } else {
+	    x.style.display = "none";
+	  }
+	}
+	</script>
+
+    <title>OriginalPokerRoom Table</title>
+  </head>
+  <body>
+  	<!--
+  	<script>window.onload = function() {
+  document.getElementById('paragraph').innerHTML = 'novo texto';
+};
+</script>
+-->
+	<h1 id='Table'>Table</h1><br>
+	<div id="tableDiv" style="display : none;">
+		<i id='seat1'>Seat 1</i> <button id="buttonSeat1" onclick="Seat(1)">Seat</button><br>
+		<i id='seat2'>Seat 2</i> <button id="buttonSeat2" onclick="Seat(2)">Seat</button><br>
+		<i id='seat3'>Seat 3</i> <button id="buttonSeat3" onclick="Seat(3)">Seat</button><br>
+		<i id='seat4'>Seat 4</i> <button id="buttonSeat4" onclick="Seat(4)">Seat</button><br>
+		<i id='seat5'>Seat 5</i> <button id="buttonSeat5" onclick="Seat(5)">Seat</button><br>
+		<i id='seat6'>Seat 6</i> <button id="buttonSeat6" onclick="Seat(6)">Seat</button><br>
+		<i id='seat7'>Seat 7</i> <button id="buttonSeat7" onclick="Seat(7)">Seat</button><br>
+		<i id='seat8'>Seat 8</i> <button id="buttonSeat8" onclick="Seat(8)">Seat</button><br>
+		<i id='seat9'>Seat 9</i> <button id="buttonSeat9" onclick="Seat(9)">Seat</button><br>
+	</div>
+	<div id="connectButtons">
+		<button onclick="Connect('localhost')">Connect to local</button>
+		<button onclick="Connect('alexander')">Connect to Alexander</button>
+		<button onclick="Connect('server')">Connect to Server</button>
+	</div>
+	<br>
+	<br>
+	<br>
+		
+	<div id="actionButtons">
+	    <button onclick="buttonAction('Fold')">Fold</button>
+	    <button onclick="buttonAction('Check')">Check</button>
+	    <button onclick="buttonAction('Call')">Call</button>
+	    <input type="number" id="raiseAmount" value="0" placeholder="0"><button onclick="buttonAction('Raise', document.getElementById('raiseAmount').value)">Raise</button>
+	</div>
+  </body>
+</html>

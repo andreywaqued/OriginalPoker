@@ -1,0 +1,121 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+body {
+  line-height: 1;
+  font-family: 'Cabin Condensed', sans-serif;
+}
+
+#login-container{
+	display:block;
+	position: absolute;
+	width:330px;
+	top:calc(50% - 240px);
+	height:480px;
+	left:calc(50% - 165px);
+}
+#login-block {
+	display:block;
+	border:solid 1px #999;
+	border-bottom:none;
+	border-radius: 10px 10px 0px 0px;
+	height:250px;
+	padding:40px;
+	text-align:center;
+}
+#cadastro-block {
+	display:block;
+	padding:30px 40px 20px;
+	text-align:center;
+	background:#222;
+	border-radius: 0px 0px 10px 10px;
+}
+#logo {
+	padding-bottom:20px;
+}
+#Usuario {
+	
+}
+.input {
+	width:99%;
+	height:35px;
+	border:0px;
+	border-bottom:solid 2px #D4D4D4;
+	padding:3px 5px;
+	font-size:14px;
+	margin-bottom:15px;
+	font-family: 'Roboto', sans-serif;
+	color:#666;
+}
+.input:hover {
+	border-bottom:solid 2px #444;
+}
+.input:focus {
+	border-bottom:solid 2px #000;
+	font-weight:bold;
+	color:#000;
+}
+#Login {
+	background: rgb(2,2,2);
+	background: linear-gradient(360deg, rgba(2,2,2,1) 0%, rgba(47,47,47,1) 100%);
+	margin:10px 50px 20px 50px;
+	text-align: center;
+	padding:16px 0px 15px;
+	color:#FFF;
+	border-radius:50px;
+	letter-spacing: 1px;
+	cursor:pointer;
+}
+#Login:hover {
+	background: rgb(39,39,39);
+	background: linear-gradient(360deg, rgba(39,39,39,1) 0%, rgba(90,90,90,1) 100%);
+}
+#Login:active {
+	background: rgb(50,50,50);
+	margin:11px 49px 19px 51px;
+}
+#Esqueci_minha_senha span { cursor:pointer; color:#999; font-size:12px; letter-spacing: 1px; }
+#Esqueci_minha_senha span:hover { cursor:pointer; color:#E40003; }
+
+#Ainda { color:#999; font-size:12px; letter-spacing: 1px; padding-bottom:5px; }
+
+#linesep {
+	display:block;
+	height:25px;
+	border-bottom:dotted 1px #999;
+	margin-bottom:25px;
+}
+ #Cadastro {
+
+	border:solid 2px #fff;
+	margin:10px 50px 20px 50px;
+	text-align: center;
+	padding:13px 0px 14px;
+	color:#fff;
+	border-radius:50px;
+	letter-spacing: 1px;
+	cursor:pointer;
+	 font-weight: 300;
+	 font-size:14px;
+}
+#Cadastro:hover {
+	border:solid 2px #ccc;
+	color:#ccc;
+}

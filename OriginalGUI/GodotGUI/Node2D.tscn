@@ -1,0 +1,33 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://icon.png" type="Texture" id=1]
+[ext_resource path="res://resize.gd" type="Script" id=2]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="ViewportContainer" type="ViewportContainer" parent="."]
+margin_right = 799.0
+margin_bottom = 448.0
+script = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="asdadsa" type="Label" parent="ViewportContainer"]
+margin_left = 203.0
+margin_top = 356.0
+margin_right = 410.0
+margin_bottom = 370.0
+size_flags_horizontal = 2
+size_flags_vertical = 2
+text = "IMAGE"
+align = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="icon" type="Sprite" parent="ViewportContainer"]
+show_behind_parent = true
+position = Vector2( 400.5, 226 )
+scale = Vector2( 12.4531, 6.96875 )
+texture = ExtResource( 1 )
