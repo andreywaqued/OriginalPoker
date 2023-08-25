@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rolling Counter with Ease-In-Out</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.15/dist/tailwind.min.css" rel="stylesheet">
+  <script type="text/javascript">
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
+    function updateCounter(target, duration) {
+      let startTime;
+
+      function animate(timestamp) {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+
+        if (elapsed < duration) {
+          const t = elapsed / duration;
+          const currentValue = Math.floor(target * easeInOutCubic(t));
+          const paddedValue = currentValue.toString().padStart(5, '0');
+          document.getElementById('counter').innerText = paddedValue;
+          requestAnimationFrame(animate);
+        } else {
+          document.getElementById('counter').innerText = target.toString().padStart(5, '0');
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    window.onload = function() {
+      // Update the counter to 1000 over the course of 5000 milliseconds (5 seconds)
+      updateCounter(5000, 1000);
+    };
+  </script>
+</head>
+<body>
+  <div class="flex justify-center items-center h-screen">
+    <h1 id="counter" class="text-6xl font-bold">00000</h1>
+  </div>
+</body>
+</html>

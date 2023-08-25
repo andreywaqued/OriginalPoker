@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Web Page</title>
+    <script type="text/javascript" src="qwebchannel.js"></script> <!-- Include the qwebchannel.js script -->
+    <script type="text/javascript">
+        console.log("html loaded")
+        var pyqtBridge;
+        
+        new QWebChannel(qt.webChannelTransport, function(channel) {
+            pyqtBridge = channel.objects.bridge;
+        });
+
+        function sendMessage() {
+            pyqtBridge.send_message("Hello from JavaScript");
+        }
+        function updateMessage(message){
+            console.log("this is running")
+            document.getElementById("updateMessage").innerText = message
+        }
+        // document.addEventListener("DOMContentLoaded", function(event) {
+        //     // Your code here
+        //     updateMessage("jdsioajdos");
+        // });
+        // updateMessage("jdsioajdos")
+        // document.onload( () => {
+        //     updateMessage("jdsioajdos")
+        // })
+    </script>
+</head>
+<body>
+    <p id="updateMessage">asd</p>
+    <button onclick="sendMessage()">Send Message</button>
+</body>
+</html>
