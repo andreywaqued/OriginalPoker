@@ -12,6 +12,7 @@
   "author": "Original Poker",
   "license": "ISC",
   "devDependencies": {
+    "@bulatdashiev/svelte-slider": "^1.0.3",
     "@electron-forge/cli": "^6.4.1",
     "@electron-forge/maker-deb": "^6.4.1",
     "@electron-forge/maker-rpm": "^6.4.1",
@@ -19,7 +20,8 @@
     "@electron-forge/maker-zip": "^6.4.1",
     "@electron-forge/plugin-auto-unpack-natives": "^6.4.1",
     "electron": "^26.1.0",
-    "electron-reloader": "^1.2.3"
+    "electron-reloader": "^1.2.3",
+    "svelte-popover": "^2.0.8"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",

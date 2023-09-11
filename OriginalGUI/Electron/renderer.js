@@ -10,5 +10,8 @@ function getProcessId() {
     console.log(`Renderer Process ID in renderer window: ${pid}`);
     return pid
 }
+function getDisplaySize() {
+    return window.api.getDisplaySize()
+}
 
 // console.log("loaded")
