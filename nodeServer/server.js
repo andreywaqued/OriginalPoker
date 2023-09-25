@@ -102,6 +102,7 @@ socketManager.on('connection', (socket) => {
     // console.log(socket)
     console.log(socket.connected)
     socket.leave("lobby")
+    if (!socket.user) return console.log("player didnt loggedin")
     for (let i = 0; i< socket.user.playerIDs.length; i++) {
       const playerID = socket.user.playerIDs[i]
       const poolID = socket.user.poolIDs[i]
