@@ -45,9 +45,9 @@ else:
     host = "3.21.35.87"
     #host = "localhost"
 sock.connect(host, 50000)
-playerID = random.randrange(100, 200)
+playerID = random.randrange(0, 10)
 playerName = "Player" + str(playerID)
-sock.fSend("SIGN_IN;%s;%s#" % (playerName, playerID))
+sock.fSend("SIGN_IN;%s;%s#" % (playerName, 123456))
 countNewHand = 0
 handsToPlay = 10000
 #avaiablePositions = []

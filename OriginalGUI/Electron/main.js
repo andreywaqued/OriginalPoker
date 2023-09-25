@@ -2,14 +2,13 @@
 const { app, BrowserWindow, ipcMain, Notification, dialog, screen } = require('electron');
 
 const io = require('socket.io-client');
-const path = require('path')
-// const { screen } = require('electron')
-try {
-  require('electron-reloader')(module)
-} catch (_) {}
+const path = require('path');
+// try {
+//   require('electron-reloader')(module)
+// } catch (_) {}
 
-let mainWindow1, mainWindow2;
-// const socket = io('http://127.0.0.1:5000'); // Replace with your server's address
+const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
+
 
 function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
   const primaryDisplay = screen.getPrimaryDisplay()
@@ -21,28 +20,14 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     url = 'http://localhost:5173/table'
   } 
   const initialHeight = 500
-  // console.log(primaryDisplay)
-  // console.log(width)
-  // console.log(height)
   const maxHeight = primaryDisplay.workAreaSize['height']
-  // console.log(maxHeight)
-  // Create two windows
-  mainWindow1 = new BrowserWindow({
+  let newWindow = new BrowserWindow({
     title: winTitle,
     height: initialHeight,
     width: initialHeight * aspectRatio,
     minWidth: 600,
-    
-    // maxHeight: 600,
-    // maxWidth: 600 * aspectRatio,
     maximizable: false,
-    // autoHideMenuBar: true,
-    // titleBarStyle: "hidden",
-    // titleBarOverlay: {
-    //   color: '#2f3241',
-    //   symbolColor: '#74b1be',
-    //   height: 30
-    // },
+
     fullscreenable: false,
 
     frame: false,
@@ -55,115 +40,200 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
       preload: path.join(__dirname, 'preload.js')
     }
   });
-  mainWindow1.aspectRatio = aspectRatio
-  mainWindow1.windowType = windowType
-  // mainWindow1.on('resize', () => {
-  //   let [width, height] = mainWindow1.getSize();
-  //   console.log(mainWindow1.getSize())
-  //   console.log(maxHeight)
-  //   // height = maxHeight/2;
-  //   width = Math.round(height * aspectRatio);
-  //   mainWindow1.setSize(width, height);
-  //   // if (height >= maxHeight/2) {
-  //   //   console.log(width)
-  //   // }
-  //   console.log(mainWindow1.getSize())
-  // });
-
-    // mainWindow2 = new BrowserWindow({
-    //   title: "mainWindow2",
-    //   width: 800,
-    //   height: 600,
-    //   frame: false,
-    //   webPreferences: {
-    //     // nodeIntegration: true,
-    //     // contextIsolation: false
-    //     preload: path.join(__dirname, 'preload.js')
-
-    //   }
-    // });
+  newWindow.aspectRatio = aspectRatio
+  newWindow.windowType = windowType
   
     // Load an HTML file into the windows
-    mainWindow1.loadURL(url);
+    newWindow.loadURL(url);
     // mainWindow2.loadURL('http://localhost:5173');
-    mainWindow1.setAspectRatio(aspectRatio);
+    newWindow.setAspectRatio(aspectRatio);
     // mainWindow2.setAspectRatio(128/108)
     // mainWindow2.loadFile('index.html');
-    mainWindow1.webContents.on('did-finish-load', () => {
+    newWindow.webContents.on('did-finish-load', () => {
       // Emit a message to the server
-      mainWindow1.show();
-      mainWindow1.focus();
+      newWindow.show();
+      newWindow.focus();
     });
+    newWindow.readyToReceiveMessages = false;
+    newWindow.messageBuffer = []
+    newWindow.startBufferSender = setInterval(() => {
+      if (newWindow.messageBuffer.length > 0) {
+        if (!newWindow) clearInterval(newWindow.startBufferSender)
+        if (!newWindow.readyToReceiveMessages) return
+        const message = newWindow.messageBuffer.shift()
+        newWindow.webContents.send(message.event, message.data)
+      }
+    }, 100)
+      // console.log(newWindow.readyToReceiveMessages)
+      // console.log(event, data)
+      
     
+    newWindow.addMessage = (event, data) => {
+      // console.log(newWindow.readyToReceiveMessages)
+      // console.log(event, data)
+      return newWindow.messageBuffer.push({event: event, data: data})
+      if (newWindow.messageBuffer.length === 0) return newWindow.webContents.send(event, data)
+      if (newWindow.readyToReceiveMessages) return newWindow.webContents.send(event, data)
+      if (!newWindow.readyToReceiveMessages) return newWindow.messageBuffer.push({event: event, data: data})
+    }
+    newWindow.sendMessage = (event, data) => {
+      // console.log(newWindow.readyToReceiveMessages)
+      // console.log(event, data)
+      if (newWindow.messageBuffer.length === 0) return newWindow.webContents.send(event, data)
+      if (newWindow.readyToReceiveMessages) return newWindow.webContents.send(event, data)
+      if (!newWindow.readyToReceiveMessages) return newWindow.messageBuffer.push({event: event, data: data})
+    }
     
-    // ipcMain.on('start-dragging', () => {
-    //   mainWindow1.webContents.send('drag-started');
-    //   mainWindow1.on('will-resize', (e) => {
-    //     e.preventDefault();
-    //   });
-    //   mainWindow1.setMovable(true);
-    // });
-  
-
-    // Make sure the window contents have been loaded before sending messages
-    // mainWindow1.webContents.on('did-finish-load', () => {
-    //   // Emit a message to the server
-    //   socket.emit('message', 'Hello, Server');
-    // });
-
-    // ipcMain.on("message", (event, message) => {
-    //     const senderWebContents = event.sender;
-    //     const windowId = senderWebContents.id;
-
-    //     socket.emit("message", `Message from window ID ${windowId}: ${message}`)
-    // })
-
-    // ipcMain.on('get-process-id', async (event) => {
-    //     const senderWebContents = event.sender;
-    //     const pid = await senderWebContents.getOSProcessId();
-        
-    //     console.log(`Renderer Process ID: ${pid} from ${senderWebContents.getTitle()}`);
-    
-    //     // Optionally send the PID back to the renderer process that requested it
-    //     event.returnValue = pid;
-    //   });
-    
-  
-    // // Handle incoming Socket.io messages
-    // socket.on('update', (data) => {
-    //     console.log("received message ", data)
-    //     // data.search()
-    //   // Update both windows with the data received from the server
-    //   if (mainWindow1 && !mainWindow1.isDestroyed() && data.data.includes("ID 2")) {
-    //     mainWindow1.webContents.send('update', data);
-    //   }
-    //   if (mainWindow2 && !mainWindow2.isDestroyed() && data.data.includes("ID 1")) {
-    //     mainWindow2.webContents.send('update', data);
-    //   }
-    // });
-
-    // socket.on('open-new-table', (data) => {
-    //     console.log("received message ", data)
-    //     data["title"]
-    //     // data.search()
-    //   // Update both windows with the data received from the server
-    //   if (mainWindow1 && !mainWindow1.isDestroyed()) {
-    //     mainWindow1.webContents.send('update', data);
-    //   }
-    //   if (mainWindow2 && !mainWindow2.isDestroyed()) {
-    //     mainWindow2.webContents.send('update', data);
-    //   }
-    // });
+    return newWindow
   }
 
+  
+let mainLobby
+let user
+app.whenReady().then( () => {
+  mainLobby = createWindow("Main Lobby", "lobby")
+});
+// let playerByTableIndex = []
+let tables = []
+let players = []
+let playersID = []
+socket.on('connect', () => {
+    console.log(`Connected to the server with id: ${socket.id}`);
+    // socket.emit("signIn", {user: "asd", password: "asd"})
+});
+socket.on("signInResponse", response => {
+    console.log("signInResponse")
+    console.log(response)
+    if (response.status === 200) {
+        // console.log("entrou aqui")
+        user = response.user
+        mainLobby.user = user
+        // console.log(mainLobby)
+        console.log("chamando send message")
+        if (mainLobby) mainLobby.addMessage("updateUser", user)
+        // ipcMain.emit("updateUser", user)
+    // socket.emit("enterPool", {poolID : "lightning4", stackSize: 100})
+    }
+})
+socket.on("enterPoolResponse", response => {
+    console.log("enterPoolResponse")
+    // console.log(response)
+    if (response.status === 200) {
+      if (tables.length < 4) {
+        const lastIndex = tables.push(createWindow(response.pool.title + " Table 1", "table")) - 1
+        const table = tables[lastIndex]
+        console.log(table)
+        players.push(response.player)
+        playersID.push(response.player.id)
+        table.player = response.player
+        console.log("chamando send message 1")
+        if (table) table.addMessage("updatePlayer", table.player)
+        
+        // ipcMain.emit("updatePlayer", {})
+      }
+        // socket.emit("parseAction", {player: response.player, action: {type: "raise", amount: 200}})
+        // socket.emit("leavePool", response.player)
+    }
+})
+socket.on("updateGameState", gameState => {
+    console.log("updateGameState")
+    console.log(gameState)
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i]
+      const table = tables[i]
+      if (player.id in gameState.players) {
+        if (table) table.addMessage("updateGameState", gameState)
+      } 
+    }
+})
+socket.on("updateUserInfo", response => {
+    console.log("updateUserInfo")
+    console.log(response)
+    user = response.user
+    if (mainLobby) mainLobby.addMessage("updateUser", user)
+})
+socket.on("updatePlayerInfo", player => {
+    console.log("updatePlayerInfo")
+    console.log(player)
+    const table = tables[playersID.indexOf(player.id)]
+    if (table) table.addMessage("updatePlayer", player)
+})
+socket.on("askRebuy", data => {
+    console.log("askRebuy")
+    console.log(data)
+    const table = tables[playersID.indexOf(data.playerID)]
+    if (table) table.addMessage("askRebuy", data)
+})
+socket.on("handTransition", player => {
+    console.log("handTransition")
+    console.log(player)
+    const table = tables[playersID.indexOf(player.id)]
+    if (table) table.addMessage("handTransition")
+    // const table = tables[playersID.indexOf(playerID)]
+    // if (table) table.addMessage("askRebuy", data)
+})
+socket.on("leavePoolResponse", response => {
+    console.log("leavePoolResponse")
+    // console.log(response)
+})
+socket.on("parseActionResponse", response => {
+    console.log("parseActionResponse")
+    // console.log(response)
+})
+socket.on("updatePools", (pools) => {
+    console.log("updatePools")
+    // console.log(pools)
+    // console.log(mainLobby)
+    console.log("chamando send message 2")
+    if (mainLobby) mainLobby.addMessage("updatePools", pools)
+})
 
-app.whenReady().then(createWindow);
+// socket.send("SIGN_IN;ALEXANDER;123456")
+
+
 ipcMain.on('open-new-table', (event, arg) => {
   console.log(arg)
-  allWindows = BrowserWindow.getAllWindows()
-  if (allWindows.length < 5) createWindow("Lightning Cash Game ⚡ " + arg + " Table 1", "table")
+  
+  // allWindows = BrowserWindow.getAllWindows()
+  
+  // if (allWindows.length < 5) createWindow("Lightning Cash Game ⚡ " + arg + " Table 1", "table")
+  if (tables.length < 4) socket.emit("enterPool", {poolID : arg, stackSize: 100})
 });
+ipcMain.on('tryRebuy', (event, data) => {
+  console.log(data)
+  socket.emit("tryRebuy", {playerID: data.playerID, poolID : data.poolID, stackSize: data.stackSize})
+  // allWindows = BrowserWindow.getAllWindows()
+  
+  // if (allWindows.length < 5) createWindow("Lightning Cash Game ⚡ " + arg + " Table 1", "table")
+  // if (tables.length < 4) socket.emit("enterPool", {poolID : arg, stackSize: 100})
+});
+// Handle window-ready event from renderer process
+ipcMain.on('signIn', (event, user) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  // console.log(user)
+  if (win) {
+    socket.emit("signIn", user)
+  }
+});
+ipcMain.on('window-ready', (event) => {
+  console.log("window is ready")
+  const win = BrowserWindow.fromWebContents(event.sender)
+  console.log(win)
+  win.readyToReceiveMessages = true;
+  // for (let i = win.messageBuffer.length; i > 0; i--) {
+  //     const message = win.messageBuffer.pop()    
+  //     console.log(message)
+  //     console.log("chamando send message 3")
+  //     win.sendMessage(message.event, message.data);
+  //   };
 
+  // if (win.messageBuffer.length > 0) {
+  //   win.startBufferSender()
+  //   // Flush the buffer to the window
+  //   // messageBuffer[windowId] = [];
+  // }
+  // Mark the window as ready
+});
 
 ipcMain.on('organize-tables', (event) => {
   // TODO
@@ -172,21 +242,22 @@ ipcMain.on('organize-tables', (event) => {
   //  if not able, add one line and try again
   // TODO MVP
   // fit up to 4 tables in a 2x2 grid
-  win = BrowserWindow.fromWebContents(event.sender)
-  if (!win) return
-  allWindows = BrowserWindow.getAllWindows()
-  console.log(allWindows)
-  allTables = []
+  // win = BrowserWindow.fromWebContents(event.sender)
+  // if (!win) return
+  // allWindows = BrowserWindow.getAllWindows()
+  // console.log(allWindows)
+  // allTables = []
   display = screen.getPrimaryDisplay().workAreaSize
-  displayAspectRatio = display.width / display.height
-  allWindows.forEach(window => {
-    if (window.windowType == "table") {
-      allTables.push(window)
-    }
-  });
+  // displayAspectRatio = display.width / display.height
+  // allWindows.forEach(window => {
+  //   if (window.windowType == "table") {
+  //     allTables.push(window)
+  //   }
+  // });
+  const allTables = tables
   console.log(allTables)
-  tableHeight = Math.round(display.height / 2)
-  tableWidth = Math.round(tableHeight*win.aspectRatio)
+  const tableHeight = Math.round(display.height / 2)
+  const tableWidth = Math.round(tableHeight*win.aspectRatio)
   initialWidthPos = (display.width - tableWidth*2) / 2
   console.log(tableWidth, tableHeight)
   if (initialWidthPos < 0) initialWidthPos = 0
@@ -199,10 +270,11 @@ ipcMain.on('organize-tables', (event) => {
   }
   for (tableIndex = 0; tableIndex < allTables.length; tableIndex++) {
     console.log(`loop ${tableIndex}`)
-    table = allTables[tableIndex]
+    const table = allTables[tableIndex]
     table.setSize(tableWidth, tableHeight)
     console.log(positions[`pos${tableIndex+1}`])
     table.setPosition(positions[`pos${tableIndex+1}`][0], positions[`pos${tableIndex+1}`][1])
+    table.focus()
   }
   // console.log(allWindows)
 });
@@ -210,6 +282,11 @@ ipcMain.on('open-hh', (event) => {
   win = BrowserWindow.fromWebContents(event.sender)
   if (!win) return
   console.log("open-hh")
+});
+ipcMain.on('parseAction', (event, data) => {
+  console.log("parseAction")
+  console.log(data)
+  socket.emit("parseAction", data)
 });
 ipcMain.on('set-window-size', (event, arg) => {
   const win = BrowserWindow.fromWebContents(event.sender)
@@ -242,6 +319,7 @@ ipcMain.on('get-title', (event) => {
 });
 ipcMain.on('close-window', (event) => {
   const win = BrowserWindow.fromWebContents(event.sender)
+  console.log(win)
   if (win) {
     if (win.windowType === "lobby") {
       dialog.showMessageBox({
@@ -253,6 +331,13 @@ ipcMain.on('close-window', (event) => {
         // response.response will be the index of the clicked button
         if (response.response === 0) {
           // Destroy the window to ensure that it is closed
+          for (let i = tables.length - 1; i >= 0 ; i--) {
+            socket.emit("leavePool", players[i])
+            tables.splice(i,1)
+            players.splice(i,1)
+            playersID.splice(i,1)
+          }
+          socket.disconnect()
           app.quit()
       // mainWindow.destroy();
         }
@@ -269,7 +354,13 @@ ipcMain.on('close-window', (event) => {
         // response.response will be the index of the clicked button
         if (response.response === 0) {
           // Destroy the window to ensure that it is closed
+          const tableIndex = tables.indexOf(win)
+          socket.emit("leavePool", players[tableIndex])
           win.close()
+          tables.splice(tableIndex,1)
+          players.splice(tableIndex,1)
+          playersID.splice(tableIndex,1)
+
       // mainWindow.destroy();
         }
       });
@@ -282,7 +373,7 @@ ipcMain.on('minimize-window', (event) => {
   if (win) {
     win.minimize()
   }
-  // mainWindow1.minimize()
+  // newWindow.minimize()
 });
 
 app.on('window-all-closed', () => {

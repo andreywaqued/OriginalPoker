@@ -7,10 +7,10 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.send(channel, data);
     },
     on: (channel, callback) => {
-      ipcRenderer.on(channel, (event, data) => {
+      ipcRenderer.on(channel, (event, ...data) => {
         console.log(event)
         console.log(data)
-        callback(data)
+        callback(...data)
       });
     },
     getProcessId: () => ipcRenderer.sendSync('get-process-id'),

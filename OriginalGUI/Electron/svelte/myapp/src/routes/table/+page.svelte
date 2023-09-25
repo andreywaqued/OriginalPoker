@@ -5,15 +5,17 @@
 	import Card from '$lib/Card.svelte';
   import Player from '$lib/Player.svelte';
 	import Pot from '$lib/Pot.svelte';
-  /**
-   * @type {number}
-   */
-  export let sbSize = 5;
+  import { fade, fly, slide } from "svelte/transition"
+  // /**
+  //  * @type {number}
+  //  */
+  // export let sbSize = 5;
+  let sbSize = 5
+  let bbSize = 10
   let winHeight = 0;
   let tableStarted = true;
   let api;
   let winTitle = ""
-  let playersMapping = {};
   let handHistories = [
     "hh 1",
     "hh 2",
@@ -26,6 +28,23 @@
     "hh 9",
     "hh 10",
   ]
+  let hero = { id: "", poolID: "", position : 0, cards: [], betSize: 0, stackSize : 0};
+  let players = {};
+  let playersComponents = {};
+  let possibleActions = [];
+  let boardCards = [];
+  let pots = [0];
+  let callAmount = 0;
+  let minBet = 0;
+  let maxBet = 9999999;
+  let currentPlayerActing = ""
+  let currentGameState = {}
+  let sumOfBetSizes = 0
+  let betValue = 50
+  let tableRotateAmount = hero.position
+  let tryStartPlayerTurn
+  $: console.log(tableRotateAmount = hero.position)
+
   onMount(() => {
     const setHeight = () => {
       document.documentElement.style.setProperty('--window-height', `${window.innerHeight}px`);
@@ -33,6 +52,87 @@
     };
     if (window.api) {
       api = window.api
+      window.api.on('updatePlayer', (player) => {
+        console.log("updatePlayer")
+        let playersTemp = JSON.parse(JSON.stringify(players))
+        hero = player
+        hero.isHero = true
+        hero.showCards = true
+        possibleActions = player.possibleActions
+        if (possibleActions.length > 0) {
+          possibleActions[1].amount
+          if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = hero.betSize + hero.stackSize
+          callAmount = possibleActions[1].amount
+          betValue = possibleActions[2].amount
+          if (betValue > hero.betSize + hero.stackSize) betValue = hero.betSize + hero.stackSize
+          minBet = betValue;
+          maxBet = player.betSize + player.stackSize;
+        }
+        if (hero.isSitout) sitoutPopover()
+        tableRotateAmount = hero.position
+        playersTemp[player.id] = hero
+        players = playersTemp
+        console.log(hero)
+      });
+      api.on("updateGameState", (gameState) => {
+        console.log("updateGameState")
+        console.log(gameState)
+        sumOfBetSizes = 0
+        if (!gameState.handIsBeingPlayed) possibleActions = []
+        // heroTurn = false
+        Object.values(gameState.players).forEach( player => {
+          player.isHero = false
+          player.showCards = false
+          player.isButton = false
+          sumOfBetSizes += player.betSize
+          
+          if (gameState.positionActing === player.position) currentPlayerActing = player.id
+          if (player.position === gameState.dealerPos) player.isButton = true
+          // player.position -= hero.position
+          // if (player.position < 0) player.position += gameState.tableSize
+          // if (!player.hasFolded) player.cards = ["cb", "cb"]
+          if (player.id === hero.id) {
+            player.isHero = true
+            player.showCards = true
+            player.cards = hero.cards
+            // if (!player.hasFolded) 
+          }
+        })
+        players = gameState.players
+        console.log(players)
+        tableSize = gameState.tableSize
+        boardCards = gameState.boardCards
+        pots = gameState.pots
+        sbSize = gameState.sb
+        bbSize = gameState.bb
+        currentGameState = gameState
+        console.log(playersComponents)
+        Object.values(playersComponents).forEach( playerComponent => { 
+          if (playerComponent) playerComponent.endPlayerTurn()
+        })
+        console.log(currentPlayerActing)
+        
+        if (gameState.handIsBeingPlayed) tryStartPlayerTurn = setInterval(()=>{
+          if (currentPlayerActing in playersComponents) { //it may be called before the component is created
+            playersComponents[currentPlayerActing].startPlayerTurn(gameState.timeLimitToAct)
+            clearInterval(tryStartPlayerTurn)
+          }
+        }, 100)
+      })
+      window.api.on('handTransition', () => {
+        console.log("handTransition")
+        possibleActions = []
+        transitionBackground()
+      });
+      window.api.on('askRebuy', (data) => {
+        toggleRebuy()
+      });
+      api.on("updatePlayerCards", cards => {
+        console.log("updatePlayerCards")
+        hero.cards = cards
+      })
+
+      api.send("window-ready")
     }
     winTitle += api.getTitle()
     
@@ -43,20 +143,20 @@
     window.addEventListener('resize', setHeight);
   });
   // function registerPlayer(id, component) {
-  //   playersMapping[id] = component;
+  //   playersComponents[id] = component;
   // }
   function foldAction(){
     console.log("foldAction()");
-    Object.values(playersMapping).forEach(p => {p.foldCards()})
+    Object.values(playersComponents).forEach(p => {p.foldCards()})
   }
   function callAction(){
     console.log("callAction()");
-    Object.values(playersMapping).forEach(p => {p.call(1000)})
-    // playersMapping[0].call(1000)
+    Object.values(playersComponents).forEach(p => {p.call(1000)})
+    // playersComponents[0].call(1000)
   }
   function raiseAction(){
     console.log("raiseAction()");
-    Object.values(playersMapping).forEach(p => {p.dealCards()})
+    Object.values(playersComponents).forEach(p => {p.dealCards()})
     // betValue = 150
     // for (let i = 0; i <= players.length; i++) {
     //   if (players[i].id === 1) players[i].betSize = 200
@@ -98,6 +198,29 @@
     }
       
   }
+  function updateBetValue(potPerc){
+    let sumOfPots = 0
+    for (let i = 0; i< pots.length; i++) {
+      sumOfPots += pots[i]
+    }
+    betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount
+    // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
+    // // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
+    // // if (sumOfBetSizes == 0) betValue = betValue * potPerc / 100
+    // if (sumOfBetSizes > 0) {
+      
+    //   100/100*(3 + 0 + 2 - 1)+2
+    //   100/100*(3 + 0 + 2 - 0)+2
+    //   100/100*(10 + 0 + 0 - 0)+0
+    //   betValue = (2 - 1) + (0 + 3 + 2) * 100 / 100 //first round sb x bb
+    //   betValue = (2 - 0) * 2 + (0 + 3 + 0) * 100 / 100 //first round other players
+    //   betValue = (callAmount - hero.betSize) + (sumOfPots + sumOfBetSizes + callAmount) * potPerc / 100
+    // }
+
+
+    if (betValue > hero.betSize + hero.stackSize) betValue = hero.betSize + hero.stackSize
+    if (betValue < minBet) betValue = minBet
+  }
 
   /**
    *
@@ -111,31 +234,27 @@
     }
   }
 
-  let betValue = 50;
-  let minBet = 5;
-  let maxBet = 1000;
   let actualBet = 0;
-  let pots = [0];
   // let sidePots = [0, 0]
-  let boardCards = ["Qs", "Js", "Ts", "9s", "8s"]
-  let players = [
-    {id: 1, playerName : "asd1", balance: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["As", "5c"], deck : "boardDeck", isButton : true, isHero : true, lastAction : "cardDealt", showCards: true},
-    {id: 4, playerName : "asdc", balance: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, lastAction : "cardDealt", showCards: false},
-    {id: 6, playerName : "asde", balance: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, lastAction : "cardDealt", showCards: false},
-    {id: 2, playerName : "asda", balance: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["As", "Kd"], deck : "boardDeck", isButton : true, isHero : false, lastAction : "cardDealt", showCards: false},
-    {id: 3, playerName : "asdb", balance: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, lastAction : "cardDealt", showCards: false},
-    {id: 5, playerName : "asdd", balance: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, lastAction : "cardDealt", showCards: false},
-    // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-    // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-    // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-  ]
+  // let playerTurn = true; //only for testing, this should come from the server
+  // players = [
+  //   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["As", "5c"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+  //   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+  //   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+  //   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["As", "Kd"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+  //   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+  //   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+  //   // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+  //   // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+  //   // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+  // ]
   function findHero(){
-    let index = players.findIndex(p => p.isHero === true)
-    if (index < 0) return 0
-    return index
+    return 0
+    // let index = players.findIndex(p => p.isHero === true)
+    // if (index < 0) return 0
+    // return index
   }
   let heroPlaceHolder = {id: 1, playerName : "Hero", balance: 1000, avatar: 1, position: 0, betSize:  0, cards: [], deck : "playerDeck", isButton : true, isHero : true};
-  let tableRotateAmount = findHero();
   let tableSize = 6
   // function restartTable() {
   //   console.log("restarting table")
@@ -151,9 +270,41 @@
     console.log("organizeTables")
     api.send("organize-tables")
   }
-  function openHH(){
-    console.log("openHH")
-    api.send("open-hh")
+  let rebuyPopoverActive = false;
+  function toggleRebuy(){
+    console.log("toggleRebuy")
+    const target = document.getElementById("rebuyPopover")
+    if (rebuyPopoverActive) target?.hidePopover()
+    if (!rebuyPopoverActive) target?.showPopover()
+    rebuyPopoverActive = !rebuyPopoverActive;
+    // popovertarget="test"
+  }
+  function tryRebuy(){
+    console.log("toggleRebuy")
+    api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: 100})
+    toggleRebuy()
+  }
+  let hhPopoverActive = false;
+  function toggleHH(){
+    console.log("toggleHH")
+    api.send("toggleHH")
+    const target = document.getElementById("hhPopover")
+    if (hhPopoverActive) target?.hidePopover()
+    if (!hhPopoverActive) target?.showPopover()
+    hhPopoverActive = !hhPopoverActive;
+    // popovertarget="test"
+  }
+  let transitioning = false;
+  function transitionBackground() {
+    transitioning = true;
+    setTimeout( () => {
+      transitioning = false;
+    }, 1000)
+  }
+  function parseAction(index) {
+    let action = possibleActions[index]
+    if (index === 2) action.amount = betValue
+    api.send("parseAction", {player: hero, action: action})
   }
   
 </script>
@@ -181,9 +332,31 @@
     aspect-ratio: 128/108;
     display: flex;
     flex-direction: column;
+    // transition: 0.1s;
+    // left: 0;
     // border-radius: 4px;
     // border-top-left-radius: 3px;
     // border-top-right-radius: 3px;
+}
+.transitioning {
+    position: absolute;
+    z-index: 10000;
+    width: 100%;
+    height: 100%;
+    left: -100%;
+    background-image: url('/transitionBackground.png');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    animation-name: slideInOut;
+    animation-timing-function: linear;
+    animation-duration: 1s;
+    // left: -100vw;
+    // animation: forwards 1s ease-in-out;
+}
+@keyframes slideInOut {
+  from {left: 100%}
+  to {left: -100%}
 }
 .potLine {
   position: absolute;
@@ -361,6 +534,12 @@
         transform: translateY(0.2vh);
       }
     }
+    .allin {
+      background-color: red;
+    }
+    .playerButtonHide {
+      display: none;
+    }
     .value::before{
         content: "$";
     }
@@ -452,7 +631,15 @@
     z-index: 100;
   }
 
-  .popover {
+  .rebuyPopover {
+    width: 50%;
+    height: 50%;
+    // display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+  }
+  .hhPopover {
     width: 80%;
     height: 80%;
     // display: flex;
@@ -470,6 +657,14 @@
     align-items: center;
     border-bottom: 1px solid black;
     padding: 0 1%;
+    button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      aspect-ratio: 1;
+      font-size: 1em;
+    }
   }
   .popoverMain {
     width: 100%;
@@ -481,18 +676,29 @@
     align-items: flex-start;
     padding: 0 1%;
   }
-  ::backdrop {
+  .popoverOverlay.active {
+    position: absolute;
     background-color: rgba(0,0,0,0.5);
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+
+    
   }
+  
+  // ::backdrop {
+  // }
 </style>
 
 <main>
   <TitleBar {winTitle}/>
   <div class="auxiliarButtons">
     <button on:click={tileTables}>Tile Tables</button>
-    <button popovertarget="test" on:click={openHH}>HH</button>
+    <button on:click={toggleHH}>HH</button>
+    <button on:click={toggleRebuy}>Rebuy</button>
   </div>
   <div class="bg-table" on:wheel={handleScroll}>
+    <div class:transitioning={transitioning}></div>
     <div class="board">
       {#each boardCards as card}
         <div class="card"><Card cardString = {card} deck = "boardDeck" /></div>
@@ -509,19 +715,21 @@
       {/each}
     </div>
     {#if tableStarted}
-      {#each players as player (player.position)}
-        <Player {...player} bind:tableSize = {tableSize} bind:tableRotateAmount = {tableRotateAmount} bind:this={playersMapping[player.position]}/>
+      {#each Object.entries(players) as [playerID, player]}
+        <Player {...player} bind:tableRotateAmount={tableRotateAmount} bind:tableSize = {tableSize} bind:this={playersComponents[playerID]}/> 
+        <!--bind:this={playersComponents[playerID]}-->
       {/each}
     {:else}
       <!-- <Player bind:tableSize = {tableSize} bind:tableRotateAmount = {tableRotateAmount} bind:player = {heroPlaceHolder}/> -->
     {/if}
-    <div class="playButtonsContainer">
+    {#if possibleActions.length > 0}
+      <div class="playButtonsContainer" transition:slide={{duration: 250, axis:"x"}}>
         <div class="betDisplayRow">
           <div class="presetButtons">
-            <button class="presetBetSizeButton">25%</button>
-            <button class="presetBetSizeButton">50%</button>
-            <button class="presetBetSizeButton">75%</button>
-            <button class="presetBetSizeButton">100%</button>
+            <button class="presetBetSizeButton" on:click={()=>updateBetValue(25)}>25%</button>
+            <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
+            <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
+            <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
           </div>
           <label class="dolarSign">$</label>
           <input class="betDisplay" value={betValue}/>
@@ -532,20 +740,54 @@
           <button class="betSliderButton" on:click={plusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg></button>
         </div>
         <div class="buttons">
-            <button class="playButton" on:click={foldAction} ><span>Fold</span></button>
-            <button class="playButton" on:click={callAction}><span>Call</span><span class="value">0123456789</span></button>
-            <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button>
+            {#each possibleActions as action, index}
+              {#if index<2}
+                <button class="playButton" class:playerButtonHide={action.amount >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} >
+                  <span>{action.type}</span>
+                  {#if action.amount > 0}
+                    <span class="value">{action.amount}</span>
+                  {/if}
+                </button>
+              {:else}
+                <!-- <button class="playButton" class:allin={betValue >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} > -->
+                <button class="playButton" on:click={() => parseAction(index)} >
+                  {#if betValue < hero.betSize + hero.stackSize}
+                    <span>{action.type}</span>
+                  {:else}
+                    <span>All-in</span>
+                  {/if}
+                  <span class="value">{betValue}</span>
+                </button>
+              {/if}
+            {/each}
+            <!-- <button class="playButton" on:click={callAction}><span>Call</span><span class="value">0123456789</span></button>
+            <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button> -->
         </div>
-    </div>
-    <div class="popover" popover id="test">
+      </div>
+    {/if}
+    
+    <div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
+    <div class="hhPopover" popover id="hhPopover">
       <div class="popoverTitle">
         <span>Hand History</span>
-        <button popovertarget="test">X</button>
+        <button on:click={toggleHH}>X</button>
       </div>
       <div class="popoverMain">
         {#each handHistories as hh, index}
           <div class="handHistory">{hh} {index}</div>
         {/each}
+      </div>
+    </div>
+    <div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
+    <div class="rebuyPopover" popover id="rebuyPopover">
+      <div class="popoverTitle">
+        <span>Rebuy</span>
+        <button on:click={toggleRebuy}>X</button>
+      </div>
+      <div class="popoverMain">
+        <label for="rebuyAmount">Amount to Rebuy</label>
+        <input placeholder="Amount to Rebuy" id="rebuyAmount"/>
+        <button on:click={tryRebuy}>Rebuy</button>
       </div>
     </div>
     <div class="adsContainer">

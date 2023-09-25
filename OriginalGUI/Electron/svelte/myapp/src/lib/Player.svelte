@@ -14,7 +14,9 @@
     //  * @type {Object.<string,any>}
     //  */
     // export let player
-    export let id, playerName, balance, avatar, position, betSize, cards, deck, isButton, isHero, lastAction, showCards;
+    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions;
+    const deck = "boardDeck"
+    let playerTurn = false;
     // export let playerName, balance: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["As", "5c"], deck : "boardDeck", isButton : true, isHero : true, lastAction : "cardDealt"
     /**
      * @type {Object.<Number, String>}
@@ -54,7 +56,7 @@
     let playerCardsFolded = false;
     let playerCardsShow = false;
     export function dealCards() {
-        console.log("dealCard called at player " + id)
+        console.log("dealCard called at player " + playerID)
         // const playerCards = document.getElementsByClassName("playerCards")[position]
         // console.log(window.innerHeight, window.innerWidth)
         // console.log(window.innerHeight/2, window.innerWidth/2)
@@ -89,7 +91,7 @@
         }
     }
     export function foldCards() {
-        console.log("foldCards() called at player " + id)
+        console.log("foldCards() called at player " + playerID)
         // const playerCards = document.getElementsByClassName("playerCards")[position]
         playerCardsFolded = true;
         // if (playerCards) { 
@@ -109,8 +111,35 @@
         // }
     }
     export function call(amount) {
-        console.log(`call(${amount}) called at player ${id}`)
+        console.log(`call(${amount}) called at player ${playerID}`)
         betSize = amount
+    }
+    let timeLeftPerc = 100;
+    let timer
+    export function startPlayerTurn(timeLimit) {
+        console.log("startPlayerTurn(timeLimit)")
+        console.log(position)
+        console.log(name)
+        console.log(id)
+        endPlayerTurn()
+        console.log(timeLimit)
+        playerTurn = true;
+        let timeDiff = timeLimit - new Date().getTime()
+        timeLeftPerc = (timeDiff/20000) * 100
+        // if (timer) clearInterval(timer)
+        console.log(timeLeftPerc)
+        timer = setInterval(()=>{
+            // clearInterval(timer)
+            if (playerTurn === false) return
+            if (timeLeftPerc > 1) return timeLeftPerc -= 1
+            if (timeLeftPerc > 0) return timeLeftPerc -= timeLeftPerc
+            endPlayerTurn()
+        }, timeDiff/100);
+    }
+    export function endPlayerTurn() {
+        clearInterval(timer)
+        playerTurn = false;
+        timeLeftPerc = 100
     }
     let avatarUrl = `url('/avatar/${avatar}.png')`
     /**
@@ -120,8 +149,12 @@
     function animateLastAction(lastAction) {
         console.log(lastAction)
     }
-    $: cssVarStyles = `--avatar-url:${avatarUrl}`;
+    $: cssVarStyles = `--avatar-url:${avatarUrl};--time-left-perc:${timeLeftPerc}%`;
+    let positioningClass = positionClassByTableSize[tableSize][(position - tableRotateAmount + tableSize) % tableSize];
+    $: console.log(`(${position} - ${tableRotateAmount} + ${tableSize}) % ${tableSize}: ${(position - tableRotateAmount + tableSize) % tableSize}`)
+    $: console.log(positioningClass)
     $: positioningClass = positionClassByTableSize[tableSize][(position - tableRotateAmount + tableSize) % tableSize]; //needs to be done like this to become reactive to changes
+    // console.log(positioningClass)
     // $: lastAction = animateLastAction(lastAction)
     // $: changePositionClass();
 
@@ -793,27 +826,91 @@
             border-radius: 5px;
         }
     }
+    .playerGlow {
+        position: absolute;
+        // height: 100%;
+        width: 150%;
+        aspect-ratio: 1;
+        // border-radius: 50%;
+        background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 55%);
+        // background: radial-gradient(rgba(255,255,255,1) 25%, rgba(255,255,255,0.0));
+        left: -25%;
+        display: none;
+        // transition: background 1s;
+        // opacity: 1;
+    }
+    .glowPlayerAnimation {
+        display: initial;
+        animation-name: glow;
+        animation-duration: 1s;
+        animation-timing-function: linear;
+        animation-direction: alternate;
+        animation-iteration-count: infinite;
+        // 1s ease-in-out infinite;
+    }
+    @keyframes glow {
+        0% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 50%);}
+        10% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 50.5%);}
+        20% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 51%);}
+        30% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 51.5%);}
+        40% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 52%);}
+        50% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 52.5%);}
+        60% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 53%);}
+        70% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 53.5%);}
+        80% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 54%);}
+        90% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 54.5%);}
+        100% {background: radial-gradient(rgba(255,255,255,1), rgba(255,255,255,0.0) 55%);}
+    }
+
+    .timer {
+        position: absolute;
+        height: 1%;
+        width: 100%;
+        top: 100%;
+        .background {
+            position: absolute;
+            background: linear-gradient(90deg, darkred, yellow 75%);
+            height: 100%;
+            width: 100%;
+        }
+        .timePasser {
+            position: absolute;
+            background-color: #353a48;
+            height: 100%;
+            left: var(--time-left-perc);
+            width: calc(100% - var(--time-left-perc));
+            // left: 100%;
+            // width: 100%;
+            z-index: 10;
+        }
+    }
 </style>
 
 <div class={positioningClass}>
     <div class="player">
+        <div class="playerGlow" class:glowPlayerAnimation={playerTurn}></div>
         <div class="playerImage" style={cssVarStyles}>
             <div class="playerCircle"></div>
         </div>
-        <div class="playerName"><span>{playerName}</span></div>
-        <div class="playerBalance"><span>{balance}</span></div>
-        <div class="playerBet"><span class="value">{betSize}</span></div>
+        <div class="playerName"><span>{name}</span></div>
+        <div class="playerBalance"><span>{stackSize}</span></div>
+        {#if betSize > 0}
+            <div class="playerBet"><span class="value">{betSize}</span></div>
+        {/if}
         {#if showCards}
-            <div class="playerCardsHero" class:show={playerCardsShow} class:fold={playerCardsFolded} bind:this={playerCardsHero}>
+            <div class="playerCardsHero" class:show={playerCardsShow} class:fold={hasFolded && isHero} bind:this={playerCardsHero}>
                 {#each cards as card}
                     <div class="card"><Card cardString = {card} deck = {deck} /></div>
                 {/each}
                 <!-- <div class="card"><Card cardString = "Ks" deck = {deck} /></div> -->
             </div>
         {:else}
-            <div class="playerCards" class:fold={playerCardsFolded} bind:this={playerCards}>
-                <div class="card"><Card cardString = "cb" deck = {deck} /></div>
-                <div class="card"><Card cardString = "cb" deck = {deck} /></div>
+            <div class="playerCards" class:fold={hasFolded} bind:this={playerCards}>
+                {#each cards as card}
+                    <div class="card"><Card cardString = {card} deck = {deck} /></div>
+                {/each}
+                <!-- <div class="card"><Card cardString = "cb" deck = {deck} /></div>
+                <div class="card"><Card cardString = "cb" deck = {deck} /></div> -->
             <!-- <div class="card"><Card cardString = "cardback preto" deck = "playerDeck" /></div>
             <div class="card"><Card cardString = "cardback preto" deck = "playerDeck" /></div> -->
             </div>
@@ -822,6 +919,12 @@
         
         {#if isButton}
             <div class="playerButton"></div>
+        {/if}
+        {#if playerTurn}
+            <div class="timer">
+                <div class="background"></div>
+                <div class="timePasser" style={cssVarStyles}></div>
+            </div>
         {/if}
     </div>
 </div>

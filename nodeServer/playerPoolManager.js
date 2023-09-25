@@ -1,0 +1,177 @@
+//responsible for directioning each player to its table
+// also responsible for asking for rebuy, handle reconnection, etc
+//important to note that each user logged in, can play multiple tables
+// so there is going to be 2 kind of players, the user and the player(inside the table) itself.
+//initially will be just an object, later on possible becoming a microservice
+// const { parentPort } = require('worker_threads');
+
+const Player = require("./player")
+const TableManager = require("./tableManager")
+
+// // Receive messages from the main thread
+// parentPort.on('message', (message) => {
+//   console.log(`Worker thread received message: ${JSON.stringify(message)}`);
+
+//   // Send an object back to the main thread
+//   parentPort.postMessage({ message: 'Hi, main thread!', value: 24 });
+// });
+class PlayerPoolManager {
+    constructor(socketManager, fastify) {
+        this.socketManager = socketManager
+        this.fastify = fastify
+        // this.db = fastify.pg
+        // this.redis = fastify.redis
+        this.sockets = {}
+        this.playersByPool = { "lightning1" : {}, "lightning2": {}, "lightning3": {}, "lightning4": {}}
+        this.pools = {
+            "lightning1" : {title: "Lightning Cash Game ⚡ NL 10", gameTitle: "NL 10", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.05, bb: 0.1, minBuyIn: 2, maxBuyIn: 10, currentPlayers:0},
+            "lightning2" : {title: "Lightning Cash Game ⚡ NL 50", gameTitle: "NL 50", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.25, bb: 0.5, minBuyIn: 10, maxBuyIn: 50, currentPlayers:0},
+            "lightning3" : {title: "Lightning Cash Game ⚡ NL 100", gameTitle: "NL 100", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.50, bb: 1, minBuyIn: 20, maxBuyIn: 100, currentPlayers:0},
+            "lightning4" : {title: "Lightning Cash Game ⚡ NL 200", gameTitle: "NL 200", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:1, bb: 2, minBuyIn: 40, maxBuyIn: 200, currentPlayers:0}
+        }
+        this.tableManager = new TableManager(this.socketManager, this.fastify, this)
+    }
+    enterPool(socket, poolID, stackSize) {
+        //player just entering the pool
+        let player = new Player(socket, stackSize)
+        if (!player && socket) return socket.emit("enterPoolResponse", { response: "failed to enter pool", status: 401 })
+        socket.user.playerIDs.push(player.id)
+        socket.user.poolIDs.push(poolID)
+        // console.log(poolID)
+        // console.log(stackSize)
+        // console.log(typeof stackSize)
+        let pool = this.pools[poolID]
+        // console.log(pool)
+        // console.log(`${stackSize} >= ${pool.minBuyIn} : ${stackSize >= pool.minBuyIn}`)
+        // console.log(`${stackSize} <= ${pool.maxBuyIn} : ${stackSize <= pool.maxBuyIn}`)
+        console.log(`${socket.user.balance} >= ${stackSize} : ${socket.user.balance >= stackSize}`)
+        if (stackSize >= pool.minBuyIn && stackSize <= pool.maxBuyIn && socket.user.balance >= stackSize) {
+            console.log("log1")
+            console.log(socket.id)
+            console.log(this.sockets)
+            if (socket.id in this.sockets === false) this.sockets[socket.id] = socket
+            console.log("log2")
+            console.log(Object.keys(this.sockets))
+            player.poolID = poolID
+            let playerPool = this.playersByPool[poolID]
+            playerPool[player.id] = player
+            this.pools[poolID].currentPlayers = Object.keys(playerPool).length
+            console.log("log3")
+            if (socket) socket.emit("enterPoolResponse", { response : "player entered the pool", player : player, status: 200, pool: pool})
+            this.tableManager.placePlayerIntoTable(player)
+            this.socketManager.to("lobby").emit("updatePools", this.pools)
+            console.log("log4")
+            socket.user.balance -= stackSize
+            if (socket) socket.emit("updatePlayerInfo", player)
+            if (socket) socket.emit("updateUserInfo", { user : socket.user, status: 200})
+            return 
+        }
+        if (socket) socket.emit("enterPoolResponse", { response: "stacksize not valid", status: 403 })
+    }
+    reEnterPool(player) {
+        //player reentering pool after played a hand
+        console.log("reEnterPool()")
+        // console.log(player)
+        let poolID = player.poolID
+        let playerPool = this.pools[poolID]
+        // console.log("sockets")
+        // console.log(Object.keys(this.sockets))
+        const socket = this.sockets[player.socketID]
+        // console.log("socket")
+        // console.log(socket)
+        if (player.stackSize === 0) {
+            console.log(`player.stackSize: ${player.stackSize}`)
+            // this.leavePool(socket, player)
+            if (socket) return socket.emit("askRebuy", {playerID : player.id, poolID: poolID, minBuyIn: playerPool.minBuyIn, maxBuyIn : playerPool.maxBuyIn})
+        }
+        if (player.isSitout) {
+            console.log(`player.isSitout: ${player.isSitout}`)
+            console.log(player.isSitout)
+            return this.leavePool(socket, player)
+        }
+        playerPool[player.id] = player
+        this.tableManager.placePlayerIntoTable(player)
+        if (socket) socket.emit("updatePlayerInfo", player)
+            // this.playersByPool.poolID[player.id] = player
+    }
+    rebuy(playerID, poolID, stackSize) {
+        console.log("rebuy")
+        const pool = this.pools[poolID]
+        const player = this.playersByPool[poolID][playerID]
+        const socket = this.sockets[player.socketID]
+        if (!pool) return console.log("pool invalid")
+        if (!player) return console.log("player invalid")
+        if (!socket) return console.log("socket invalid")
+        // console.log(pool)
+        // console.log(`${stackSize} >= ${pool.minBuyIn} : ${stackSize >= pool.minBuyIn}`)
+        // console.log(`${stackSize} <= ${pool.maxBuyIn} : ${stackSize <= pool.maxBuyIn}`)
+        console.log(`${socket.user.balance} >= ${stackSize} : ${socket.user.balance >= stackSize}`)
+        if (stackSize >= pool.minBuyIn && stackSize <= pool.maxBuyIn && socket.user.balance >= stackSize) {
+            console.log("rebuy 1")
+            player.stackSize += stackSize
+            socket.user.balance -= stackSize
+            player.isSitout = false
+            socket.emit("updateUserInfo", { user : socket.user, status: 200})
+            return this.reEnterPool(player)
+        }
+        console.log("rebuy 2")
+        console.log(pool)
+        console.log(stackSize)
+        console.log(socket.user.balance)
+    }
+    leavePool(socket, playerFromClient) {
+        console.log("leavePool()")
+        // console.log(socket)
+        // console.log(playerFromClient)
+        const player = this.playersByPool[playerFromClient.poolID][playerFromClient.id]
+        if (!player) return console.log("player already leaved")
+        //player reentering pool after played a hand
+        console.log("leavePool()1")
+        if (socket.id === player.socketID) {
+            
+            const table = this.tableManager.tables[player.poolID][player.tableID]
+            console.log("leavePool()2")
+            if (table) {
+                console.log("leavePool()3")
+                if (table.currentHand.handIsBeingPlayed) {
+                    console.log("leavePool()4")
+                    console.log(player.id)
+                    console.log(player.position)
+                    console.log(player.possibleActions)
+                    console.log(player.hasFolded)
+                    console.log(player.isSitout)
+                    console.log(table.currentHand.positionActing)
+                    player.isSitout = true
+                    if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) table.validateAction(player, {type: "fold", amount: 0})
+                }
+                if (!table.currentHand.handIsBeingPlayed) {
+                    console.log("leavePool()5")
+                    table.removePlayer(player) //tira o jogador antes da mao começar
+                    socket.user.balance += player.stackSize
+                    delete this.playersByPool[player.poolID][player.id]
+                    this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
+                    this.socketManager.to("lobby").emit("updatePools", this.pools)
+                    if (socket) socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
+                    if (socket) socket.emit("updateUserInfo", { user : socket.user, status: 200})
+                    // delete this.sockets[player.socketID]
+                    if (table.playerIDByPositionIndex.length === 0) {
+                        this.socketManager.socketsLeave(`table:${table.id}`)
+                        delete this.tableManager.tables[player.poolID][table.id]
+                    }
+                    return 
+                }
+            }
+        }
+        console.log("leavePool()5")
+        if (socket) {
+            socket.user.balance += player.stackSize
+            delete this.playersByPool[player.poolID][player.id]
+            this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
+            this.socketManager.to("lobby").emit("updatePools", this.pools)
+            if (socket) socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
+            if (socket) socket.emit("updateUserInfo", { user : socket.user, status: 200})
+        }
+    }
+}
+
+module.exports = PlayerPoolManager;

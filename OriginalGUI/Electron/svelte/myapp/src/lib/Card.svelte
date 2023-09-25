@@ -9,8 +9,8 @@
      * @type {String}
      */
     export let deck
-    cardString = cardString.replace("cb", "cardback preto")
-    let cardUrl = `url('/baralho/${deck}/${cardString}.png')`
+    // cardString = cardString.replace("cb", "cardback preto")
+    $: cardUrl = `url('/baralho/${deck}/${cardString}.png')`
     // onMount(() => {
     //     const setCard = () => {
     //         console.log("settando carta")
