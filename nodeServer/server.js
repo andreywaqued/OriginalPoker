@@ -5,10 +5,10 @@ const PlayerPoolManager = require('./playerPoolManager');
 const User = require('./user');
 // const TableManager = require('./tableManager')
 // const { Worker } = require('worker_threads');
-fastify.register(require('@fastify/postgres'), {
-  connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
-})
-fastify.register(require('@fastify/redis'), { host: 'redis', port: 6379 })
+// fastify.register(require('@fastify/postgres'), {
+//   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
+// })
+// fastify.register(require('@fastify/redis'), { host: 'redis', port: 6379 })
 
 playerPoolManager = new PlayerPoolManager(socketManager, fastify)
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
