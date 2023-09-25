@@ -110,10 +110,10 @@ socketManager.on('connection', (socket) => {
     delete playerPoolManager.sockets[socket.id]
   });
 });
-
+const port = process.env.PORT || 3000
 fastify.listen({
   host: "0.0.0.0",
-  port:3000
+  port:port
   }, 
   (err) => {
     if (err) {

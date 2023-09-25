@@ -8,7 +8,7 @@ const path = require('path');
 // } catch (_) {}
 
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
+const socket = io('wss://originaltrial.onrender.com'); // Replace with your server's address
 
 
 function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
