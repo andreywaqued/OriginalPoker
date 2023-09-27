@@ -1,5 +1,7 @@
 // preload.js
-const { contextBridge, ipcRenderer, screen } = require('electron');
+// import { contextBridge, ipcRenderer, screen } from ('electron');
+const { contextBridge, ipcRenderer } = require('electron');
+
 
 contextBridge.exposeInMainWorld(
   "api", {

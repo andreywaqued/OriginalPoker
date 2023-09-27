@@ -141,7 +141,7 @@
         playerTurn = false;
         timeLeftPerc = 100
     }
-    let avatarUrl = `url('/avatar/${avatar}.png')`
+    let avatarUrl = `url('../../../avatar/${avatar}.png')`
     /**
      * 
      * @param {String} lastAction
@@ -377,7 +377,7 @@
         z-index: 2;
     }
     .playerButton {
-        background-image: url('./Dealer.png');
+        background-image: url('/Dealer.png');
         background-position: center;
         background-size: contain;
         background-repeat: no-repeat;

@@ -6,6 +6,7 @@
   import Player from '$lib/Player.svelte';
 	import Pot from '$lib/Pot.svelte';
   import { fade, fly, slide } from "svelte/transition"
+  export const ssr = false;
   // /**
   //  * @type {number}
   //  */

@@ -28,6 +28,8 @@ class TableManager {
         })
     }
     createNewTable(poolID) {
+        console.log("createNewTable(poolID)")
+        console.log(poolID)
         const pool = this.playerPoolManager.pools[poolID]
         const newTable = new Table(this, pool, poolID)
         if (poolID in this.tables === false) this.tables[poolID] = {}
@@ -42,7 +44,7 @@ class TableManager {
         if (player.isSitout) return
         if (player.stackSize === 0) return //ask if wants to rebuy
         // console.log(player.poolID)
-        console.log(this.tables[player.poolID])
+        // console.log(this.tables[player.poolID])
         for (const key in this.tables[player.poolID]) {
             const table = this.tables[player.poolID][key]
             if (!table.waitingForPlayers) continue
@@ -57,6 +59,10 @@ class TableManager {
         return 
     }
     parseAction(socket, player, action) {
+        console.log("parseAction(socket, player, action)")
+        console.log(socket.id)
+        console.log(player.name)
+        console.log(action)
         if (socket.id != player.socketID && socket) return socket.emit("parseActionResponse", {response: "socketid is wrong", status: 403, action: action})
         const table = this.tables[player.poolID][player.tableID]
         if (!table.validateAction(player, action) && socket) return socket.emit("parseActionResponse", {response: "failed to make action", status: 401, tableID : table.id, action: action})
@@ -64,6 +70,7 @@ class TableManager {
         if (socket) socket.emit("parseActionResponse", {response: "action received", status: 200, action: action, player: player})
     }
     deleteTable(id) {
+        console.log("deleteTable(id)")
         this.socketManager.socketsLeave(`table:${id}`)
         delete this.tables[id]
     }

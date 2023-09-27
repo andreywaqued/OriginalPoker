@@ -1,4 +1,5 @@
 <script >
+    export const ssr = false;
 	import Ads from "$lib/Ads.svelte";
 	import Login from "$lib/Login.svelte";
     import TitleBar from "$lib/Title_Bar.svelte";
@@ -106,7 +107,7 @@
         // // if (doordashClass === "doordashDiv hide") 
         // console.log(doordashDivShow)
     }
-    $: avatarUrl = `url('/avatar/${userAvatar}.png')`
+    $: avatarUrl = `url('../../../avatar/${userAvatar}.png')`
     $: cssVarStyles = `--avatar-url:${avatarUrl};`;
 </script>
 
@@ -513,7 +514,7 @@
             width: 80%;
             height: 50%;
             // margin-top: 1%;
-            background: url('./doordash-logo-white.png');
+            background: url('/doordash-logo-white.png');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;

@@ -1,24 +1,54 @@
 // main.js
-const { app, BrowserWindow, ipcMain, Notification, dialog, screen } = require('electron');
-
+const {app, BrowserWindow, ipcMain, Notification, dialog, screen} = require('electron');
 const io = require('socket.io-client');
 const path = require('path');
+// const express = require('express');
+// const { fileURLToPath } = require('url');
+// const {handler} = require("./build/handler")
+// import {app, BrowserWindow, ipcMain, Notification, dialog, screen} from 'electron';
+// import io from 'socket.io-client';
+// import path from 'path';
+// import { handler } from './build/handler.js';
+// import express from 'express';
+
+
+// // let SvelteKit handle everything else, including serving prerendered pages and static assets
+// let handler 
+// const handlerPath = path.join(__dirname, 'build/handler.js')
+// console.log(handlerPath)
+// const moduleURL = fileURLToPath(handlerPath)
+// console.log(moduleURL)
+// const serverApp = express();
+// import('./build/handler.js').then(module => {
+//   handler = module.handler;
+//   serverApp.use(handler);
+//   serverApp.listen(10000, () => {
+//     console.log('listening on port 10000');
+//   });
+// })
+
 // try {
 //   require('electron-reloader')(module)
 // } catch (_) {}
 
-// const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
+const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
+// const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
+
+
+// Serve the static SvelteKit build files
+// serverApp.use(express.static(path.join(__dirname, 'svelte/myapp/build/client')));
+// console.log(path.join(__dirname, 'svelte/myapp/.svelte-kit/output/server'))
 
 
 function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
   const primaryDisplay = screen.getPrimaryDisplay()
   // const { width, height } = primaryDisplay.workAreaSize
   let aspectRatio = 4/3 //lobby
-  let url = 'http://localhost:5173/lobby'
+  // let url = 'http://localhost:10000/lobby'
+  let url = 'build/lobby.html'
   if (windowType === "table") {
     aspectRatio = 128/108 //mesa
-    url = 'http://localhost:5173/table'
+    url = 'build/table.html'
   } 
   const initialHeight = 500
   const maxHeight = primaryDisplay.workAreaSize['height']
@@ -38,18 +68,20 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
       devTools: true,
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(__dirname, 'preload.js'),
+      // devTools: false
     }
   });
   newWindow.aspectRatio = aspectRatio
   newWindow.windowType = windowType
   
     // Load an HTML file into the windows
-    newWindow.loadURL(url);
+    // newWindow.loadURL(url);
+    newWindow.loadFile(path.join(__dirname, url));
     // mainWindow2.loadURL('http://localhost:5173');
     newWindow.setAspectRatio(aspectRatio);
     // mainWindow2.setAspectRatio(128/108)
-    // mainWindow2.loadFile('index.html');
+    // mainWindow2.loadFile(join('svelte\myapp\src\app.html'));
     newWindow.webContents.on('did-finish-load', () => {
       // Emit a message to the server
       newWindow.show();
@@ -156,7 +188,9 @@ socket.on("updateUserInfo", response => {
 socket.on("updatePlayerInfo", player => {
     console.log("updatePlayerInfo")
     console.log(player)
-    const table = tables[playersID.indexOf(player.id)]
+    const playerIndex = playersID.indexOf(player.id)
+    const table = tables[playerIndex]
+    players[playerIndex] = player
     if (table) table.addMessage("updatePlayer", player)
 })
 socket.on("askRebuy", data => {

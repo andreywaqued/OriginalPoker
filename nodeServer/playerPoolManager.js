@@ -32,6 +32,10 @@ class PlayerPoolManager {
         this.tableManager = new TableManager(this.socketManager, this.fastify, this)
     }
     enterPool(socket, poolID, stackSize) {
+        console.log("enterPool(socket, poolID, stackSize)")
+        console.log(socket.id)
+        console.log(poolID)
+        console.log(stackSize)
         //player just entering the pool
         let player = new Player(socket, stackSize)
         if (!player && socket) return socket.emit("enterPoolResponse", { response: "failed to enter pool", status: 401 })
@@ -47,8 +51,8 @@ class PlayerPoolManager {
         console.log(`${socket.user.balance} >= ${stackSize} : ${socket.user.balance >= stackSize}`)
         if (stackSize >= pool.minBuyIn && stackSize <= pool.maxBuyIn && socket.user.balance >= stackSize) {
             console.log("log1")
-            console.log(socket.id)
-            console.log(this.sockets)
+            // console.log(socket.id)
+            // console.log(this.sockets)
             if (socket.id in this.sockets === false) this.sockets[socket.id] = socket
             console.log("log2")
             console.log(Object.keys(this.sockets))
@@ -71,9 +75,12 @@ class PlayerPoolManager {
     reEnterPool(player) {
         //player reentering pool after played a hand
         console.log("reEnterPool()")
+        console.log(player.name)
         // console.log(player)
         let poolID = player.poolID
-        let playerPool = this.pools[poolID]
+        let pool = this.pools[poolID]
+        console.log(`poolID: ${poolID}`)
+        console.log(`pool: ${pool}`)
         // console.log("sockets")
         // console.log(Object.keys(this.sockets))
         const socket = this.sockets[player.socketID]
@@ -82,14 +89,17 @@ class PlayerPoolManager {
         if (player.stackSize === 0) {
             console.log(`player.stackSize: ${player.stackSize}`)
             // this.leavePool(socket, player)
-            if (socket) return socket.emit("askRebuy", {playerID : player.id, poolID: poolID, minBuyIn: playerPool.minBuyIn, maxBuyIn : playerPool.maxBuyIn})
+            if (socket) return socket.emit("askRebuy", {playerID : player.id, poolID: poolID, minBuyIn: pool.minBuyIn, maxBuyIn : pool.maxBuyIn})
         }
         if (player.isSitout) {
             console.log(`player.isSitout: ${player.isSitout}`)
             console.log(player.isSitout)
             return this.leavePool(socket, player)
         }
+        let playerPool = this.playersByPool[poolID]
         playerPool[player.id] = player
+        console.log(`playerPool: ${playerPool}`)
+        console.log(Object.keys(playerPool))
         this.tableManager.placePlayerIntoTable(player)
         if (socket) socket.emit("updatePlayerInfo", player)
             // this.playersByPool.poolID[player.id] = player
@@ -121,18 +131,23 @@ class PlayerPoolManager {
     }
     leavePool(socket, playerFromClient) {
         console.log("leavePool()")
+        console.log(playerFromClient.name)
+        console.log(`playerFromClient.tableID: ${playerFromClient.tableID}`)
         // console.log(socket)
         // console.log(playerFromClient)
         const player = this.playersByPool[playerFromClient.poolID][playerFromClient.id]
+        // if (!socket) return console.log("socket already gone")
         if (!player) return console.log("player already leaved")
         //player reentering pool after played a hand
         console.log("leavePool()1")
-        if (socket.id === player.socketID) {
+        if (!socket || socket.id === player.socketID) {
+            console.log("leavePool()2")
+            console.log(`player.tableID: ${player.tableID}`)
             
             const table = this.tableManager.tables[player.poolID][player.tableID]
-            console.log("leavePool()2")
             if (table) {
                 console.log("leavePool()3")
+                console.log(table.id)
                 if (table.currentHand.handIsBeingPlayed) {
                     console.log("leavePool()4")
                     console.log(player.id)
@@ -142,12 +157,15 @@ class PlayerPoolManager {
                     console.log(player.isSitout)
                     console.log(table.currentHand.positionActing)
                     player.isSitout = true
-                    if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) table.validateAction(player, {type: "fold", amount: 0})
+                    if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) return table.validateAction(player, {type: "fold", amount: 0})
                 }
                 if (!table.currentHand.handIsBeingPlayed) {
                     console.log("leavePool()5")
-                    table.removePlayer(player) //tira o jogador antes da mao começar
+                    if (table.waitingForPlayers) table.removePlayer(player) //tira o jogador antes da mao começar
                     socket.user.balance += player.stackSize
+                    const playerIndex = socket.user.playerIDs.indexOf(player.id)
+                    socket.user.playerIDs.splice(playerIndex, 1)
+                    socket.user.poolIDs.splice(playerIndex, 1)
                     delete this.playersByPool[player.poolID][player.id]
                     this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
                     this.socketManager.to("lobby").emit("updatePools", this.pools)
@@ -162,15 +180,15 @@ class PlayerPoolManager {
                 }
             }
         }
-        console.log("leavePool()5")
-        if (socket) {
-            socket.user.balance += player.stackSize
-            delete this.playersByPool[player.poolID][player.id]
-            this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
-            this.socketManager.to("lobby").emit("updatePools", this.pools)
-            if (socket) socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
-            if (socket) socket.emit("updateUserInfo", { user : socket.user, status: 200})
-        }
+        console.log("leavePool()6")
+        // if (socket) {
+        //     socket.user.balance += player.stackSize
+        //     delete this.playersByPool[player.poolID][player.id]
+        //     this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
+        //     this.socketManager.to("lobby").emit("updatePools", this.pools)
+        //     if (socket) socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
+        //     if (socket) socket.emit("updateUserInfo", { user : socket.user, status: 200})
+        // }
     }
 }
 
