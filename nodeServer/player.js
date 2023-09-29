@@ -18,6 +18,7 @@ class Player {
         this.contestingPots = [0];
         this.position = 0;
         this.isButton = false;
+        this.showCards = false;
     }
 }
 module.exports = Player;

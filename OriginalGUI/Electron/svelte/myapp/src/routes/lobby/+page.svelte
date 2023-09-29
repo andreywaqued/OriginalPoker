@@ -14,10 +14,10 @@
     let userLoggedIn = false
    
     let gamesAvaiable = {
-        "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 125, minBuyIn: "$2.00", maxBuyIn: "10.00"},
-        "lightning2" : {gameTitle: "NL 50", blinds: "$0.25 / $0.50", players: 85, minBuyIn: "$10.00", maxBuyIn: "50.00"},
-        "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 35, minBuyIn: "$20.00", maxBuyIn: "100.00"},
-        "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 1025, minBuyIn: "$40.00", maxBuyIn: "200.00"}
+        "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 125, minBuyIn: "$2.00", maxBuyIn: "10.00", buyInAmount: -1},
+        "lightning2" : {gameTitle: "NL 50", blinds: "$0.25 / $0.50", players: 85, minBuyIn: "$10.00", maxBuyIn: "50.00", buyInAmount: -1},
+        "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 35, minBuyIn: "$20.00", maxBuyIn: "100.00", buyInAmount: -1},
+        "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 1025, minBuyIn: "$40.00", maxBuyIn: "200.00", buyInAmount: -1}
     }
     let menuIndexSelected = 0
     let menuItens = ["games", "profile", "settings"]
@@ -57,8 +57,8 @@
                     gamePool.blinds = `$${pool.sb} / $${pool.bb}`
                     gamePool.minBuyIn = `$${pool.minBuyIn}`
                     gamePool.maxBuyIn = `$${pool.maxBuyIn}`
-                    gamePool.blinds = `$${pool.sb} / $${pool.bb}`
                     gamePool.players = pool.currentPlayers
+                    if (gamePool.buyInAmount === -1) gamePool.buyInAmount = pool.maxBuyIn
                 })
                 gamesAvaiable = newGamesAvaiable
             })
@@ -91,7 +91,9 @@
      * @param {String} tableName
      */
     function openNewTable(poolID) {
-        api.send("open-new-table", poolID)
+        let stackSize = gamesAvaiable[poolID].buyInAmount
+        if (stackSize < gamesAvaiable[poolID].minBuyIn ) stackSize = gamesAvaiable[poolID].minBuyIn
+        api.send("open-new-table", {poolID: poolID, stackSize: stackSize})
     }
     
     let doordashClass = "doordashDiv hide"
@@ -300,7 +302,7 @@
         display: flex;
         flex-direction: column;
         width: 90%;
-        height: 100%;
+        height: 94%;
         padding: 2% 3%;
         background-color: rgb(24, 24, 24);
         // background-color: blue;
@@ -325,14 +327,14 @@
         display: flex;
         flex-direction: row;
         width: 100%;
-        height: 60%;
+        height: 80%;
         gap: 3%;
         // padding: 0 3%;
     }
     .wrapper {
         position: relative;
         width: 100%;
-        height: 75%;
+        height: 85%;
         z-index: 1;
     }
     .gameSelector {
@@ -361,7 +363,7 @@
         .gameInfo {
             position: relative;
             width: 100%;
-            height: 60%;
+            height: 40%;
             // background-color: green;
             display: flex;
             flex-direction: column;
@@ -412,6 +414,17 @@
                 font-weight: bold;
                 background-color: rgb(79,148,217);
                 border-radius: 5px;
+            }
+        }
+        .inputDiv {
+            width: 100;
+            height: 20%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            input {
+                width: 50%;
             }
         }
     }
@@ -717,6 +730,10 @@
                                             <div class="buyIn minBuyIn">{game.minBuyIn}</div>
                                             <div class="buyIn maxBuyIn">{game.maxBuyIn}</div>
                                         </div>
+                                    </div>
+                                    <div class="inputDiv">
+                                        <span>Buy in Amount:</span>
+                                        <input class="buyInAmount" type="number" bind:value={gamesAvaiable[key].buyInAmount}/>
                                     </div>
                                     <div class="buttonDiv">
                                         <button class="joinNow" on:click={()=>openNewTable(key)}>JOIN NOW</button>

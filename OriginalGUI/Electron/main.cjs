@@ -193,6 +193,12 @@ socket.on("updatePlayerInfo", player => {
     players[playerIndex] = player
     if (table) table.addMessage("updatePlayer", player)
 })
+socket.on("sitoutUpdate", data => {
+    console.log("sitoutUpdate")
+    console.log(data)
+    const table = tables[playersID.indexOf(data.playerID)]
+    if (table) table.addMessage("sitoutUpdate", data.isSitout)
+})
 socket.on("askRebuy", data => {
     console.log("askRebuy")
     console.log(data)
@@ -226,13 +232,22 @@ socket.on("updatePools", (pools) => {
 // socket.send("SIGN_IN;ALEXANDER;123456")
 
 
-ipcMain.on('open-new-table', (event, arg) => {
-  console.log(arg)
+ipcMain.on('open-new-table', (event, data) => {
+  console.log('open-new-table')
+  console.log(data)
   
   // allWindows = BrowserWindow.getAllWindows()
   
   // if (allWindows.length < 5) createWindow("Lightning Cash Game ⚡ " + arg + " Table 1", "table")
-  if (tables.length < 4) socket.emit("enterPool", {poolID : arg, stackSize: 100})
+  if (tables.length < 4) socket.emit("enterPool", {poolID : data.poolID, stackSize: data.stackSize})
+});
+ipcMain.on('sitoutUpdate', (event, data) => {
+  console.log("sitoutUpdate")
+  console.log(data)
+  win = BrowserWindow.fromWebContents(event.sender)
+  if (!win) return
+  console.log("sending sitout update")
+  socket.emit("sitoutUpdate", data)
 });
 ipcMain.on('tryRebuy', (event, data) => {
   console.log(data)
@@ -277,12 +292,12 @@ ipcMain.on('organize-tables', (event) => {
   //  if not able, add one line and try again
   // TODO MVP
   // fit up to 4 tables in a 2x2 grid
-  // win = BrowserWindow.fromWebContents(event.sender)
-  // if (!win) return
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!win) return
   // allWindows = BrowserWindow.getAllWindows()
   // console.log(allWindows)
   // allTables = []
-  display = screen.getPrimaryDisplay().workAreaSize
+  const display = screen.getPrimaryDisplay().workAreaSize
   // displayAspectRatio = display.width / display.height
   // allWindows.forEach(window => {
   //   if (window.windowType == "table") {

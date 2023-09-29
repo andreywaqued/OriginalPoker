@@ -44,6 +44,7 @@
   let betValue = 50
   let tableRotateAmount = hero.position
   let tryStartPlayerTurn
+  let waitingForPlayers = true
   $: console.log(tableRotateAmount = hero.position)
 
   onMount(() => {
@@ -69,7 +70,6 @@
           minBet = betValue;
           maxBet = player.betSize + player.stackSize;
         }
-        if (hero.isSitout) sitoutPopover()
         tableRotateAmount = hero.position
         playersTemp[player.id] = hero
         players = playersTemp
@@ -80,10 +80,15 @@
         console.log(gameState)
         sumOfBetSizes = 0
         if (!gameState.handIsBeingPlayed) possibleActions = []
+        if (gameState.handIsBeingPlayed || gameState.isShowdown) {
+          waitingForPlayers = false
+        } else {
+          waitingForPlayers = true
+        }
         // heroTurn = false
         Object.values(gameState.players).forEach( player => {
           player.isHero = false
-          player.showCards = false
+          // player.showCards = false
           player.isButton = false
           sumOfBetSizes += player.betSize
           
@@ -113,7 +118,7 @@
         })
         console.log(currentPlayerActing)
         
-        if (gameState.handIsBeingPlayed) tryStartPlayerTurn = setInterval(()=>{
+        if (gameState.handIsBeingPlayed && !gameState.isShowdown) tryStartPlayerTurn = setInterval(()=>{
           if (currentPlayerActing in playersComponents) { //it may be called before the component is created
             playersComponents[currentPlayerActing].startPlayerTurn(gameState.timeLimitToAct)
             clearInterval(tryStartPlayerTurn)
@@ -127,6 +132,10 @@
       });
       window.api.on('askRebuy', (data) => {
         toggleRebuy()
+      });
+      window.api.on('sitoutUpdate', (isSitout) => {
+        playerSitout = isSitout
+        sitoutPopover(isSitout)
       });
       api.on("updatePlayerCards", cards => {
         console.log("updatePlayerCards")
@@ -271,9 +280,27 @@
     console.log("organizeTables")
     api.send("organize-tables")
   }
+  function toggleSitout() {
+    console.log("toggleSitout()")
+    playerSitout = !playerSitout
+    if (!playerSitout) sitoutPopover(playerSitout)
+    api.send("sitoutUpdate", {playerID: hero.id, poolID: hero.poolID, isSitout: playerSitout})
+  }
+  let playerSitout = false;
+  let sitoutPopoverActive = false;
+  function sitoutPopover(isSitout = true) {
+    console.log("sitoutPopover" + isSitout)
+    const target = document.getElementById("sitoutPopover")
+    if (isSitout) target?.showPopover()
+    if (!isSitout) target?.hidePopover()
+    sitoutPopoverActive = isSitout;
+    // popovertarget="test"
+  }
   let rebuyPopoverActive = false;
+  let rebuyAmount = 0;
   function toggleRebuy(){
     console.log("toggleRebuy")
+    rebuyAmount = bbSize * 100 - hero.stackSize
     const target = document.getElementById("rebuyPopover")
     if (rebuyPopoverActive) target?.hidePopover()
     if (!rebuyPopoverActive) target?.showPopover()
@@ -282,7 +309,7 @@
   }
   function tryRebuy(){
     console.log("toggleRebuy")
-    api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: 100})
+    api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: rebuyAmount})
     toggleRebuy()
   }
   let hhPopoverActive = false;
@@ -306,6 +333,7 @@
     let action = possibleActions[index]
     if (index === 2) action.amount = betValue
     api.send("parseAction", {player: hero, action: action})
+    possibleActions = []
   }
   
 </script>
@@ -339,15 +367,29 @@
     // border-top-left-radius: 3px;
     // border-top-right-radius: 3px;
 }
+.waitingForPlayersDiv{
+  position: absolute;
+  width: 100%;
+  top: 50%;
+  // left: 40%;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  .waitingForPlayersText{
+    // background-color: #c1c1c1;
+    color: white;
+  }
+}
 .transitioning {
     position: absolute;
     z-index: 10000;
-    width: 100%;
+    width: 200%;
     height: 100%;
-    left: -100%;
+    left: -200%;
     background-image: url('/transitionBackground.png');
     background-position: center;
-    background-size: cover;
+    background-size: contain;
     background-repeat: no-repeat;
     animation-name: slideInOut;
     animation-timing-function: linear;
@@ -356,8 +398,8 @@
     // animation: forwards 1s ease-in-out;
 }
 @keyframes slideInOut {
-  from {left: 100%}
-  to {left: -100%}
+  from {left: 200%}
+  to {left: -200%}
 }
 .potLine {
   position: absolute;
@@ -630,6 +672,9 @@
     top: 20px;
     display: flex;
     z-index: 100;
+    .sitout {
+      background-color: lightcoral;
+    }
   }
 
   .rebuyPopover {
@@ -680,8 +725,9 @@
   .popoverOverlay.active {
     position: absolute;
     background-color: rgba(0,0,0,0.5);
+    top: 20px;
+    height: calc(100% - 20px);
     width: 100%;
-    height: 100%;
     z-index: 10000;
 
     
@@ -697,9 +743,15 @@
     <button on:click={tileTables}>Tile Tables</button>
     <button on:click={toggleHH}>HH</button>
     <button on:click={toggleRebuy}>Rebuy</button>
+    <button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
   </div>
   <div class="bg-table" on:wheel={handleScroll}>
     <div class:transitioning={transitioning}></div>
+    {#if waitingForPlayers && !playerSitout}
+      <div class="waitingForPlayersDiv">
+        <span class="waitingForPlayersText">Waiting for players...</span>
+      </div>
+    {/if}
     <div class="board">
       {#each boardCards as card}
         <div class="card"><Card cardString = {card} deck = "boardDeck" /></div>
@@ -733,7 +785,7 @@
             <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
           </div>
           <label class="dolarSign">$</label>
-          <input class="betDisplay" value={betValue}/>
+          <input class="betDisplay" bind:value={betValue}/>
         </div>
         <div class="betSlider">
           <button class="betSliderButton" on:click={minusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg></button>
@@ -767,6 +819,17 @@
       </div>
     {/if}
     
+    <div class="popoverOverlay" class:active={sitoutPopoverActive} on:click={() => sitoutPopover(false)}></div>
+    <div class="sitoutPopover" popover id="sitoutPopover">
+      <div class="popoverTitle">
+        <span>Sitout</span>
+        <button on:click={() => sitoutPopover(false)}>X</button>
+      </div>
+      <div class="popoverMain">
+        You are sitout
+        <button on:click={toggleSitout}>I`m Back!`</button>
+      </div>
+    </div>
     <div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
     <div class="hhPopover" popover id="hhPopover">
       <div class="popoverTitle">
@@ -787,7 +850,7 @@
       </div>
       <div class="popoverMain">
         <label for="rebuyAmount">Amount to Rebuy</label>
-        <input placeholder="Amount to Rebuy" id="rebuyAmount"/>
+        <input placeholder="Amount to Rebuy" id="rebuyAmount" type="number" bind:value={rebuyAmount}/>
         <button on:click={tryRebuy}>Rebuy</button>
       </div>
     </div>

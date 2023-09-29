@@ -54,11 +54,13 @@ class Table {
         this.players = {};
         this.sockets = {};
         this.waitingForPlayers = true;
+        this.startHandTimer = undefined
         this.currentHand = {
             tableSize : this.tableSize,
             sb : this.sb,
             bb : this.bb,
             handIsBeingPlayed : false,
+            isShowdown : false,
             // players : this.players,
             pots : [0],
             actionSequence : [],
@@ -95,6 +97,7 @@ class Table {
         player.possibleActions = []
         player.hasFolded = false
         player.isButton = false
+        player.showCards = false
         player.contestingPots = [0]
         // player.isSitout = false;
         this.players[player.id] = player;
@@ -107,7 +110,15 @@ class Table {
         // console.log(this.playerIDByPositionIndex)
         // console.log(this.sockets)
 
-        if (this.playerIDByPositionIndex.length > 1) this.startNewHand()
+        if (this.playerIDByPositionIndex.length > 1) {
+            clearTimeout(this.startHandTimer)
+            this.startHandTimer = setTimeout(() => this.startNewHand(), 5000)
+        }
+        // if (this.playerIDByPositionIndex.length === this.tableSize) this.startHandTimer = setTimeout(() => this.startNewHand(), 0)
+        if (this.playerIDByPositionIndex.length === this.tableSize) {
+            clearTimeout(this.startHandTimer)
+            this.startNewHand()
+        }
         if (!this.currentHand.handIsBeingPlayed) this.broadcastHandState()
         // this.socketManager.to(`table:${this.id}`).emit("updateGameState", this.currentHand);
         
@@ -143,14 +154,16 @@ class Table {
                 tableID: player.tableID,
                 stackSize: player.stackSize,
                 hasFolded: player.hasFolded,
-                cards: [],
+                cards: player.cards,
                 isSitout: player.isSitout,
                 betSize: player.betSize,
                 possibleActions: player.possibleActions,
                 isButton : player.isButton,
-                position : player.position
+                position : player.position,
+                showCards : player.showCards
             }
-            if (handState.handIsBeingPlayed) handState.players[playerID].cards = ["cb", "cb"]
+            if (handState.handIsBeingPlayed && !handState.isShowdown) handState.players[playerID].cards = ["cb", "cb"]
+            // if (handState.handIsBeingPlayed && handState.isShowdown) handState.players[playerID].cards = ["cb", "cb"]
 
             // console.log(this.sockets[player.socketID])
             // this.sockets[player.socketID].emit("updateGameState", handState)
@@ -160,6 +173,51 @@ class Table {
 
         this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
         if (this.currentHand.handIsBeingPlayed) this.broadcastPlayerCards()
+    }
+    sendEmptyTable(player) {
+        console.log("sendEmptyTable")
+        let handState = {
+            tableSize : this.tableSize,
+            sb : this.sb,
+            bb : this.bb,
+            handIsBeingPlayed : false,
+            isShowdown : false,
+            // players : this.players,
+            pots : [0],
+            actionSequence : [],
+            // playersActive : this.playerIDByPositionIndex,
+            boardCards : [],
+            boardRound : 0,
+            minBet : 0,
+            maxBet : 9999999999,
+            biggestBet : 0,
+            positionActing : 0,
+            timeLimitToAct: 0,
+            playersAllin : 0,
+            playersFolded : 0,
+            betSizesAllinThisRound : [],
+            dealerPos: -1,
+            sbPos: 0,
+            bbPos: 0,
+        }
+        handState.players = {}
+        handState.players[player.id] = {
+            id : player.id,
+            name: player.name,
+            avatar: player.avatar,
+            tableID: player.tableID,
+            stackSize: player.stackSize,
+            hasFolded: player.hasFolded,
+            cards: [],
+            isSitout: player.isSitout,
+            betSize: player.betSize,
+            possibleActions: player.possibleActions,
+            isButton : player.isButton,
+            position : player.position,
+            showCards : player.showCards
+        }
+        const socket = this.sockets[player.socketID]
+        if (socket) socket.emit("updateGameState", handState);
     }
     validateAction(playerFromClient, action) {
         console.log(`validateAction(playerFromClient, action)`)
@@ -214,10 +272,12 @@ class Table {
             this.currentHand.playersFolded++
             if (player.socketID in this.sockets) {
                 console.log("player folded 1")
-                this.sockets[player.socketID].leave(`table:${this.id}`);
+                this.sendEmptyTable(player)//send empty table
+                playerSocket.leave(`table:${this.id}`);
                 delete this.sockets[player.socketID]
                 const playerCopy = JSON.parse(JSON.stringify(player))
-                this.tableManager.playerPoolManager.reEnterPool(playerCopy)
+                this.players[player.id] = playerCopy
+                this.tableManager.playerPoolManager.reEnterPool(player)
             }
         }
         console.log("validateAction 5")
@@ -249,13 +309,16 @@ class Table {
     evaluateHand() {
         console.log("evaluateHand()")
         const gameType = "texas"
+        
         // const board = [this.deck[0], this.deck[1], this.deck[2], this.deck[3], this.deck[4]]
         for (let potIndex = 0; potIndex < this.currentHand.pots.length; potIndex ++) {
             let winnerRank = 999999
             let winners = []
+            let playersContestingThisPot = 0
             for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
                 const player = this.players[this.playerIDByPositionIndex[i]]
                 if (player.hasFolded || !player.contestingPots.includes(potIndex)) continue
+                playersContestingThisPot++
                 player.finalHandRank = {rank: -1}
                 // console.log(this.currentHand.boardCards, [player.cards])
                 if (this.currentHand.boardCards.length > 0 && player.finalHandRank.rank === -1) player.finalHandRank = rankHands(gameType, this.currentHand.boardCards, [player.cards])[0]
@@ -271,8 +334,10 @@ class Table {
                 // console.log(this.currentHand.pots)
                 // console.log(potIndex)
                 winners[i].stackSize += this.currentHand.pots[potIndex]/winners.length
+                // if (playersContestingThisPot > 1) winners[i].showCards = true
             }
             if (winners.length > 0) this.currentHand.actionSequence.push({pot: potIndex, winners: winners})
+            this.currentHand.pots[potIndex] = 0
         }
         // const playerCards1 = [this.deck[5], this.deck[6]]
         // const playerCards2 = [this.deck[7], this.deck[8]]
@@ -280,22 +345,32 @@ class Table {
         // const result = rankHands(gameType, board, [playerCards1, playerCards2, playerCards3])
         // console.log(playerCards1, playerCards2, playerCards3, board)
         this.currentHand.handIsBeingPlayed = false;
+        this.currentHand.isShowdown = true;
         // console.log(this.currentHand.players)
         console.log("evaluateHand() 1")
         this.broadcastHandState()
         // setTimeout(() => {this.startNewHand()}, 5000)
         console.log("evaluateHand() 2")
-        setTimeout(() => {this.closeHand()}, 1000)
+        setTimeout(() => {this.closeHand()}, 3000)
 
         // return winners
         // return this.distributeWinnings()
     }
+    startNewRoundAtShowdown() {
+        this.currentHand.isShowdown = true
+        for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
+            const player = this.players[this.playerIDByPositionIndex[i]]
+            if (!player.hasFolded) player.showCards = true
+        }
+        this.startNewRound(1000)
+    }
     prepareNextPlayerTurn(){
         console.log("prepareNextPlayerTurn()")
         if (!this.currentHand.handIsBeingPlayed) return console.log("hand is over")
+        
         if (this.currentHand.playersFolded === this.playerIDByPositionIndex.length - 1) return this.startNewRound()
         let playersLeftWithChips = 0
-        if (this.currentHand.playersFolded + this.currentHand.playersAllin === this.playerIDByPositionIndex.length) return this.startNewRound()
+        if (this.currentHand.playersFolded + this.currentHand.playersAllin === this.playerIDByPositionIndex.length) return this.startNewRoundAtShowdown()
         console.log("prepareNextPlayerTurn() 1")
         this.currentHand.positionActing++
         if (this.currentHand.positionActing > this.playerIDByPositionIndex.length - 1) this.currentHand.positionActing -= this.playerIDByPositionIndex.length
@@ -309,7 +384,7 @@ class Table {
             const player = this.players[this.playerIDByPositionIndex[i]]
             if (!player.hasFolded && player.stackSize + player.betSize > nextPlayer.betSize) playersLeftWithChips++
         }
-        if (playersLeftWithChips < 2) return this.startNewRound()
+        if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
 
         if (nextPlayer.actedSinceLastRaise && this.currentHand.boardRound != 4) return this.startNewRound()
         console.log("prepareNextPlayerTurn() 2")
@@ -337,6 +412,10 @@ class Table {
             if (nextPlayer.possibleActions.length === 0) return console.log("nextPlayer.possibleActions.length === 0")//server protection case for when something went wrong.
             let timeoutAction = nextPlayer.possibleActions[0]
             if (nextPlayer.possibleActions[1].type === "check") timeoutAction = nextPlayer.possibleActions[1]
+            //send sitout
+            const socket = this.sockets[nextPlayer.socketID]
+            if (socket) socket.emit("sitoutUpdate", {playerID: nextPlayer.id, isSitout: true})
+            //
             this.validateAction(nextPlayer, timeoutAction)
             console.log("time is over, folding player 2")
         }, this.currentHand.timeLimitToAct - new Date().getTime())
@@ -434,7 +513,7 @@ class Table {
         console.log("putBetsIntoPot() 6")
         // console.log(this.currentHand.pots)
     }
-    startNewRound() {
+    startNewRound(timeout = 500) {
         console.log("startNewRound()")
         this.putBetsIntoPot()
         if (this.currentHand.playersFolded === this.playerIDByPositionIndex.length - 1) return this.evaluateHand()
@@ -462,7 +541,8 @@ class Table {
         // }
         // if (playersLeftWithChips < 2) return this.startNewRound()
         this.setAllPlayerActedSinceLastRaiseToFalse()
-        this.prepareNextPlayerTurn()
+        this.broadcastHandState()
+        setTimeout(() => {this.prepareNextPlayerTurn()}, timeout)
     }
     closeHand() {
         console.log("closeHand()")
@@ -490,10 +570,15 @@ class Table {
         console.log("closeHand() 1")
         // this.broadcastHandState() //talvez nao precise fazer isso aqui
         for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
+            console.log("closeHand() loop index:" + i)
             const player = this.players[this.playerIDByPositionIndex[i]]
+            console.log(this.id)
             console.log(player.name)
+            console.log(player.tableID)
+            console.log(player.hasFolded)
+            console.log(player.isSitout)
             const socket = this.sockets[player.socketID]
-            if (!player.hasFolded || player.isSitout) this.tableManager.playerPoolManager.reEnterPool(player) //if player folded, it had already reentered the pool
+            if (!player.hasFolded) this.tableManager.playerPoolManager.reEnterPool(player) //if player folded, it had already reentered the pool
             // this.removePlayer(player)
         }
         // console.log(this.tableManager)
@@ -514,11 +599,13 @@ class Table {
         const playerIndex = this.playerIDByPositionIndex.indexOf(player.id)
         const playerKey = this.playerIDByPositionIndex.splice(playerIndex, 1)
         delete this.players[playerKey]
+        this.broadcastHandState()
     }
     startNewHand() {
         console.log("startNewHand()")
         this.waitingForPlayers = false;
         this.currentHand.handIsBeingPlayed = true;
+        this.currentHand.isShowdown = false;
         this.currentHand.pots = [0];
         this.currentHand.actionSequence = [];
         this.currentHand.boardCards = [];
@@ -547,7 +634,11 @@ class Table {
             player.isButton = false
             player.contestingPots = [0]
         }
-        if (this.playerIDByPositionIndex.length < 2) return console.log("exiting because we have less than 2 players")
+        if (this.playerIDByPositionIndex.length < 2) {
+            this.waitingForPlayers = true;
+            this.currentHand.handIsBeingPlayed = false;
+            return console.log("exiting because we have less than 2 players")
+        }
         this.determinePlayerPositions()
     }
     saveHandHistoryToDB() {

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" href="./favicon.png" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+		
+		<link rel="modulepreload" href="./_app/immutable/entry/start.654bbcc9.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/scheduler.6797a6c1.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/singletons.6cf7e283.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.074b2f09.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.469fccd5.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/0.70a65455.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/layout.ae33825f.js">
+		<link rel="modulepreload" href="./_app/immutable/nodes/4.e1c75511.js">
+	</head>
+	<body data-sveltekit-preload-data="">
+		<div style="display: contents">  home 
+			
+			<script>
+				{
+					__sveltekit_1mooj19 = {
+						base: new URL(".", location).pathname.slice(0, -1),
+						env: {}
+					};
+
+					const element = document.currentScript.parentElement;
+
+					const data = [null,null];
+
+					Promise.all([
+						import("./_app/immutable/entry/start.654bbcc9.js"),
+						import("./_app/immutable/entry/app.074b2f09.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element, {
+							node_ids: [0, 4],
+							data,
+							form: null,
+							error: null
+						});
+					});
+				}
+			</script>
+		</div>
+	</body>
+	<style>
+		body{
+			margin: 0;
+			overflow: hidden;
+		}
+	</style>
+</html>

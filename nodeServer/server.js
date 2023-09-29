@@ -89,6 +89,10 @@ socketManager.on('connection', (socket) => {
     console.log(`received rebuyAction: ${data.playerID} ${data.poolID} ${data.stackSize}`)
     return playerPoolManager.rebuy(data.playerID, data.poolID, data.stackSize)
   })
+  socket.on("sitoutUpdate", (data) => {
+    console.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
+    return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
+  })
   
 
 
