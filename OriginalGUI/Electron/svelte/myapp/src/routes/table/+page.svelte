@@ -215,7 +215,7 @@
       sumOfPots += pots[i]
     }
     console.log("betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount")
-    betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount)+callAmount
+    betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount
     console.log(`${betValue} = ${potPerc}/100*(${sumOfPots} + ${sumOfBetSizes} + ${callAmount} - ${hero.betSize}) + ${callAmount}`)
     // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
     // // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
@@ -466,6 +466,7 @@
     display: flex;
     flex-direction: column;
     gap: 5%;
+    z-index: 10;
     .betDisplayRow {
       display: flex;
       width: 100%;
@@ -544,7 +545,6 @@
         flex-direction: row;
         width: 100%;
         height: 70%;
-        z-index: 10;
     }
     .playButton:hover, .presetBetSizeButton:hover {
         background-color: white;

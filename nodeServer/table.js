@@ -99,6 +99,7 @@ class Table {
         player.isButton = false
         player.showCards = false
         player.contestingPots = [0]
+        player.finalHandRank = {rank: -1}
         // player.isSitout = false;
         this.players[player.id] = player;
         this.playerIDByPositionIndex.push(player.id);
@@ -320,7 +321,7 @@ class Table {
                 const player = this.players[this.playerIDByPositionIndex[i]]
                 if (player.hasFolded || !player.contestingPots.includes(potIndex)) continue
                 playersContestingThisPot++
-                player.finalHandRank = {rank: -1}
+                // player.finalHandRank = {rank: -1}
                 // console.log(this.currentHand.boardCards, [player.cards])
                 if (this.currentHand.boardCards.length > 0 && player.finalHandRank.rank === -1) player.finalHandRank = rankHands(gameType, this.currentHand.boardCards, [player.cards])[0]
                 if (player.finalHandRank.rank < winnerRank) {
@@ -335,7 +336,7 @@ class Table {
                 // console.log(this.currentHand.pots)
                 // console.log(potIndex)
                 winners[i].stackSize += this.currentHand.pots[potIndex]/winners.length
-                // if (playersContestingThisPot > 1) winners[i].showCards = true
+                if (playersContestingThisPot > 1) winners[i].showCards = true
             }
             if (winners.length > 0) this.currentHand.actionSequence.push({pot: potIndex, winners: winners})
             this.currentHand.pots[potIndex] = 0

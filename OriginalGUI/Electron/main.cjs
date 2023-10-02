@@ -112,6 +112,7 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     newWindow.sendMessage = (event, data) => {
       // console.log(newWindow.readyToReceiveMessages)
       // console.log(event, data)
+      if (!newWindow) return
       if (newWindow.messageBuffer.length === 0) return newWindow.webContents.send(event, data)
       if (newWindow.readyToReceiveMessages) return newWindow.webContents.send(event, data)
       if (!newWindow.readyToReceiveMessages) return newWindow.messageBuffer.push({event: event, data: data})
