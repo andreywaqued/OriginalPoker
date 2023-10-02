@@ -141,7 +141,7 @@
         playerTurn = false;
         timeLeftPerc = 100
     }
-    let avatarUrl = `url('../../../avatar/${avatar}.png')`
+    $: avatarUrl = `url('../../../avatar/${avatar}.png')`
     /**
      * 
      * @param {String} lastAction

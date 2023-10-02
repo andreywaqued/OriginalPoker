@@ -1,31 +1,43 @@
 //the user class, responsible for handling the object associated with a login
 class User {
-    static async createAndLogin(id, password) {
+    static async createAndLogin(name, password, db) {
+        console.log("createAndLogin")
+        // console.log(db)
         const user = new User();
-        await user.tryLogin(id, password);
+        await user.tryLogin(name, password, db);
         return user;
     }
 
-    async tryLogin(id, password) {
+    async tryLogin(name, password, db) {
+        console.log("tryLogin")
         // Perform DB check
-        const loginSuccessful = await checkLogin(id, password);
+        const loginSuccessful = await checkLogin(name, password, db);
         if (loginSuccessful) {
-            await this.getUserFromDB(id);
+            await this.getUserFromDB(name, db);
         } else {
-            throw new Error('Invalid login credentials');
+            console.log("invalid login credentials")
+            const avatar = Math.floor(Math.random() * 32)
+            await this.createNewUser(name, password, avatar, db)
         }
     }
 
-    async createNewUser(name, avatar) {
+    async createNewUser(name, password, avatar, db) {
+        console.log("createNewUser")
         // Save user to DB and get the user's id
-        const userId = await saveUserToDB(name, avatar);
-        await this.getUserFromDB(userId);
+        const createdUser = await saveUserToDB(name, password, avatar, db);
+        if (createdUser) {
+            this.name = name;
+            this.avatar = avatar;
+            this.balance = 1000;
+        }
+        console.log(this)
+        // await this.getUserFromDB(userId);
     }
 
-    async getUserFromDB(id) {
+    async getUserFromDB(name, db) {
         // Fetch user details from DB
-        const userData = await fetchUserFromDB(id);
-        this.name = userData.name;
+        const userData = await fetchUserFromDB(name, db);
+        this.name = userData.username;
         this.avatar = userData.avatar;
         this.balance = userData.balance;
     }
@@ -56,23 +68,50 @@ class User {
 }
 
 // Mock database functions
-async function checkLogin(id, password) {
+async function checkLogin(name, password, db) {
+    console.log("checkLogin")
     // Simulate a database check
-    return true;
+    const client = await db.connect();
+    const { rows } = await client.query(`SELECT * FROM users WHERE username = '${name}' AND password = '${password}'`);
+    console.log(rows)
+    client.release();
+    return rows.length>0;
+    // return true;
 }
 
-async function saveUserToDB(name, avatar) {
+async function saveUserToDB(name, password, avatar, db) {
     // Simulate saving a new user to the database
-    return 1; // Return user id
+    console.log("saveUserToDB")
+    const client = await db.connect();
+    const { rowCount } = await client.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${name}@test.com.br', ${avatar}, 1000)`);
+    client.release();
+    if (rowCount > 0) {
+        console.log("inserted user into db")
+        return true
+    }
+    console.log("failed to insert user")
+    return false
 }
 
-async function fetchUserFromDB(id) {
+async function fetchUserFromDB(name, db) {
+    console.log("fetchUserFromDB")
+    const client = await db.connect();
+    const { rows } = await client.query(`SELECT * FROM users WHERE username = '${name}'`);
+    client.release();
+    if (rows.length > 0) {
+        console.log("fetchUserFromDB 1")
+        const user = rows[0] ; // Return user id
+        console.log(user)
+        const client = await db.connect();
+        await client.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = '${name}'`);
+        client.release();
+        return {
+            username: user.username,
+            avatar: user.avatar,
+            balance: user.balance
+        };
+    }
     // Simulate fetching a user from the database
-    return {
-        name: id,
-        avatar: 0,
-        balance: 1000
-    };
 }
 
 async function updateBalanceInDB(name, newBalance) {

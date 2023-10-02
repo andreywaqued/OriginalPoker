@@ -5,24 +5,40 @@ const PlayerPoolManager = require('./playerPoolManager');
 const User = require('./user');
 // const TableManager = require('./tableManager')
 // const { Worker } = require('worker_threads');
+//docker acess
 // fastify.register(require('@fastify/postgres'), {
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
 // })
+//internal render acess
+// fastify.register(require('@fastify/postgres'), {
+//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
+// })
+//external render acess
+fastify.register(require('@fastify/postgres'), {
+  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+})
+fastify.addHook('onReady', async () => {
+  console.log("connected")
+  const client = await fastify.pg.connect()
+  // client.query("DROP TABLE users")
+  // client.query("DROP TABLE hands")
+  client.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 20 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  client.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  client.release()
+})
 // fastify.register(require('@fastify/redis'), { host: 'redis', port: 6379 })
 
 playerPoolManager = new PlayerPoolManager(socketManager, fastify)
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
 // tableManager.test()
 console.log("starting")
-// fastify.get('/', async (request, reply) => {
-//   const client = await fastify.pg.connect();
-//   const { rows } = await client.query('SELECT NOW()');
-//   client.release();
-//   return { time: rows[0].now };
-
-
-//   return { hello: 'world' };
-// });
+fastify.get('/users', async (request, reply) => {
+  const client = await fastify.pg.connect();
+  const { rows } = await client.query('SELECT * FROM users');
+  client.release();
+  console.log(rows)
+  return rows;
+});
 // fastify.get('/set', async (request, reply) => {
 //   const { user, name } = request.query
 //   const { redis } = fastify
@@ -58,14 +74,17 @@ socketManager.on('connection', (socket) => {
   console.log('New connection:', socket.id);
   socket.join("lobby")
   // console.log(socket)
-  console.log(socket.connected)
   socket.on("signIn", (data) => {
     console.log(`received signin: ${data.user} ${data.password}`)
-    User.createAndLogin(data.user, data.password).then(user => {
+    User.createAndLogin(data.user, data.password, fastify.pg).then(user => {
+      console.log("created user")
+      console.log(user)
       socket.user = user
       socket.user.playerIDs = []
       socket.user.poolIDs = []
+      console.log("signIn 1")
       socket.emit("signInResponse", {response : "user logged in", status: 200, user : user})
+      console.log("signIn 2")
       socket.emit("updatePools", playerPoolManager.pools)
     }).catch(err => {
       console.log(err)
@@ -127,6 +146,7 @@ fastify.listen({
     }
   }
 );
+
 
 // const worker = new Worker('./matchmaking.js');
 

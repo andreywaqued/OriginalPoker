@@ -73,6 +73,18 @@ class PlayerPoolManager {
             this.socketManager.to("lobby").emit("updatePools", this.pools)
             console.log("log4")
             socket.user.balance -= stackSize
+            this.fastify.pg.connect().then(async (client) => {
+                console.log("updating balance")
+                try {
+                    const result = await client.query(`UPDATE users SET balance = balance - ${stackSize} WHERE username = '${socket.user.name}'`);
+                    console.log(result)
+                } catch (error) {
+                    console.log(error)
+                    
+                }
+                
+                client.release();
+            });
             if (socket) socket.emit("updatePlayerInfo", player)
             if (socket) socket.emit("updateUserInfo", { user : socket.user, status: 200})
             return 
@@ -111,6 +123,7 @@ class PlayerPoolManager {
         const socket = this.sockets[player.socketID]
         // console.log("socket")
         // console.log(socket)
+        if (!socket) return this.leavePool(socket, player)
         if (player.askingRebuy) {
             console.log("returning rebuy")
             return this.tableManager.playerPoolManager.rebuy(player.id, player.poolID, player.rebuyAmount)
@@ -124,7 +137,6 @@ class PlayerPoolManager {
             console.log(`player.isSitout: ${player.isSitout}`)
             console.log(player.isSitout)
             if (socket) return socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
-            // return this.leavePool(socket, player)
         }
         let playerPool = this.playersByPool[poolID]
         playerPool[player.id] = player
@@ -180,6 +192,12 @@ class PlayerPoolManager {
                 console.log("rebuyAmount > 0")
                 player.stackSize += rebuyAmount
                 socket.user.balance -= rebuyAmount
+                this.fastify.pg.connect().then(async (client) => {
+                    console.log("updating balance")
+                    const result = await client.query(`UPDATE users SET balance = balance - ${rebuyAmount} WHERE username = '${socket.user.name}'`);
+                    console.log(result)
+                    client.release();
+                });
                 player.askingRebuy = false
                 player.rebuyAmount = 0
                 player.isSitout = false
@@ -233,6 +251,13 @@ class PlayerPoolManager {
                     console.log("leavePool()5")
                     if (table.waitingForPlayers) table.removePlayer(player) //tira o jogador antes da mao começar
                     if (socket) socket.user.balance += player.stackSize //devolver o balance pro jogador no banco de dados
+                    this.fastify.pg.connect().then(async (client) => {
+                        console.log("updating balance")
+                        const result = await client.query(`UPDATE users SET balance = balance + ${player.stackSize} WHERE username = '${player.name}'`);
+                        console.log(result)
+                        client.release();
+
+                    });
                     if (socket) {
                         const playerIndex = socket.user.playerIDs.indexOf(player.id)
                         socket.user.playerIDs.splice(playerIndex, 1)
@@ -253,6 +278,13 @@ class PlayerPoolManager {
             } else {
                 console.log("leavePool() 7 table undefined")
                 if (socket) socket.user.balance += player.stackSize //devolver o balance pro jogador no banco de dados
+                this.fastify.pg.connect().then(async (client) => {
+                    console.log("updating balance")
+                    const result = await client.query(`UPDATE users SET balance = balance + ${player.stackSize} WHERE username = '${player.name}'`);
+                    console.log(result)
+                    client.release();
+
+                });
                 if (socket) {
                     const playerIndex = socket.user.playerIDs.indexOf(player.id)
                     socket.user.playerIDs.splice(playerIndex, 1)
