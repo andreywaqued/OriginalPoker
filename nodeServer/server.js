@@ -11,7 +11,7 @@ const User = require('./user');
 // })
 //internal render acess
 fastify.register(require('@fastify/postgres'), {
-  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db?ssl=true'
+  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
 })
 //external render acess
 // fastify.register(require('@fastify/postgres'), {
