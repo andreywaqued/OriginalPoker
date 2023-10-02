@@ -209,11 +209,14 @@
       
   }
   function updateBetValue(potPerc){
+    console.log(`updateBetValue(${potPerc})`)
     let sumOfPots = 0
     for (let i = 0; i< pots.length; i++) {
       sumOfPots += pots[i]
     }
-    betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount
+    console.log("betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount")
+    betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount)+callAmount
+    console.log(`${betValue} = ${potPerc}/100*(${sumOfPots} + ${sumOfBetSizes} + ${callAmount} - ${hero.betSize}) + ${callAmount}`)
     // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
     // // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
     // // if (sumOfBetSizes == 0) betValue = betValue * potPerc / 100
@@ -541,6 +544,7 @@
         flex-direction: row;
         width: 100%;
         height: 70%;
+        z-index: 10;
     }
     .playButton:hover, .presetBetSizeButton:hover {
         background-color: white;

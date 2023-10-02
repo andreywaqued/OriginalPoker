@@ -154,15 +154,16 @@ class Table {
                 tableID: player.tableID,
                 stackSize: player.stackSize,
                 hasFolded: player.hasFolded,
-                cards: player.cards,
                 isSitout: player.isSitout,
                 betSize: player.betSize,
+                cards: [],
                 possibleActions: player.possibleActions,
                 isButton : player.isButton,
                 position : player.position,
                 showCards : player.showCards
             }
-            if (handState.handIsBeingPlayed && !handState.isShowdown) handState.players[playerID].cards = ["cb", "cb"]
+            if (player.cards.length > 0) handState.players[playerID].cards = ["cb", "cb"]
+            if (handState.isShowdown && player.showCards) handState.players[playerID].cards = player.cards
             // if (handState.handIsBeingPlayed && handState.isShowdown) handState.players[playerID].cards = ["cb", "cb"]
 
             // console.log(this.sockets[player.socketID])
