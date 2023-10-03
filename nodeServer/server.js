@@ -20,8 +20,8 @@ fastify.register(require('@fastify/postgres'), {
 fastify.addHook('onReady', async () => {
   console.log("connected")
   const client = await fastify.pg.connect()
-  client.query("DROP TABLE users")
-  client.query("DROP TABLE hands")
+  // client.query("DROP TABLE users")
+  // client.query("DROP TABLE hands")
   client.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 20 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   client.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   client.release()
