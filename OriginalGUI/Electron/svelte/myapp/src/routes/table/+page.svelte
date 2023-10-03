@@ -62,7 +62,6 @@
         hero.showCards = true
         possibleActions = player.possibleActions
         if (possibleActions.length > 0) {
-          possibleActions[1].amount
           if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = hero.betSize + hero.stackSize
           callAmount = possibleActions[1].amount
           betValue = possibleActions[2].amount

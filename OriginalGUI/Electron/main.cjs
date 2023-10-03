@@ -31,8 +31,8 @@ const path = require('path');
 //   require('electron-reloader')(module)
 // } catch (_) {}
 
-// const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
+const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
+// const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
 
 
 // Serve the static SvelteKit build files
@@ -214,6 +214,22 @@ socket.on("handTransition", player => {
     // const table = tables[playersID.indexOf(playerID)]
     // if (table) table.addMessage("askRebuy", data)
 })
+socket.on("closeTable", playerID => {
+    console.log("closeTable")
+    console.log(playerID)
+    console.log(playersID)
+    console.log(tables)
+    const tableIndex = playersID.indexOf(playerID)
+    console.log(tableIndex)
+    const table = tables[tableIndex]
+    console.log(table)
+    if (table) {
+      table.close()
+      tables.splice(tableIndex,1)
+      players.splice(tableIndex,1)
+      playersID.splice(tableIndex,1)
+    }
+})
 socket.on("leavePoolResponse", response => {
     console.log("leavePoolResponse")
     // console.log(response)
@@ -228,6 +244,9 @@ socket.on("updatePools", (pools) => {
     // console.log(mainLobby)
     console.log("chamando send message 2")
     if (mainLobby) mainLobby.addMessage("updatePools", pools)
+})
+socket.on("disconnect", () => {
+  app.quit()
 })
 
 // socket.send("SIGN_IN;ALEXANDER;123456")

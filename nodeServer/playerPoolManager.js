@@ -97,14 +97,15 @@ class PlayerPoolManager {
         console.log(poolID)
         console.log(isSitout)
         const pool = this.pools[poolID]
-        const player = this.playersByPool[poolID][playerID]
-        const socket = this.sockets[player.socketID]
         if (!pool) return console.log("pool invalid")
+        const player = this.playersByPool[poolID][playerID]
         if (!player) return console.log("player invalid")
+        const socket = this.sockets[player.socketID]
         if (!socket) return console.log("socket invalid")
         player.isSitout = isSitout //player can become sitout or not
         if (!isSitout) {
             const table = this.tableManager.tables[poolID][player.tableID]
+            clearTimeout(player.leavePoolTimeout)
             if (!table) return this.reEnterPool(player) //player is coming back from sitout
             if (player.hasFolded) return this.reEnterPool(player) //player is coming back from sitout
         }
@@ -123,7 +124,7 @@ class PlayerPoolManager {
         const socket = this.sockets[player.socketID]
         // console.log("socket")
         // console.log(socket)
-        if (!socket) return this.leavePool(socket, player)
+        if (!socket || player.tableClosed) return this.leavePool(socket, player)
         if (player.askingRebuy) {
             console.log("returning rebuy")
             return this.tableManager.playerPoolManager.rebuy(player.id, player.poolID, player.rebuyAmount)
@@ -136,7 +137,16 @@ class PlayerPoolManager {
         if (player.isSitout) {
             console.log(`player.isSitout: ${player.isSitout}`)
             console.log(player.isSitout)
-            if (socket) return socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
+            if (socket) socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
+            const playerByID = this.playersByPool[poolID][player.id]
+            clearTimeout(playerByID.leavePoolTimeout)
+            if (!this.tableManager.tables[poolID][player.tableID]) playerByID.leavePoolTimeout = setTimeout(()=>{
+                console.log("leave pool timeout")
+                if (socket) socket.emit("closeTable", player.id)
+                this.leavePool(socket, playerByID)
+            }, 300000)
+            return
+            //  this.leavePool(socket, player)
         }
         let playerPool = this.playersByPool[poolID]
         playerPool[player.id] = player
@@ -217,7 +227,7 @@ class PlayerPoolManager {
         console.log(player.stackSize)
         console.log(socket.user.balance)
     }
-    leavePool(socket, playerFromClient) {
+    leavePool(socket, playerFromClient, tableClosed = false) {
         console.log("leavePool()")
         console.log(playerFromClient.name)
         console.log(`playerFromClient.tableID: ${playerFromClient.tableID}`)
@@ -245,6 +255,7 @@ class PlayerPoolManager {
                     console.log(player.isSitout)
                     console.log(table.currentHand.positionActing)
                     player.isSitout = true
+                    if (tableClosed) player.tableClosed = true
                     if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) return table.validateAction(player, {type: "fold", amount: 0})
                 }
                 if (!table.currentHand.handIsBeingPlayed) {

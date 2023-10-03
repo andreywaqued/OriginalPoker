@@ -233,7 +233,7 @@ class Table {
         console.log("validateAction 1")
         const playerSocket = this.sockets[playerFromClient.socketID]
         const player = this.players[playerFromClient.id]
-        player.isSitout = playerFromClient.isSitout
+        // player.isSitout = playerFromClient.isSitout
         // console.log(player)
         if (!this.currentHand.handIsBeingPlayed && playerSocket) return console.log(playerSocket.emit("actionResponse", {message: "hand is over", status:401}), "hand is over")
         const currentPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.positionActing]]
@@ -569,6 +569,9 @@ class Table {
         //     player.isButton = false
         //     player.contestingPots = [0]
         // } now im resetting these info when the player sits in
+        console.log("closeHand() 2")
+        this.tableManager.socketManager.socketsLeave(`table:${this.id}`)
+        delete this.tableManager.tables[this.poolID][this.id]
         console.log("closeHand() 1")
         // this.broadcastHandState() //talvez nao precise fazer isso aqui
         for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
@@ -580,7 +583,9 @@ class Table {
             console.log(player.hasFolded)
             console.log(player.isSitout)
             const socket = this.sockets[player.socketID]
-            if (!player.hasFolded) this.tableManager.playerPoolManager.reEnterPool(player) //if player folded, it had already reentered the pool
+
+            if (!player.hasFolded || player.isSitout) this.tableManager.playerPoolManager.reEnterPool(player) //if player folded, it had already reentered the pool
+
             // this.removePlayer(player)
         }
         // console.log(this.tableManager)
@@ -588,9 +593,7 @@ class Table {
         // console.log(this.tables)
         // console.log(this.poolID)
         // console.log(this.id)
-        console.log("closeHand() 2")
-        this.tableManager.socketManager.socketsLeave(`table:${this.id}`)
-        delete this.tableManager.tables[this.poolID][this.id]
+        
         // console.log(this.tableManager.tables[this.poolID][this.id])
 
     }
