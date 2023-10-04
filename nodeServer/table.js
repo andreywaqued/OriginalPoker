@@ -225,6 +225,8 @@ class Table {
         console.log(`validateAction(playerFromClient, action)`)
         console.log(playerFromClient.name)
         console.log(action)
+        action.amount = parseFloat(action.amount)
+        if (action.amount === NaN) return playerSocket.emit("actionResponse", {message: "action not allowed", status:401})
         //validate if player can make that action
         //update gamestate and broadcast or reply invalid
         // console.log(this.currentHand.actionSequence)
