@@ -162,7 +162,8 @@ class Table {
                 possibleActions: player.possibleActions,
                 isButton : player.isButton,
                 position : player.position,
-                showCards : player.showCards
+                showCards : player.showCards,
+                isWinner : player.isWinner
             }
             if (player.cards.length > 0) handState.players[playerID].cards = ["cb", "cb"]
             if (handState.isShowdown && player.showCards) handState.players[playerID].cards = player.cards
