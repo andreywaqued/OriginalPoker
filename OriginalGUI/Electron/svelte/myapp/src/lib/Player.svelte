@@ -14,7 +14,7 @@
     //  * @type {Object.<string,any>}
     //  */
     // export let player
-    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions;
+    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions, isWinner;
     const deck = "boardDeck"
     let playerTurn = false;
     // export let playerName, balance: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["As", "5c"], deck : "boardDeck", isButton : true, isHero : true, lastAction : "cardDealt"
@@ -355,6 +355,11 @@
             color: whitesmoke;
             padding-right: 5%;
         }
+        .winner{
+            border-top: 1px solid green;
+            border-left: 1px solid green;
+            border-right: 1px solid green;
+        }
         z-index: 2;
     }
     .playerBalance {
@@ -368,6 +373,11 @@
         span {
             color: whitesmoke;
             padding-right: 5%;
+        }
+        .winner{
+            border-bottom: 1px solid green;
+            border-left: 1px solid green;
+            border-right: 1px solid green;
         }
         ::before {
             position: absolute;
@@ -892,8 +902,8 @@
         <div class="playerImage" style={cssVarStyles}>
             <div class="playerCircle"></div>
         </div>
-        <div class="playerName"><span>{name}</span></div>
-        <div class="playerBalance"><span>{stackSize}</span></div>
+        <div class="playerName" class:winner={isWinner}><span>{name}</span></div>
+        <div class="playerBalance" class:winner={isWinner}><span>{stackSize}</span></div>
         {#if betSize > 0}
             <div class="playerBet"><span class="value">{betSize}</span></div>
         {/if}

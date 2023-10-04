@@ -38,6 +38,7 @@
   let callAmount = 0;
   let minBet = 0;
   let maxBet = 9999999;
+  let biggestBet = 0;
   let currentPlayerActing = ""
   let currentGameState = {}
   let sumOfBetSizes = 0
@@ -110,6 +111,7 @@
         pots = gameState.pots
         sbSize = gameState.sb
         bbSize = gameState.bb
+        biggestBet = gameState.biggestBet
         currentGameState = gameState
         console.log(playersComponents)
         Object.values(playersComponents).forEach( playerComponent => { 
@@ -214,8 +216,8 @@
       sumOfPots += pots[i]
     }
     console.log("betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount")
-    betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount
-    console.log(`${betValue} = ${potPerc}/100*(${sumOfPots} + ${sumOfBetSizes} + ${callAmount} - ${hero.betSize}) + ${callAmount}`)
+    betValue = potPerc/100*(sumOfPots + sumOfBetSizes + biggestBet - hero.betSize)+biggestBet
+    console.log(`${betValue} = ${potPerc}/100*(${sumOfPots} + ${sumOfBetSizes} + ${callAmount}) + ${biggestBet}`)
     // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
     // // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
     // // if (sumOfBetSizes == 0) betValue = betValue * potPerc / 100

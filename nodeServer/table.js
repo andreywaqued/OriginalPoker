@@ -98,6 +98,7 @@ class Table {
         player.hasFolded = false
         player.isButton = false
         player.showCards = false
+        player.isWinner = false
         player.contestingPots = [0]
         player.finalHandRank = {rank: -1}
         // player.isSitout = false;
@@ -209,14 +210,14 @@ class Table {
             avatar: player.avatar,
             tableID: player.tableID,
             stackSize: player.stackSize,
-            hasFolded: player.hasFolded,
+            hasFolded: true,
             cards: [],
             isSitout: player.isSitout,
-            betSize: player.betSize,
-            possibleActions: player.possibleActions,
-            isButton : player.isButton,
-            position : player.position,
-            showCards : player.showCards
+            betSize: 0,
+            possibleActions: [],
+            isButton : false,
+            position : 0,
+            showCards : false
         }
         const socket = this.sockets[player.socketID]
         if (socket) socket.emit("updateGameState", handState);
@@ -339,6 +340,7 @@ class Table {
                 // console.log(potIndex)
                 winners[i].stackSize += this.currentHand.pots[potIndex]/winners.length
                 if (playersContestingThisPot > 1) winners[i].showCards = true
+                winners[i].isWinner = true
             }
             if (winners.length > 0) this.currentHand.actionSequence.push({pot: potIndex, winners: winners})
             this.currentHand.pots[potIndex] = 0
