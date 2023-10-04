@@ -39,6 +39,9 @@ fastify.get('/users', async (request, reply) => {
   console.log(rows)
   return rows;
 });
+fastify.get('/pools', async (request, reply) => {
+  return playerPoolManager.playersByPool
+});
 // fastify.get('/set', async (request, reply) => {
 //   const { user, name } = request.query
 //   const { redis } = fastify

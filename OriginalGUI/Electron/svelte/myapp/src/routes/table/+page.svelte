@@ -494,35 +494,36 @@
       }
     }
     .betDisplay {
-        all: unset;
-        background-color: rgba(0,0,0,0.5);
-        width: 46%;
-        height: 100%;
-        // transform: translateX(80%);
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        text-align: end;
-        padding: 0 2%;
-        // border: 1px solid yellow;
-        border-radius: 5px;
-        font-size: 0.8em;
-        color: rgba(255,255,255,0.7);
+      /* Chrome, Safari, Edge, Opera */
+      all: unset;
+      background-color: rgba(0,0,0,0.5);
+      width: 46%;
+      height: 100%;
+      // transform: translateX(80%);
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      text-align: end;
+      padding: 0 2%;
+      // border: 1px solid yellow;
+      border-radius: 5px;
+      font-size: 0.8em;
+      color: rgba(255,255,255,0.7);
 
-        span {
-            color: white;
-            padding-right: 5%;
-            opacity: 0.7;
-        }
-        ::before {
-            display: block;
-            position: absolute;
-            // left: 15%;
-            color: white;
-            content: "$";
-            align-self: flex-start;
-            font-size: 0.5em;
-        }
+      span {
+          color: white;
+          padding-right: 5%;
+          opacity: 0.7;
+      }
+      ::before {
+          display: block;
+          position: absolute;
+          // left: 15%;
+          color: white;
+          content: "$";
+          align-self: flex-start;
+          font-size: 0.5em;
+      }
     }
     .dolarSign {
       position: absolute;
@@ -788,7 +789,7 @@
             <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
           </div>
           <label class="dolarSign">$</label>
-          <input class="betDisplay" type="number" bind:value={betValue}/>
+          <input class="betDisplay" type="number" min={minBet} max={maxBet} step={sbSize} bind:value={betValue}/>
         </div>
         <div class="betSlider">
           <button class="betSliderButton" on:click={minusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg></button>
