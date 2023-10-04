@@ -55,6 +55,7 @@
     let playerCardsHero
     let playerCardsFolded = false;
     let playerCardsShow = false;
+    $: console.log(`isWinner: ${isWinner}`)
     export function dealCards() {
         console.log("dealCard called at player " + playerID)
         // const playerCards = document.getElementsByClassName("playerCards")[position]
@@ -355,13 +356,14 @@
             color: whitesmoke;
             padding-right: 5%;
         }
-        .winner{
-            border-top: 1px solid green;
-            border-left: 1px solid green;
-            border-right: 1px solid green;
-        }
         z-index: 2;
     }
+    .playerName.winner {
+        border-top: 1px solid green;
+        border-left: 1px solid green;
+        border-right: 1px solid green;
+    }
+    
     .playerBalance {
         width: 100%;
         height: 18%;
@@ -374,17 +376,17 @@
             color: whitesmoke;
             padding-right: 5%;
         }
-        .winner{
-            border-bottom: 1px solid green;
-            border-left: 1px solid green;
-            border-right: 1px solid green;
-        }
         ::before {
             position: absolute;
             content: "$";
             left: 5%;
         }
         z-index: 2;
+    }
+    .playerBalance.winner {
+        border-bottom: 1px solid green;
+        border-left: 1px solid green;
+        border-right: 1px solid green;
     }
     .playerButton {
         background-image: url('/Dealer.png');

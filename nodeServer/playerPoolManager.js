@@ -139,7 +139,7 @@ class PlayerPoolManager {
             console.log(player.isSitout)
             if (socket) socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
             const playerByID = this.playersByPool[poolID][player.id]
-            clearTimeout(playerByID.leavePoolTimeout)
+            if (playerByID) clearTimeout(playerByID.leavePoolTimeout)
             if (!this.tableManager.tables[poolID][player.tableID]) playerByID.leavePoolTimeout = setTimeout(()=>{
                 console.log("leave pool timeout")
                 if (socket) socket.emit("closeTable", player.id)

@@ -99,6 +99,7 @@ class Table {
         player.isButton = false
         player.showCards = false
         player.isWinner = false
+        player.betSize = 0
         player.contestingPots = [0]
         player.finalHandRank = {rank: -1}
         // player.isSitout = false;
