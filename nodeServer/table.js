@@ -137,6 +137,8 @@ class Table {
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             const playerID = this.playerIDByPositionIndex[i]
             const player = this.players[playerID]
+            console.log(player)//this gave an error recently,
+            // trying to verify what it is sending to see if can filter to avoid sending too much information
             if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("updatePlayerInfo", player)
         }
     }
@@ -218,7 +220,7 @@ class Table {
             betSize: 0,
             possibleActions: [],
             isButton : false,
-            position : 0,
+            position : player.position,
             showCards : false
         }
         const socket = this.sockets[player.socketID]

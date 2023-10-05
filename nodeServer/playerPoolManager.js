@@ -29,6 +29,7 @@ class PlayerPoolManager {
             "lightning3" : {title: "Lightning Cash Game ⚡ NL 100", gameTitle: "NL 100", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.50, bb: 1, minBuyIn: 20, maxBuyIn: 100, currentPlayers:0},
             "lightning4" : {title: "Lightning Cash Game ⚡ NL 200", gameTitle: "NL 200", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:1, bb: 2, minBuyIn: 40, maxBuyIn: 200, currentPlayers:0}
         }
+        this.leavePoolTimeout = {}
         this.tableManager = new TableManager(this.socketManager, this.fastify, this)
     }
     /**
@@ -105,7 +106,8 @@ class PlayerPoolManager {
         player.isSitout = isSitout //player can become sitout or not
         if (!isSitout) {
             const table = this.tableManager.tables[poolID][player.tableID]
-            clearTimeout(player.leavePoolTimeout)
+            // clearTimeout(player.leavePoolTimeout)
+            clearTimeout(this.leavePoolTimeout[player.id])
             if (!table) return this.reEnterPool(player) //player is coming back from sitout
             if (player.hasFolded) return this.reEnterPool(player) //player is coming back from sitout
         }
@@ -138,12 +140,12 @@ class PlayerPoolManager {
             console.log(`player.isSitout: ${player.isSitout}`)
             console.log(player.isSitout)
             if (socket) socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
-            const playerByID = this.playersByPool[poolID][player.id]
-            if (playerByID) clearTimeout(playerByID.leavePoolTimeout)
-            if (!this.tableManager.tables[poolID][player.tableID]) playerByID.leavePoolTimeout = setTimeout(()=>{
+            const playerFromID = this.playersByPool[poolID][player.id]
+            if (this.leavePoolTimeout[player.id]) clearTimeout(this.leavePoolTimeout[player.id])
+            if (!this.tableManager.tables[poolID][player.tableID]) this.leavePoolTimeout[player.id] = setTimeout(()=>{
                 console.log("leave pool timeout")
                 if (socket) socket.emit("closeTable", player.id)
-                this.leavePool(socket, playerByID)
+                this.leavePool(socket, playerFromID)
             }, 300000)
             return
             //  this.leavePool(socket, player)

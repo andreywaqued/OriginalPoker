@@ -10,13 +10,13 @@ const User = require('./user');
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
 // })
 //internal render acess
-fastify.register(require('@fastify/postgres'), {
-  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
-})
-//external render acess
 // fastify.register(require('@fastify/postgres'), {
-//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
 // })
+//external render acess
+fastify.register(require('@fastify/postgres'), {
+  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+})
 fastify.addHook('onReady', async () => {
   console.log("connected")
   const client = await fastify.pg.connect()
@@ -25,6 +25,18 @@ fastify.addHook('onReady', async () => {
   client.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 20 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   client.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   client.release()
+})
+fastify.addHook('onClose', async () => {
+  console.log("onClose")
+  //return the money to the players that were waiting to leave the pool
+  Object.keys(PlayerPoolManager.sockets).forEach((socketID)=>{
+    PlayerPoolManager.sockets[socketID].disconnect()
+  })
+  Object.keys(PlayerPoolManager.leavePoolTimeout).forEach((key)=>{
+    PlayerPoolManager.leavePoolTimeout[key]._onTimeout()
+    clearTimeout(PlayerPoolManager.leavePoolTimeout[key])
+  })
+  done()
 })
 // fastify.register(require('@fastify/redis'), { host: 'redis', port: 6379 })
 
@@ -145,7 +157,7 @@ fastify.listen({
   (err) => {
     if (err) {
       fastify.log.error(err);
-      process.exit(1);
+      // process.exit(1);
     }
   }
 );
