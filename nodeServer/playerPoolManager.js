@@ -282,7 +282,7 @@ class PlayerPoolManager {
                     this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
                     this.socketManager.to("lobby").emit("updatePools", this.pools)
                     // delete this.sockets[player.socketID]
-                    if (table.playerIDByPositionIndex.length === 0) {
+                    if (table.countPlayers() === 0) {
                         this.socketManager.socketsLeave(`table:${table.id}`)
                         delete this.tableManager.tables[player.poolID][table.id]
                     }

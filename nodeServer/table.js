@@ -50,7 +50,7 @@ class Table {
         this.timeBank = 20000
         this.timeLimitCounter = undefined
         this.socketManager = TableManager.socketManager;
-        this.playerIDByPositionIndex = [];
+        this.playerIDByPositionIndex = new Array(this.tableSize).fill(null);
         this.players = {};
         this.sockets = {};
         this.waitingForPlayers = true;
@@ -91,7 +91,15 @@ class Table {
             console.log(Object.keys(this.tableManager.playerPoolManager.sockets))
             return
         } 
-        player.position = this.playerIDByPositionIndex.length;
+        player.position = -1;
+        for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
+            if (!this.playerIDByPositionIndex[i]) {
+                this.playerIDByPositionIndex[i] = player.id;
+                player.position = i;
+                break
+            }
+        }
+        if (player.position === -1) return console.log("failed to find a seat")
         player.cards = []
         player.actedSinceLastRaise = false
         player.possibleActions = []
@@ -104,7 +112,7 @@ class Table {
         player.finalHandRank = {rank: -1}
         // player.isSitout = false;
         this.players[player.id] = player;
-        this.playerIDByPositionIndex.push(player.id);
+        // this.playerIDByPositionIndex.push(player.id);
         player.tableID = this.id;
         this.sockets[player.socketID] = this.tableManager.playerPoolManager.sockets[player.socketID];
         this.sendHandTrasition(player)
@@ -113,12 +121,12 @@ class Table {
         // console.log(this.playerIDByPositionIndex)
         // console.log(this.sockets)
 
-        if (this.playerIDByPositionIndex.length > 1) {
+        if (this.countPlayers() >= 2) {
             clearTimeout(this.startHandTimer)
             this.startHandTimer = setTimeout(() => this.startNewHand(), 5000)
         }
         // if (this.playerIDByPositionIndex.length === this.tableSize) this.startHandTimer = setTimeout(() => this.startNewHand(), 0)
-        if (this.playerIDByPositionIndex.length === this.tableSize) {
+        if (this.countPlayers() === this.tableSize) {
             clearTimeout(this.startHandTimer)
             this.startNewHand()
         }
@@ -137,6 +145,7 @@ class Table {
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             const playerID = this.playerIDByPositionIndex[i]
             const player = this.players[playerID]
+            if (!player) continue
             console.log(player)//this gave an error recently,
             // trying to verify what it is sending to see if can filter to avoid sending too much information
             if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("updatePlayerInfo", player)
@@ -152,6 +161,7 @@ class Table {
             console.log("entrou no player " + this.playerIDByPositionIndex[i])
             const playerID = this.playerIDByPositionIndex[i]
             const player = this.players[playerID]
+            if (!player) continue
             handState.players[playerID] = {
                 id : player.id,
                 name: player.name,
@@ -225,6 +235,29 @@ class Table {
         }
         const socket = this.sockets[player.socketID]
         if (socket) socket.emit("updateGameState", handState);
+    }
+    countPlayers(){
+        let count = 0
+        for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
+            if (!this.playerIDByPositionIndex[i]) continue
+            count++
+        } 
+        return count
+    }
+    findNextPlayer(start){
+        if (start >= this.playerIDByPositionIndex.length) start -= this.playerIDByPositionIndex.length
+        for (let i = start+1; i <= start + this.playerIDByPositionIndex.length; i++) {
+            let index = i
+            if (index >= this.playerIDByPositionIndex.length) index -= this.playerIDByPositionIndex.length
+            console.log(index)
+            if (!this.playerIDByPositionIndex[index]) continue
+            console.log("returning: " + index)
+            console.log("playerID: " + this.playerIDByPositionIndex[index])
+            return index
+            if (i === this.countPlayers()) i - this.countPlayers()
+            if (!this.playerIDByPositionIndex[i]) continue
+            return i
+        } 
     }
     validateAction(playerFromClient, action) {
         console.log(`validateAction(playerFromClient, action)`)
@@ -326,6 +359,7 @@ class Table {
             let playersContestingThisPot = 0
             for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
                 const player = this.players[this.playerIDByPositionIndex[i]]
+                if (!player) continue
                 if (player.hasFolded || !player.contestingPots.includes(potIndex)) continue
                 playersContestingThisPot++
                 // player.finalHandRank = {rank: -1}
@@ -370,6 +404,7 @@ class Table {
         this.currentHand.isShowdown = true
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             const player = this.players[this.playerIDByPositionIndex[i]]
+            if (!player) continue
             if (!player.hasFolded) player.showCards = true
         }
         this.startNewRound(1000)
@@ -378,12 +413,13 @@ class Table {
         console.log("prepareNextPlayerTurn()")
         if (!this.currentHand.handIsBeingPlayed) return console.log("hand is over")
         
-        if (this.currentHand.playersFolded === this.playerIDByPositionIndex.length - 1) return this.startNewRound()
+        if (this.currentHand.playersFolded === this.countPlayers() - 1) return this.startNewRound()
         let playersLeftWithChips = 0
-        if (this.currentHand.playersFolded + this.currentHand.playersAllin === this.playerIDByPositionIndex.length) return this.startNewRoundAtShowdown()
+        if (this.currentHand.playersFolded + this.currentHand.playersAllin === this.countPlayers()) return this.startNewRoundAtShowdown()
         console.log("prepareNextPlayerTurn() 1")
-        this.currentHand.positionActing++
-        if (this.currentHand.positionActing > this.playerIDByPositionIndex.length - 1) this.currentHand.positionActing -= this.playerIDByPositionIndex.length
+        this.currentHand.positionActing = this.findNextPlayer(this.currentHand.positionActing)
+        // this.currentHand.positionActing++
+        // if (this.currentHand.positionActing > this.playerIDByPositionIndex.length - 1) this.currentHand.positionActing -= this.playerIDByPositionIndex.length
         // console.log(this.currentHand.positionActing)
         // console.log(this.playerIDByPositionIndex.length)
         const nextPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.positionActing]]
@@ -392,6 +428,7 @@ class Table {
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             if (playersLeftWithChips > 2) continue
             const player = this.players[this.playerIDByPositionIndex[i]]
+            if (!player) continue
             if (!player.hasFolded && player.stackSize + player.betSize > nextPlayer.betSize) playersLeftWithChips++
         }
         if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
@@ -438,6 +475,7 @@ class Table {
         console.log("setAllPlayerActedSinceLastRaiseToFalse()")
         for (let i = 0; i<this.playerIDByPositionIndex.length;i++) {
             const player = this.players[this.playerIDByPositionIndex[i]]
+            if (!player) continue
             player.actedSinceLastRaise = false;
         }
     }
@@ -455,6 +493,7 @@ class Table {
             console.log("putBetsIntoPot() 2")
             const player = this.players[this.playerIDByPositionIndex[i]]
             // console.log(smallestAllin)
+            if (!player) continue
             if (player.stackSize === 0 && player.betSize > 0) {
                 if (player.betSize <= smallestAllin) smallestAllin = player.betSize
             }
@@ -500,6 +539,7 @@ class Table {
         console.log("putBetsIntoPot() 4")
         for (let i = 0; i<this.playerIDByPositionIndex.length;i++) {
             const player = this.players[this.playerIDByPositionIndex[i]]
+            if (!player) continue
             if (player.stackSize === 0 && player.betSize > 0) playersAllinOnThisRound++
             if (player.betSize === 0) continue
             if (player.betSize >= smallestAllin) {
@@ -526,7 +566,7 @@ class Table {
     startNewRound(timeout = 500) {
         console.log("startNewRound()")
         this.putBetsIntoPot()
-        if (this.currentHand.playersFolded === this.playerIDByPositionIndex.length - 1) return this.evaluateHand()
+        if (this.currentHand.playersFolded === this.countPlayers() - 1) return this.evaluateHand()
         // for (let i = 0; i<this.currentHand.playersToRemoveThisRound.length; i++) {
         //     const index = this.currentHand.playersToRemoveThisRound[i]
         //     this.playerIDByPositionIndex.splice(index, 1)
@@ -585,6 +625,7 @@ class Table {
         for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
             console.log("closeHand() loop index:" + i)
             const player = this.players[this.playerIDByPositionIndex[i]]
+            if (!player) continue
             console.log(this.id)
             console.log(player.name)
             console.log(player.tableID)
@@ -610,8 +651,10 @@ class Table {
         console.log("removePlayer()")
         console.log(player.name)
         const playerIndex = this.playerIDByPositionIndex.indexOf(player.id)
-        const playerKey = this.playerIDByPositionIndex.splice(playerIndex, 1)
+        const playerKey = this.playerIDByPositionIndex[playerIndex]
         delete this.players[playerKey]
+        delete this.sockets[player.socketID]
+        this.playerIDByPositionIndex[playerIndex] = null
         this.broadcastHandState()
     }
     startNewHand() {
@@ -633,6 +676,7 @@ class Table {
         this.deck = new Deck()
         for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
             const player = this.players[this.playerIDByPositionIndex[i]]
+            if (!player) continue
             // if (player.stackSize === 0 || player.isSitout) {
             //     const socket = this.sockets[player.socketID]
             //     if (socket) this.tableManager.playerPoolManager.reEnterPool(player) //create a copy of player
@@ -647,7 +691,7 @@ class Table {
             player.isButton = false
             player.contestingPots = [0]
         }
-        if (this.playerIDByPositionIndex.length < 2) {
+        if (this.countPlayers() < 2) {
             this.waitingForPlayers = true;
             this.currentHand.handIsBeingPlayed = false;
             return console.log("exiting because we have less than 2 players")
@@ -661,15 +705,20 @@ class Table {
         console.log("determinePlayerPositions()")
         //bb, sb, button, etc
         //set initial playerTurn
-        this.currentHand.dealerPos = Math.floor(Math.random() * this.playerIDByPositionIndex.length)
-        if (this.currentHand.dealerPos >= this.playerIDByPositionIndex.length) this.currentHand.dealerPos -= this.playerIDByPositionIndex.length
+        const randomStart = Math.floor(Math.random() * this.countPlayers())
+        console.log(randomStart)
+        this.currentHand.dealerPos = this.findNextPlayer(randomStart)
+        console.log(this.currentHand.dealerPos)
+        // if (this.currentHand.dealerPos >= this.playerIDByPositionIndex.length) this.currentHand.dealerPos -= this.playerIDByPositionIndex.length
         const dealerPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.dealerPos]]
+        console.log(this.playerIDByPositionIndex)
+        console.log(dealerPlayer)
         dealerPlayer.isButton = true;
-        this.currentHand.sbPos = this.currentHand.dealerPos + 1
-        if (this.playerIDByPositionIndex.length === 2) this.currentHand.sbPos = this.currentHand.dealerPos
-        if (this.currentHand.sbPos >= this.playerIDByPositionIndex.length) this.currentHand.sbPos -= this.playerIDByPositionIndex.length
-        this.currentHand.bbPos = this.currentHand.sbPos + 1
-        if (this.currentHand.bbPos >= this.playerIDByPositionIndex.length) this.currentHand.bbPos -= this.playerIDByPositionIndex.length
+        this.currentHand.sbPos = this.findNextPlayer(this.currentHand.dealerPos)
+        if (this.countPlayers() === 2) this.currentHand.sbPos = this.currentHand.dealerPos
+        // if (this.currentHand.sbPos >= this.playerIDByPositionIndex.length) this.currentHand.sbPos -= this.playerIDByPositionIndex.length
+        this.currentHand.bbPos = this.findNextPlayer(this.currentHand.sbPos)
+        // if (this.currentHand.bbPos >= this.playerIDByPositionIndex.length) this.currentHand.bbPos -= this.playerIDByPositionIndex.length
         const sbPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.sbPos]]
         const bbPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.bbPos]]
         sbPlayer.betSize = this.sb

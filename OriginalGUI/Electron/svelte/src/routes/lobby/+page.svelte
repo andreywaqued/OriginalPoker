@@ -44,7 +44,7 @@
                 console.log("updateUser")
                 console.log(user)
                 userName = user.name
-                userBalance = user.balance
+                userBalance = Math.round(user.balance * 100)/100
                 userAvatar = user.avatar
                 userLoggedIn = true
             });
@@ -93,7 +93,7 @@
     function openNewTable(poolID) {
         let stackSize = gamesAvaiable[poolID].buyInAmount
         if (stackSize < gamesAvaiable[poolID].minBuyIn ) stackSize = gamesAvaiable[poolID].minBuyIn
-        api.send("open-new-table", {poolID: poolID, stackSize: stackSize})
+        api.send("open-new-table", {poolID: poolID, stackSize: Math.round(stackSize * 100) / 100})
     }
     
     let doordashClass = "doordashDiv hide"

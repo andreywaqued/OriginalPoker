@@ -66,7 +66,7 @@
         if (possibleActions.length > 0) {
           if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = hero.betSize + hero.stackSize
           callAmount = possibleActions[1].amount
-          betValue = possibleActions[2].amount
+          betValue = Math.round(possibleActions[2].amount * 100) / 100
           if (betValue > hero.betSize + hero.stackSize) betValue = hero.betSize + hero.stackSize
           minBet = betValue;
           maxBet = player.betSize + player.stackSize;
@@ -198,16 +198,16 @@
   }
   function plusBetSlider(){
     if (betValue + sbSize >= maxBet) {
-      betValue = maxBet
+      betValue = Math.round(maxBet * 100) / 100
     } else {
-      betValue += sbSize
+      betValue = Math.round((maxBet + sbSize) * 100) / 100 
     }
   }
   function minusBetSlider(){
     if (betValue - sbSize <= minBet) {
-      betValue = minBet
+      betValue = Math.round(minBet * 100) / 100
     } else {
-      betValue -= sbSize
+      betValue = Math.round((maxBet - sbSize) * 100) / 100 
     }
       
   }
@@ -236,6 +236,8 @@
 
     if (betValue > hero.betSize + hero.stackSize) betValue = hero.betSize + hero.stackSize
     if (betValue < minBet) betValue = minBet
+    betValue = Math.round(betValue * 100) / 100
+    
   }
 
   /**
@@ -337,7 +339,7 @@
   }
   function parseAction(index) {
     let action = possibleActions[index]
-    if (index === 2) action.amount = betValue
+    if (index === 2) action.amount = Math.round(betValue * 100) / 100
     api.send("parseAction", {player: hero, action: action})
     possibleActions = []
   }
@@ -460,6 +462,19 @@
     height: 100%;
     // background-color: azure;
     aspect-ratio: 6/9;
+}
+button:active {
+  transform: scale(0.95);
+}
+button {
+  all: unset;
+  border: none;
+  border-bottom: 0.4vh solid #c1c1c1;
+  background-color: #e3e3e3;
+  border-radius: 1.3vw;
+}
+button:hover {
+  background-color: white;
 }
 .playButtonsContainer {
     position: absolute;
@@ -678,10 +693,20 @@
   .auxiliarButtons {
     position: absolute;
     width: 100%;
-    height: 5%;
+    height: 4.5%;
     top: 20px;
     display: flex;
     z-index: 100;
+    gap: 0.5%;
+    padding-top: 0.5%;
+    padding-left: 0.5%;
+    button {
+      width: 8%;
+      font-size: 0.6em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
     .sitout {
       background-color: lightcoral;
     }
@@ -751,7 +776,7 @@
   <TitleBar {winTitle}/>
   <div class="auxiliarButtons">
     <button on:click={tileTables}>Tile Tables</button>
-    <button on:click={toggleHH}>HH</button>
+    <button on:click={toggleHH}>Hand History</button>
     <button on:click={toggleRebuy}>Rebuy</button>
     <button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
   </div>
