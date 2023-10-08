@@ -14,10 +14,10 @@
     let userLoggedIn = false
    
     let gamesAvaiable = {
-        "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 125, minBuyIn: "$2.00", maxBuyIn: "10.00", buyInAmount: -1},
-        "lightning2" : {gameTitle: "NL 50", blinds: "$0.25 / $0.50", players: 85, minBuyIn: "$10.00", maxBuyIn: "50.00", buyInAmount: -1},
-        "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 35, minBuyIn: "$20.00", maxBuyIn: "100.00", buyInAmount: -1},
-        "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 1025, minBuyIn: "$40.00", maxBuyIn: "200.00", buyInAmount: -1}
+        "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 125, minBuyIn: 2, maxBuyIn: 10, buyInAmount: -1},
+        "lightning2" : {gameTitle: "NL 50", blinds: "$0.25 / $0.50", players: 85, minBuyIn: 10, maxBuyIn: 50, buyInAmount: -1},
+        "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 35, minBuyIn: 20, maxBuyIn: 100, buyInAmount: -1},
+        "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 1025, minBuyIn: 40, maxBuyIn: 200, buyInAmount: -1}
     }
     let menuIndexSelected = 0
     let menuItens = ["games", "profile", "settings"]
@@ -54,9 +54,9 @@
                     const pool = pools[key]
                     const gamePool = newGamesAvaiable[key]
                     gamePool.gameTitle = pool.gameTitle
-                    gamePool.blinds = `$${pool.sb} / $${pool.bb}`
-                    gamePool.minBuyIn = `$${pool.minBuyIn}`
-                    gamePool.maxBuyIn = `$${pool.maxBuyIn}`
+                    gamePool.blinds = `$${pool.sb.toFixed(2)} / $${pool.bb.toFixed(2)}`
+                    gamePool.minBuyIn = pool.minBuyIn
+                    gamePool.maxBuyIn = pool.maxBuyIn
                     gamePool.players = pool.currentPlayers
                     if (gamePool.buyInAmount === -1) gamePool.buyInAmount = pool.maxBuyIn
                 })
@@ -91,8 +91,14 @@
      * @param {String} tableName
      */
     function openNewTable(poolID) {
-        let stackSize = gamesAvaiable[poolID].buyInAmount
-        if (stackSize < gamesAvaiable[poolID].minBuyIn ) stackSize = gamesAvaiable[poolID].minBuyIn
+        let stackSize = parseFloat(gamesAvaiable[poolID].buyInAmount)
+        console.log(stackSize)
+        console.log(userBalance)
+        console.log(gamesAvaiable[poolID].minBuyIn)
+        console.log(gamesAvaiable[poolID].maxBuyIn)
+        console.log(userBalance < gamesAvaiable[poolID].buyInAmount || gamesAvaiable[poolID].buyInAmount < gamesAvaiable[poolID].minBuyIn || gamesAvaiable[poolID].buyInAmount > gamesAvaiable[poolID].maxBuyIn)
+        // if (stackSize < gamesAvaiable[poolID].minBuyIn ) stackSize = gamesAvaiable[poolID].minBuyIn
+        // if (stackSize > gamesAvaiable[poolID].maxBuyIn ) stackSize = gamesAvaiable[poolID].maxBuyIn
         api.send("open-new-table", {poolID: poolID, stackSize: Math.round(stackSize * 100) / 100})
     }
     
@@ -311,7 +317,7 @@
         display: flex;
         flex-direction: row;
         width: 100%;
-        height: 14%;
+        height: 15%;
         justify-content: center;
         align-items: flex-start;
         // padding-top: 3%;
@@ -327,14 +333,14 @@
         display: flex;
         flex-direction: row;
         width: 100%;
-        height: 80%;
+        height: 65%;
         gap: 3%;
         // padding: 0 3%;
     }
     .wrapper {
         position: relative;
         width: 100%;
-        height: 85%;
+        height: 90%;
         z-index: 1;
     }
     .gameSelector {
@@ -352,7 +358,7 @@
         z-index: 20;
         .gameTitle {
             width: 100%;
-            height: 20%;
+            height: 18%;
             font-size: 1.5em;
             font-weight: bold;
             // background-color: yellow;
@@ -363,7 +369,8 @@
         .gameInfo {
             position: relative;
             width: 100%;
-            height: 40%;
+            height: 45%;
+            padding-top: 5%;
             // background-color: green;
             display: flex;
             flex-direction: column;
@@ -399,7 +406,7 @@
         }
         .buttonDiv {
             width: 100%;
-            height: 20%;
+            height: 25%;
             // background-color: red;
             display: flex;
             justify-content: center;
@@ -415,18 +422,62 @@
                 background-color: rgb(79,148,217);
                 border-radius: 5px;
             }
+            button:disabled {
+                opacity: 0.7;
+            }
         }
         .inputDiv {
-            width: 100;
-            height: 20%;
+            width: 80%;
+            height: 12%;
+            gap: 1%;
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
-            input {
-                width: 50%;
+            flex-direction: row;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.8em;
+
+            span {
+                width: 45%;
+            }
+            .inputWrapper {
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
+                align-items: center;
+                width: 55%;
+                height: 100%;
+                span {
+                    background-color: rgba(0,0,0,0.5);
+                    padding-left: 0.2em;
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: flex-start;
+                    align-items: center;
+                    height: 100%;
+                    width: 20%;
+                    border-top-left-radius: 5px;
+                    border-bottom-left-radius: 5px;
+                }
+                .buyInAmount {
+                    all: unset;
+                    padding-right: 0.2em;
+                    display: flex;
+                    flex-direction: row;
+                    justify-content: flex-end;
+                    align-items: center;
+                    text-align: end;
+                    height: 100%;
+                    width: 80%;
+                    background-color: rgba(0,0,0,0.5);
+                    border-top-right-radius: 5px;
+                    border-bottom-right-radius: 5px;
+                }
             }
         }
+    }
+    input::before {
+        content: "$";
     }
     .blinds:before {
         position: absolute;
@@ -476,7 +527,7 @@
     .gameInfo:after {
         content: "";
         position: absolute;
-        top: 100%;
+        top: 95%;
         width: 90%;
         height: 1px;
         background-color: rgba(78, 78, 78);
@@ -489,12 +540,12 @@
         align-items: center;
         // padding: 3%;
         width: 100%;
-        height: 20%;
+        height: 25%;
     }
     button {
         all:unset;
     }
-    button:active {
+    button:active:enabled {
         transform: scale(0.95);
     }
     .avaiableSoonDiv {
@@ -727,16 +778,19 @@
                                         <div class="blinds">{game.blinds}</div>
                                         <div class="players">{game.players}</div>
                                         <div class="buyInRow">
-                                            <div class="buyIn minBuyIn">{game.minBuyIn}</div>
-                                            <div class="buyIn maxBuyIn">{game.maxBuyIn}</div>
+                                            <div class="buyIn minBuyIn">${game.minBuyIn}</div>
+                                            <div class="buyIn maxBuyIn">${game.maxBuyIn}</div>
                                         </div>
                                     </div>
                                     <div class="inputDiv">
-                                        <span>Buy in Amount:</span>
-                                        <input class="buyInAmount" type="number" bind:value={gamesAvaiable[key].buyInAmount}/>
+                                        <span>BUY IN:</span>
+                                        <div class="inputWrapper">
+                                            <span>$</span>
+                                            <input class="buyInAmount" bind:value={gamesAvaiable[key].buyInAmount}/>
+                                        </div>
                                     </div>
-                                    <div class="buttonDiv">
-                                        <button class="joinNow" on:click={()=>openNewTable(key)}>JOIN NOW</button>
+                                    <div class="buttonDiv" >
+                                        <button class="joinNow" disabled='{userBalance < gamesAvaiable[key].buyInAmount || gamesAvaiable[key].buyInAmount < game.minBuyIn || gamesAvaiable[key].buyInAmount > game.maxBuyIn}' on:click={()=>openNewTable(key)}>JOIN NOW</button> <!-- {} -->
                                     </div>
                                 </div>
                             </div>

@@ -30,7 +30,7 @@ class PlayerPoolManager {
             "lightning4" : {title: "Lightning Cash Game ⚡ NL 200", gameTitle: "NL 200", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:1, bb: 2, minBuyIn: 40, maxBuyIn: 200, currentPlayers:0}
         }
         this.leavePoolTimeout = {}
-        this.tableManager = new TableManager(this.socketManager, this.fastify, this)
+        this.tableManager = new TableManager(this.socketManager, fastify, this)
     }
     /**
      * 

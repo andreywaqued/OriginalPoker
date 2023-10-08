@@ -340,7 +340,7 @@ class Table {
             player.betSize = action.amount
         }
         if (action.amount >= player.stackSize + player.betSize) this.currentHand.playersAllin++
-        
+        action.playerName = player.name
         this.currentHand.actionSequence.push(action)
         player.actedSinceLastRaise = true;
         player.possibleActions = []
@@ -356,6 +356,7 @@ class Table {
         for (let potIndex = 0; potIndex < this.currentHand.pots.length; potIndex ++) {
             let winnerRank = 999999
             let winners = []
+            let winnerNames = []
             let playersContestingThisPot = 0
             for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
                 const player = this.players[this.playerIDByPositionIndex[i]]
@@ -379,8 +380,9 @@ class Table {
                 winners[i].stackSize += this.currentHand.pots[potIndex]/winners.length
                 if (playersContestingThisPot > 1) winners[i].showCards = true
                 winners[i].isWinner = true
+                winnerNames.push(winners[i].name)
             }
-            if (winners.length > 0) this.currentHand.actionSequence.push({pot: potIndex, winners: winners})
+            if (winners.length > 0) this.currentHand.actionSequence.push({pot: potIndex, potSize: this.currentHand.pots[potIndex], winners: winnerNames})
             this.currentHand.pots[potIndex] = 0
         }
         // const playerCards1 = [this.deck[5], this.deck[6]]
@@ -637,6 +639,7 @@ class Table {
 
             // this.removePlayer(player)
         }
+        this.saveHandHistoryToDB()
         // console.log(this.tableManager)
         // console.log(this.tableManager.tables[this.poolID][this.id])
         // console.log(this.tables)
@@ -699,7 +702,37 @@ class Table {
         this.determinePlayerPositions()
     }
     saveHandHistoryToDB() {
-
+        console.log("saveHandHistoryToDB()")
+        let handHistory = `OriginalPoker ${this.title} ${this.tableSize}-max ${this.sb}/${this.bb} Button:${this.currentHand.dealerPos} - ${new Date().toUTCString()}\n`
+        let playerIndex = 1
+        Object.values(this.players).forEach(player => {
+            if (!player) return
+            handHistory += `Seat ${playerIndex}: ${player.name} ($${player.stackSize}) - cards:${player.cards}\n`
+            playerIndex++
+        })
+        this.currentHand.actionSequence.forEach(action => {
+            if (action.round) {
+                handHistory += `${action.round}: ${action.boardCards}\n`
+            }
+            else if (action.playerName) {
+                if (action.amount === 0) handHistory += `${action.playerName}: ${action.type}\n`
+                if (action.amount > 0) handHistory += `${action.playerName}: ${action.type} ${action.amount}\n`   
+            }
+            else if (action.pot) {
+                handHistory += `${action.pot} - ${action.potSize} WINNERS: ${action.winnerNames}\n`
+            }
+        })
+        this.tableManager.fastify.pg.connect().then(async (client) => {
+            console.log("saving hand history")
+            try {
+                const result = await client.query(`INSERT INTO hands(handHistory) VALUES ('${handHistory}')`);
+                console.log(result)
+            } catch (error) {
+                console.log(error)
+                
+            }
+            client.release();
+        });
     }
     determinePlayerPositions(){
         console.log("determinePlayerPositions()")
@@ -727,8 +760,8 @@ class Table {
         if (bbPlayer.stackSize < this.bb) bbPlayer.betSize = bbPlayer.stackSize
         sbPlayer.stackSize -= sbPlayer.betSize
         bbPlayer.stackSize -= bbPlayer.betSize
-        this.currentHand.actionSequence.push({type: "sb", amount: sbPlayer.betSize})
-        this.currentHand.actionSequence.push({type: "bb", amount: bbPlayer.betSize})
+        this.currentHand.actionSequence.push({playerName: sbPlayer.name, type: "sb", amount: sbPlayer.betSize})
+        this.currentHand.actionSequence.push({playerName: bbPlayer.name, type: "bb", amount: bbPlayer.betSize})
         this.currentHand.positionActing = this.currentHand.bbPos
         this.currentHand.biggestBet = this.bb
         this.currentHand.minBet = this.bb * 2

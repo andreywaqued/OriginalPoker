@@ -2,6 +2,7 @@
 const {app, BrowserWindow, ipcMain, Notification, dialog, screen} = require('electron');
 const io = require('socket.io-client');
 const path = require('path');
+const { shell } = require('electron');
 // const express = require('express');
 // const { fileURLToPath } = require('url');
 // const {handler} = require("./build/handler")
@@ -260,6 +261,11 @@ ipcMain.on('open-new-table', (event, data) => {
   
   // if (allWindows.length < 5) createWindow("Lightning Cash Game ⚡ " + arg + " Table 1", "table")
   if (tables.length < 4) socket.emit("enterPool", {poolID : data.poolID, stackSize: data.stackSize})
+});
+ipcMain.on('openExternalUrl', (event, url) => {
+  console.log('openExternalUrl')
+  console.log(url)
+  shell.openExternal(url)
 });
 ipcMain.on('sitoutUpdate', (event, data) => {
   console.log("sitoutUpdate")

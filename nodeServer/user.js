@@ -28,7 +28,7 @@ class User {
         if (createdUser) {
             this.name = name;
             this.avatar = avatar;
-            this.balance = 1000;
+            this.balance = 0;
         }
         console.log(this)
         // await this.getUserFromDB(userId);
@@ -83,7 +83,7 @@ async function saveUserToDB(name, password, avatar, db) {
     // Simulate saving a new user to the database
     console.log("saveUserToDB")
     const client = await db.connect();
-    const { rowCount } = await client.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${name}@test.com.br', ${avatar}, 1000)`);
+    const { rowCount } = await client.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${name}@test.com.br', ${avatar}, 0)`);
     client.release();
     if (rowCount > 0) {
         console.log("inserted user into db")

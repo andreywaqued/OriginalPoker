@@ -1,10 +1,5 @@
 const fastify = require('fastify')({ logger: true });
 const socketManager = require('socket.io')(fastify.server);
-const PlayerPoolManager = require('./playerPoolManager');
-// const TableManager = require('./tableManager');
-const User = require('./user');
-// const TableManager = require('./tableManager')
-// const { Worker } = require('worker_threads');
 //docker acess
 // fastify.register(require('@fastify/postgres'), {
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
@@ -17,6 +12,11 @@ fastify.register(require('@fastify/postgres'), {
 // fastify.register(require('@fastify/postgres'), {
 //   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
 // })
+const PlayerPoolManager = require('./playerPoolManager');
+// const TableManager = require('./tableManager');
+const User = require('./user');
+// const TableManager = require('./tableManager')
+// const { Worker } = require('worker_threads');
 fastify.addHook('onReady', async () => {
   console.log("connected")
   const client = await fastify.pg.connect()
@@ -50,6 +50,34 @@ fastify.get('/users', async (request, reply) => {
   client.release();
   console.log(rows)
   return rows;
+});
+fastify.get('/hands', async (request, reply) => {
+  const client = await fastify.pg.connect();
+  const { rows } = await client.query('SELECT * FROM hands');
+  client.release();
+  console.log(rows)
+  return rows;
+});
+fastify.get('/addchips', async (request, reply) => {
+  console.log(request.query)
+  const username = request.query.user
+  const chips = parseFloat(request.query.chips)
+  const client = await fastify.pg.connect();
+  const result = await client.query(`UPDATE users SET balance = balance + ${chips} WHERE username = '${username}'`);
+  client.release();
+  //TODO FAZER ISSO DAQUI FUNCIONAR
+  // console.log("socketManager.sockets.sockets")
+  // console.log(socketManager.sockets.sockets)
+  // Object.values(socketManager.sockets.sockets).forEach(socket => {
+  //   console.log(socket)
+  //   if (socket.user) {
+  //     console.log(socket.user)
+  //     if (socket.user.name === username) socket.user.balance += chips
+  //     socket.emit("updateUserInfo", { user : socket.user, status: 200})
+  //   }
+  // })
+  // console.log(result)
+  return result;
 });
 fastify.get('/pools', async (request, reply) => {
   return playerPoolManager.playersByPool

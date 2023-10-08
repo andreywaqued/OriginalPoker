@@ -48,7 +48,7 @@
   let waitingForPlayers = true
   let doordashTable = false
   $: console.log(tableRotateAmount = hero.position)
-
+  let callChangeAds
   onMount(() => {
     const setHeight = () => {
       document.documentElement.style.setProperty('--window-height', `${window.innerHeight}px`);
@@ -131,6 +131,7 @@
         console.log("handTransition")
         possibleActions = []
         transitionBackground()
+        callChangeAds()
       });
       window.api.on('askRebuy', (data) => {
         toggleRebuy()
@@ -200,26 +201,26 @@
     if (betValue + sbSize >= maxBet) {
       betValue = Math.round(maxBet * 100) / 100
     } else {
-      betValue = Math.round((maxBet + sbSize) * 100) / 100 
+      betValue = Math.round((betValue + sbSize) * 100) / 100 
     }
   }
   function minusBetSlider(){
     if (betValue - sbSize <= minBet) {
       betValue = Math.round(minBet * 100) / 100
     } else {
-      betValue = Math.round((maxBet - sbSize) * 100) / 100 
+      betValue = Math.round((betValue - sbSize) * 100) / 100 
     }
       
   }
   function updateBetValue(potPerc){
-    console.log(`updateBetValue(${potPerc})`)
+    // console.log(`updateBetValue(${potPerc})`)
     let sumOfPots = 0
     for (let i = 0; i< pots.length; i++) {
       sumOfPots += pots[i]
     }
-    console.log("betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount")
+    // console.log("betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount")
     betValue = potPerc/100*(sumOfPots + sumOfBetSizes + biggestBet - hero.betSize)+biggestBet
-    console.log(`${betValue} = ${potPerc}/100*(${sumOfPots} + ${sumOfBetSizes} + ${callAmount}) + ${biggestBet}`)
+    // console.log(`${betValue} = ${potPerc}/100*(${sumOfPots} + ${sumOfBetSizes} + ${callAmount}) + ${biggestBet}`)
     // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
     // // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
     // // if (sumOfBetSizes == 0) betValue = betValue * potPerc / 100
@@ -389,6 +390,21 @@
   .waitingForPlayersText{
     // background-color: #c1c1c1;
     color: white;
+    animation-name: pulseWaitingPlayer; 
+    animation-duration: 1.5s; 
+    animation-timing-function: ease-in-out; 
+    animation-direction: alternate; 
+    animation-iteration-count: infinite; 
+    animation-play-state: running; 
+  }
+}
+@keyframes pulseWaitingPlayer {
+  0% {
+    opacity: 0.3
+  }
+  100% {
+    opacity: 0.8
+
   }
 }
 .transitioning {
@@ -674,8 +690,8 @@ button:hover {
   }
   .adsContainer {
     position: absolute;
-    width: 38%;
-    height: 17%;
+    width: 35%;
+    height: 15%;
     top: 82%;
     left: 1%;
     z-index: 1;
@@ -820,7 +836,7 @@ button:hover {
             <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
           </div>
           <label class="dolarSign">$</label>
-          <input class="betDisplay" type="number" min={minBet} max={maxBet} step={sbSize} bind:value={betValue}/>
+          <input class="betDisplay" bind:value={betValue}/>
         </div>
         <div class="betSlider">
           <button class="betSliderButton" on:click={minusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg></button>
@@ -890,7 +906,7 @@ button:hover {
       </div>
     </div>
     <div class="adsContainer">
-      <Ads />
+      <Ads bind:changeAds={callChangeAds}/>
     </div>
   </div>
 </main>
