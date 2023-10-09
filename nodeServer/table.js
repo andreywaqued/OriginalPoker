@@ -263,7 +263,9 @@ class Table {
         console.log(`validateAction(playerFromClient, action)`)
         console.log(playerFromClient.name)
         console.log(action)
-        action.amount = parseFloat(action.amount)
+        action.amount = action.amount.replace(",", ".")
+        action.amount = Math.round(parseFloat(action.amount) * 100) / 100
+        
         if (action.amount === NaN) return playerSocket.emit("actionResponse", {message: "action not allowed", status:401})
         //validate if player can make that action
         //update gamestate and broadcast or reply invalid
@@ -330,8 +332,8 @@ class Table {
             if (action.amount < this.currentHand.minBet && this.currentHand.minBet > player.stackSize + player.betSize) action.amount = player.stackSize + player.betSize
             if (action.amount <= this.currentHand.biggestBet) return this.validateAction(player, player.possibleActions[1])
             const secondBiggestBet = this.currentHand.biggestBet
-            this.currentHand.biggestBet = action.amount
-            this.currentHand.minBet = this.currentHand.biggestBet + this.currentHand.biggestBet - secondBiggestBet
+            this.currentHand.biggestBet = Math.round(action.amount * 100) / 100
+            this.currentHand.minBet = Math.round((this.currentHand.biggestBet + this.currentHand.biggestBet - secondBiggestBet) * 100) / 100
             this.setAllPlayerActedSinceLastRaiseToFalse()
         }
         console.log("validateAction 7")

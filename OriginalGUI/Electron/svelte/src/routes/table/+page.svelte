@@ -36,8 +36,8 @@
   let boardCards = [];
   let pots = [0];
   let callAmount = 0;
-  let minBet = 0;
-  let maxBet = 9999999;
+  let minBet = 0.00;
+  let maxBet = 9999999.99;
   let biggestBet = 0;
   let currentPlayerActing = ""
   let currentGameState = {}
@@ -69,8 +69,9 @@
           betValue = Math.round(possibleActions[2].amount * 100) / 100
           if (betValue > hero.betSize + hero.stackSize) betValue = hero.betSize + hero.stackSize
           minBet = betValue;
-          maxBet = player.betSize + player.stackSize;
+          maxBet = Math.round((player.betSize + player.stackSize)*100/100);
         }
+        player.stackSize = 
         tableRotateAmount = hero.position
         playersTemp[player.id] = hero
         players = playersTemp
@@ -340,6 +341,7 @@
   }
   function parseAction(index) {
     let action = possibleActions[index]
+    action.amount = action.amount.replace(",", ".")
     if (index === 2) action.amount = Math.round(betValue * 100) / 100
     api.send("parseAction", {player: hero, action: action})
     possibleActions = []
@@ -840,7 +842,7 @@ button:hover {
         </div>
         <div class="betSlider">
           <button class="betSliderButton" on:click={minusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg></button>
-          <input type="range" min={minBet} max={maxBet} bind:value={betValue} class="slider" id="myRange">
+          <input type="range" min={minBet} max={maxBet} step=0.01 bind:value={betValue} class="slider" id="myRange">
           <button class="betSliderButton" on:click={plusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg></button>
         </div>
         <div class="buttons">
