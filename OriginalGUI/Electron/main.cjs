@@ -51,7 +51,7 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     aspectRatio = 128/108 //mesa
     url = 'build/table.html'
   } 
-  const initialHeight = 500
+  const initialHeight = 750
   const maxHeight = primaryDisplay.workAreaSize['height']
   let newWindow = new BrowserWindow({
     title: winTitle,

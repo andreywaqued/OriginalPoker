@@ -148,7 +148,7 @@
       api.send("window-ready")
     }
     winTitle += api.getTitle()
-    if (winTitle.includes("NL 100")) doordashTable = true
+    if (winTitle.includes("NL 50")) doordashTable = true
     
     // Initial setting
     setHeight();
@@ -906,7 +906,9 @@ button:hover {
       </div>
     </div>
     <div class="adsContainer">
-      <Ads bind:changeAds={callChangeAds}/>
+      {#if !doordashTable}
+        <Ads bind:changeAds={callChangeAds}/>
+      {/if}
     </div>
   </div>
 </main>

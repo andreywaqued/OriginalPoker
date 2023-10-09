@@ -106,7 +106,7 @@
     let doordashDivShow = false;
     function changeDoordashClass(index) {
         // console.log("entrou aqui")
-        if (index === 2) doordashDivShow = !doordashDivShow
+        if (index === 1) doordashDivShow = !doordashDivShow
         // if (doordashClass.includes("hide")) {
         //     doordashClass = "doordashDiv"}
         // else {
@@ -766,7 +766,7 @@
                         {#if tabSelected === 0}
                             {#each Object.entries(gamesAvaiable) as [key, game], index}
                             <div class="wrapper" on:mouseenter={() => changeDoordashClass(index)} on:mouseleave={() => changeDoordashClass(index)}>
-                                {#if index === 2}
+                                {#if index === 1}
                                     <div class= "doordashDiv" class:show={doordashDivShow}>
                                         <div class="doordashLogo"></div>
                                         <div class="doordashInfo"><span>$10 GIFT CARDS</span></div>

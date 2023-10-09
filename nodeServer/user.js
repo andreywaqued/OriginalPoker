@@ -108,7 +108,7 @@ async function fetchUserFromDB(name, db) {
         return {
             username: user.username,
             avatar: user.avatar,
-            balance: user.balance
+            balance: parseFloat(user.balance) //it looks like numeric type saves as string
         };
     }
     // Simulate fetching a user from the database

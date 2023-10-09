@@ -66,17 +66,18 @@ fastify.get('/addchips', async (request, reply) => {
   const result = await client.query(`UPDATE users SET balance = balance + ${chips} WHERE username = '${username}'`);
   client.release();
   //TODO FAZER ISSO DAQUI FUNCIONAR
-  // console.log("socketManager.sockets.sockets")
-  // console.log(socketManager.sockets.sockets)
-  // Object.values(socketManager.sockets.sockets).forEach(socket => {
-  //   console.log(socket)
-  //   if (socket.user) {
-  //     console.log(socket.user)
-  //     if (socket.user.name === username) socket.user.balance += chips
-  //     socket.emit("updateUserInfo", { user : socket.user, status: 200})
-  //   }
-  // })
-  // console.log(result)
+  console.log("socketManager.sockets.sockets")
+  console.log(socketManager.sockets.sockets)
+  socketManager.sockets.sockets.forEach((socket, socketID) => {
+    console.log(socketID)
+    console.log(socket)
+    if (socket.user) {
+      console.log(socket.user)
+      if (socket.user.name === username) socket.user.balance += chips
+      socket.emit("updateUserInfo", { user : socket.user, status: 200})
+    }
+  })
+  console.log(result)
   return result;
 });
 fastify.get('/pools', async (request, reply) => {
