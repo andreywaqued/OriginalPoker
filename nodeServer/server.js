@@ -5,13 +5,13 @@ const socketManager = require('socket.io')(fastify.server);
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
 // })
 //internal render acess
-fastify.register(require('@fastify/postgres'), {
-  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
-})
-//external render acess
 // fastify.register(require('@fastify/postgres'), {
-//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
 // })
+//external render acess
+fastify.register(require('@fastify/postgres'), {
+  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+})
 const PlayerPoolManager = require('./playerPoolManager');
 // const TableManager = require('./tableManager');
 const User = require('./user');

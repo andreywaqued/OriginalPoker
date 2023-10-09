@@ -64,14 +64,13 @@
         hero.showCards = true
         possibleActions = player.possibleActions
         if (possibleActions.length > 0) {
-          if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = hero.betSize + hero.stackSize
+          if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize)*100)/100
           callAmount = possibleActions[1].amount
           betValue = Math.round(possibleActions[2].amount * 100) / 100
-          if (betValue > hero.betSize + hero.stackSize) betValue = hero.betSize + hero.stackSize
+          if (betValue > hero.betSize + hero.stackSize) betValue = Math.round((hero.betSize + hero.stackSize)*100)/100
           minBet = betValue;
-          maxBet = Math.round((player.betSize + player.stackSize)*100/100);
+          maxBet = Math.round((player.betSize + player.stackSize)*100)/100;
         }
-        player.stackSize = 
         tableRotateAmount = hero.position
         playersTemp[player.id] = hero
         players = playersTemp
@@ -160,6 +159,34 @@
   // function registerPlayer(id, component) {
   //   playersComponents[id] = component;
   // }
+  function validateBetValueInput(event) {
+    let input = event.target.value;
+    input = input.replace(/[^0-9.]/g, '');
+    
+    // Allow only one dot
+    const parts = input.split('.');
+    if (parts.length > 2) {
+        input = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    betValue = parseFloat(input);
+
+  }
+  
+  function validateRebuyAmountInput(event) {
+    let input = event.target.value;
+    input = input.replace(/[^0-9.]/g, '');
+    
+    // Allow only one dot
+    const parts = input.split('.');
+    if (parts.length > 2) {
+        input = parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    rebuyAmount = parseFloat(input);
+
+  }
+
   function foldAction(){
     console.log("foldAction()");
     Object.values(playersComponents).forEach(p => {p.foldCards()})
@@ -341,7 +368,7 @@
   }
   function parseAction(index) {
     let action = possibleActions[index]
-    action.amount = action.amount.replace(",", ".")
+    betValue = parseFloat(betValue.toString().replace(",", "."))
     if (index === 2) action.amount = Math.round(betValue * 100) / 100
     api.send("parseAction", {player: hero, action: action})
     possibleActions = []
@@ -838,7 +865,7 @@ button:hover {
             <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
           </div>
           <label class="dolarSign">$</label>
-          <input class="betDisplay" bind:value={betValue}/>
+          <input class="betDisplay" bind:value={betValue} type="number" step=0.01/>
         </div>
         <div class="betSlider">
           <button class="betSliderButton" on:click={minusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg></button>
@@ -903,7 +930,7 @@ button:hover {
       </div>
       <div class="popoverMain">
         <label for="rebuyAmount">Amount to Rebuy</label>
-        <input placeholder="Amount to Rebuy" id="rebuyAmount" type="number" bind:value={rebuyAmount}/>
+        <input placeholder="Amount to Rebuy" id="rebuyAmount" bind:value={rebuyAmount} step=0.01 type="number"/>
         <button on:click={tryRebuy}>Rebuy</button>
       </div>
     </div>

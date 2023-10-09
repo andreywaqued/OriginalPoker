@@ -44,7 +44,7 @@
 </style>
 
 <div class="loginDiv">
-    Login <input placeholder="Login" bind:value={login}/>
+    Login <input placeholder="Login" bind:value={login} on:input={(e)=>{console.log(e)}}/>
     Password <input placeholder="Password" bind:value={password}/>
     <button class="loginButton" on:click={sendSignIn}>SIGN IN</button>
     <button class="loginButton">SIGN UP</button>

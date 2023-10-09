@@ -71,7 +71,6 @@
     function toggleBalanceView() {
         balanceHidden = !balanceHidden
     }
-
     /**
      * 
      * @param {number} index
@@ -786,7 +785,7 @@
                                         <span>BUY IN:</span>
                                         <div class="inputWrapper">
                                             <span>$</span>
-                                            <input class="buyInAmount" bind:value={gamesAvaiable[key].buyInAmount}/>
+                                            <input class="buyInAmount" type="number" bind:value={gamesAvaiable[key].buyInAmount}/>
                                         </div>
                                     </div>
                                     <div class="buttonDiv" >

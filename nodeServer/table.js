@@ -263,8 +263,8 @@ class Table {
         console.log(`validateAction(playerFromClient, action)`)
         console.log(playerFromClient.name)
         console.log(action)
-        action.amount = action.amount.replace(",", ".")
-        action.amount = Math.round(parseFloat(action.amount) * 100) / 100
+        action.amount = parseFloat(action.amount.toString().replace(",", "."))
+        action.amount = Math.round(action.amount * 100) / 100
         
         if (action.amount === NaN) return playerSocket.emit("actionResponse", {message: "action not allowed", status:401})
         //validate if player can make that action
