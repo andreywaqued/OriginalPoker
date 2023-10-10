@@ -92,12 +92,15 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     newWindow.messageBuffer = []
     newWindow.startBufferSender = setInterval(() => {
       if (newWindow.messageBuffer.length > 0) {
-        if (!newWindow) clearInterval(newWindow.startBufferSender)
+        if (!newWindow) {
+          clearInterval(newWindow.startBufferSender)
+          return
+        }
         if (!newWindow.readyToReceiveMessages) return
         const message = newWindow.messageBuffer.shift()
         newWindow.webContents.send(message.event, message.data)
       }
-    }, 100)
+    }, 15)
       // console.log(newWindow.readyToReceiveMessages)
       // console.log(event, data)
       
