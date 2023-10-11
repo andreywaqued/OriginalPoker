@@ -1,5 +1,6 @@
 const fastify = require('fastify')({ logger: true });
 const socketManager = require('socket.io')(fastify.server);
+const Decimal = require('decimal.js');
 //docker acess
 // fastify.register(require('@fastify/postgres'), {
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
@@ -38,6 +39,10 @@ fastify.addHook('onClose', async () => {
   })
   done()
 })
+fastify.setErrorHandler((error, request, reply) => {
+  request.log.error(error.toString());
+  reply.send({ error: 'Internal server error' });
+});
 // fastify.register(require('@fastify/redis'), { host: 'redis', port: 6379 })
 
 playerPoolManager = new PlayerPoolManager(socketManager, fastify)
@@ -61,11 +66,10 @@ fastify.get('/hands', async (request, reply) => {
 fastify.get('/addchips', async (request, reply) => {
   console.log(request.query)
   const username = request.query.user
-  const chips = parseFloat(request.query.chips)
+  const chips = new Decimal(request.query.chips)
   const client = await fastify.pg.connect();
   const result = await client.query(`UPDATE users SET balance = balance + ${chips} WHERE username = '${username}'`);
   client.release();
-  //TODO FAZER ISSO DAQUI FUNCIONAR
   console.log("socketManager.sockets.sockets")
   console.log(socketManager.sockets.sockets)
   socketManager.sockets.sockets.forEach((socket, socketID) => {
@@ -73,7 +77,7 @@ fastify.get('/addchips', async (request, reply) => {
     console.log(socket)
     if (socket.user) {
       console.log(socket.user)
-      if (socket.user.name === username) socket.user.balance += chips
+      if (socket.user.name === username) socket.user.balance = socket.user.balance.plus(chips)
       socket.emit("updateUserInfo", { user : socket.user, status: 200})
     }
   })
@@ -82,6 +86,9 @@ fastify.get('/addchips', async (request, reply) => {
 });
 fastify.get('/pools', async (request, reply) => {
   return playerPoolManager.playersByPool
+});
+fastify.get('/tables', async (request, reply) => {
+  return playerPoolManager.tableManager.tables
 });
 // fastify.get('/set', async (request, reply) => {
 //   const { user, name } = request.query

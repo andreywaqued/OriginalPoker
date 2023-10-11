@@ -1,5 +1,6 @@
 const { rankHands } = require('@xpressit/winning-poker-hand-rank');
 const { v4: uuidv4 } = require('uuid');
+const Decimal = require('decimal.js');
 
 class Deck {
     constructor() {
@@ -62,19 +63,18 @@ class Table {
             handIsBeingPlayed : false,
             isShowdown : false,
             // players : this.players,
-            pots : [0],
+            pots : [new Decimal(0)],
             actionSequence : [],
             // playersActive : this.playerIDByPositionIndex,
             boardCards : [],
             boardRound : 0,
-            minBet : 0,
-            maxBet : 9999999999,
-            biggestBet : 0,
+            minBet : new Decimal(0),
+            maxBet : new Decimal(9999999999),
+            biggestBet : new Decimal(0),
             positionActing : 0,
             timeLimitToAct: 0,
             playersAllin : 0,
             playersFolded : 0,
-            betSizesAllinThisRound : [],
             dealerPos: -1,
             sbPos: 0,
             bbPos: 0,
@@ -107,7 +107,7 @@ class Table {
         player.isButton = false
         player.showCards = false
         player.isWinner = false
-        player.betSize = 0
+        player.betSize = new Decimal(0)
         player.contestingPots = [0]
         player.finalHandRank = {rank: -1}
         // player.isSitout = false;
@@ -212,7 +212,6 @@ class Table {
             timeLimitToAct: 0,
             playersAllin : 0,
             playersFolded : 0,
-            betSizesAllinThisRound : [],
             dealerPos: -1,
             sbPos: 0,
             bbPos: 0,
@@ -223,7 +222,7 @@ class Table {
             name: player.name,
             avatar: player.avatar,
             tableID: player.tableID,
-            stackSize: player.stackSize,
+            stackSize: player.stackSize.toNumber(),
             hasFolded: true,
             cards: [],
             isSitout: player.isSitout,
@@ -264,9 +263,9 @@ class Table {
         console.log(playerFromClient.name)
         console.log(action)
         action.amount = parseFloat(action.amount.toString().replace(",", "."))
-        action.amount = Math.round(action.amount * 100) / 100
+        action.amount = new Decimal(action.amount)
+        if (action.amount.isNaN()) return playerSocket.emit("actionResponse", {message: "action not allowed", status:401})
         
-        if (action.amount === NaN) return playerSocket.emit("actionResponse", {message: "action not allowed", status:401})
         //validate if player can make that action
         //update gamestate and broadcast or reply invalid
         // console.log(this.currentHand.actionSequence)
@@ -292,11 +291,11 @@ class Table {
             if (actionAllowed) continue
             const actionAtIndex = player.possibleActions[i]
             if (action.type === actionAtIndex.type) {
-                console.log(`(${action.type} === "raise" || ${action.type} === "bet") && ${action.amount} >= ${actionAtIndex.amount} : ${(action.type === "raise" || action.type === "bet") && action.amount >= actionAtIndex.amount}`)
-                if (action.amount >= actionAtIndex.amount)
-                if ((action.type === "call" || action.type === "fold" || action.type === "check") && action.amount === actionAtIndex.amount) actionAllowed = true;
-                if ((action.type === "raise" || action.type === "bet") && action.amount < this.currentHand.minBet) return this.validateAction(player, {type: "raise", amount: this.currentHand.minBet});
-                if ((action.type === "raise" || action.type === "bet") && action.amount >= this.currentHand.minBet) actionAllowed = true;
+                console.log(`(${action.type} === "raise" || ${action.type} === "bet") && ${action.amount} >= ${actionAtIndex.amount} : ${(action.type === "raise" || action.type === "bet") && action.amount.greaterThanOrEqualTo(actionAtIndex.amount)}`)
+                if (action.amount.greaterThanOrEqualTo(actionAtIndex.amount))
+                if ((action.type === "call" || action.type === "fold" || action.type === "check") && action.amount.equals(actionAtIndex.amount)) actionAllowed = true;
+                if ((action.type === "raise" || action.type === "bet") && action.amount.lessThan(this.currentHand.minBet)) return this.validateAction(player, {type: "raise", amount: this.currentHand.minBet.toNumber()});
+                if ((action.type === "raise" || action.type === "bet") && action.amount.greaterThanOrEqualTo(this.currentHand.minBet)) actionAllowed = true;
             }
         }
         console.log("validateAction 3")
@@ -307,7 +306,7 @@ class Table {
         // if (action.amount < this.currentHand.biggestBet && action.amount < player.stackSize) return "amount is not allowed"
         //action valid
         // console.log(`${action.amount} > ${player.stackSize} + ${player.betSize}: ${action.amount > player.stackSize + player.betSize}`)
-        if (action.amount > player.stackSize + player.betSize) action.amount = player.stackSize + player.betSize
+        if (action.amount.greaterThan(player.stackSize.plus(player.betSize))) action.amount = player.stackSize.plus(player.betSize)
         if (action.type === "fold") {
             console.log("player folded")
             player.hasFolded = true;
@@ -325,23 +324,23 @@ class Table {
             }
         }
         console.log("validateAction 5")
-        if (action.type === "check" && this.currentHand.biggestBet > player.betSize) return this.validateAction(player, player.possibleActions[0])
+        if (action.type === "check" && this.currentHand.biggestBet.greaterThan(player.betSize)) return this.validateAction(player, player.possibleActions[0])
         console.log("validateAction 6")
         if (action.type === "raise" || action.type === "bet") {
-            if (action.amount < this.currentHand.minBet && this.currentHand.minBet < player.stackSize) action.amount = this.currentHand.minBet
-            if (action.amount < this.currentHand.minBet && this.currentHand.minBet > player.stackSize + player.betSize) action.amount = player.stackSize + player.betSize
-            if (action.amount <= this.currentHand.biggestBet) return this.validateAction(player, player.possibleActions[1])
+            if (action.amount.lessThan(this.currentHand.minBet) && this.currentHand.minBet.lessThan(player.stackSize)) action.amount = this.currentHand.minBet
+            if (action.amount.lessThan(this.currentHand.minBet) && this.currentHand.minBet.greaterThan(player.stackSize.plus(player.betSize))) action.amount = player.stackSize.plus(player.betSize)
+            if (action.amount.lessThanOrEqualTo(this.currentHand.biggestBet)) return this.validateAction(player, player.possibleActions[1])
             const secondBiggestBet = this.currentHand.biggestBet
-            this.currentHand.biggestBet = Math.round(action.amount * 100) / 100
-            this.currentHand.minBet = Math.round((this.currentHand.biggestBet + this.currentHand.biggestBet - secondBiggestBet) * 100) / 100
+            this.currentHand.biggestBet = action.amount
+            this.currentHand.minBet = this.currentHand.biggestBet.plus(this.currentHand.biggestBet).minus(secondBiggestBet)
             this.setAllPlayerActedSinceLastRaiseToFalse()
         }
         console.log("validateAction 7")
         if (action.type != "fold" && action.type != "check")  {
-            player.stackSize -= action.amount - player.betSize 
+            player.stackSize = player.stackSize.minus(action.amount.minus(player.betSize))
             player.betSize = action.amount
         }
-        if (action.amount >= player.stackSize + player.betSize) this.currentHand.playersAllin++
+        if (action.amount.greaterThanOrEqualTo(player.stackSize.plus(player.betSize))) this.currentHand.playersAllin++
         action.playerName = player.name
         this.currentHand.actionSequence.push(action)
         player.actedSinceLastRaise = true;
@@ -379,13 +378,13 @@ class Table {
                 // console.log(winners)
                 // console.log(this.currentHand.pots)
                 // console.log(potIndex)
-                winners[i].stackSize += this.currentHand.pots[potIndex]/winners.length
+                winners[i].stackSize = winners[i].stackSize.plus(this.currentHand.pots[potIndex].dividedBy(winners.length))
                 if (playersContestingThisPot > 1) winners[i].showCards = true
                 winners[i].isWinner = true
                 winnerNames.push(winners[i].name)
             }
             if (winners.length > 0) this.currentHand.actionSequence.push({pot: potIndex, potSize: this.currentHand.pots[potIndex], winners: winnerNames})
-            this.currentHand.pots[potIndex] = 0
+            this.currentHand.pots[potIndex] = new Decimal(0)
         }
         // const playerCards1 = [this.deck[5], this.deck[6]]
         // const playerCards2 = [this.deck[7], this.deck[8]]
@@ -433,7 +432,8 @@ class Table {
             if (playersLeftWithChips > 2) continue
             const player = this.players[this.playerIDByPositionIndex[i]]
             if (!player) continue
-            if (!player.hasFolded && player.stackSize + player.betSize > nextPlayer.betSize) playersLeftWithChips++
+            if (!player.hasFolded && nextPlayer.betSize.lessThan(player.stackSize.plus(player.betSize))) playersLeftWithChips++ //old way
+            // if (!player.hasFolded && player.stackSize.greaterThan(0)) playersLeftWithChips++ //teste (NAO FUNCIONOU DIREITO, QUANDO O JOGADOR VAI ALLIN ELE FICA COM STACK 0, DAI BUGA)
         }
         if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
 
@@ -443,17 +443,17 @@ class Table {
         //     nextPlayer.actedSinceLastRaise = true
         //     return this.prepareNextPlayerTurn()
         // } 
-        if (nextPlayer.hasFolded || nextPlayer.stackSize === 0) return this.prepareNextPlayerTurn()
+        if (nextPlayer.hasFolded || nextPlayer.stackSize.equals(0)) return this.prepareNextPlayerTurn()
         console.log("prepareNextPlayerTurn() 3")
-        if (this.currentHand.minBet <= this.bb) this.currentHand.minBet = this.bb
+        if (this.currentHand.minBet.lessThanOrEqualTo(this.bb)) this.currentHand.minBet = new Decimal(this.bb)
         nextPlayer.possibleActions = [{type: "fold", amount: 0}]
-        if (this.currentHand.biggestBet === nextPlayer.betSize) nextPlayer.possibleActions.push({type: "check", amount: 0})
+        if (this.currentHand.biggestBet.equals(nextPlayer.betSize)) nextPlayer.possibleActions.push({type: "check", amount: 0})
         console.log("prepareNextPlayerTurn() 4")
         console.log(nextPlayer)
         // if (nextPlayer.isSitout) return this.validateAction(nextPlayer, nextPlayer.possibleActions[nextPlayer.possibleActions.length -1])
-        if (this.currentHand.biggestBet != nextPlayer.betSize) nextPlayer.possibleActions.push({type: "call", amount: this.currentHand.biggestBet})
-        if (this.currentHand.biggestBet === 0) nextPlayer.possibleActions.push({type: "bet", amount: this.bb})
-        if (this.currentHand.biggestBet > 0) nextPlayer.possibleActions.push({type: "raise", amount: this.currentHand.minBet}) 
+        if (!this.currentHand.biggestBet.equals(nextPlayer.betSize)) nextPlayer.possibleActions.push({type: "call", amount: this.currentHand.biggestBet.toNumber()})
+        if (this.currentHand.biggestBet.equals(0)) nextPlayer.possibleActions.push({type: "bet", amount: this.bb})
+        if (this.currentHand.biggestBet.greaterThan(0)) nextPlayer.possibleActions.push({type: "raise", amount: this.currentHand.minBet.toNumber()}) 
 
         this.currentHand.timeLimitToAct = new Date().getTime() + this.timeBank //timestamp + 20sec
         this.timeLimitCounter = setTimeout(()=> {
@@ -485,11 +485,11 @@ class Table {
     }
     putBetsIntoPot() {
         console.log("putBetsIntoPot()")
-        let highestBet = 0
+        let highestBet = new Decimal(0)
         let highestBetPlayer
-        let secondHighestBet = 0
+        let secondHighestBet = new Decimal(0)
         let qtdHighestBet = 0
-        let smallestAllin = 99999
+        let smallestAllin = new Decimal(99999)
         let playersAllinOnThisRound = 0
         const lastPot = this.currentHand.pots.length - 1
         console.log("putBetsIntoPot() 1")
@@ -498,23 +498,25 @@ class Table {
             const player = this.players[this.playerIDByPositionIndex[i]]
             // console.log(smallestAllin)
             if (!player) continue
-            if (player.stackSize === 0 && player.betSize > 0) {
-                if (player.betSize <= smallestAllin) smallestAllin = player.betSize
+            player.stackSize = new Decimal(player.stackSize) //player here may be copied when he folds and the value doesnt come as Decimal
+            player.betSize = new Decimal(player.betSize) //player here may be copied when he folds and the value doesnt come as Decimal
+            if (player.stackSize.equals(0) && player.betSize.greaterThan(0)) {
+                if (player.betSize.lessThanOrEqualTo(smallestAllin)) smallestAllin = player.betSize
             }
             // console.log(smallestAllin)
             // console.log(highestBet)
             // console.log(secondHighestBet)
-            if (player.betSize > highestBet) {
+            if (player.betSize.greaterThan(highestBet)) {
                 secondHighestBet = highestBet
                 highestBet = player.betSize
                 highestBetPlayer = player
                 qtdHighestBet = 0
-            } else if (player.betSize > secondHighestBet) {
+            } else if (player.betSize.greaterThan(secondHighestBet)) {
                 secondHighestBet = player.betSize
             }
             // console.log(highestBet)
             // console.log(secondHighestBet)
-            if (player.betSize === highestBet) qtdHighestBet++
+            if (player.betSize.equals(highestBet)) qtdHighestBet++
         }
         // console.log(qtdHighestBet)
         // if (lastPot > 6) process.exit()
@@ -524,7 +526,7 @@ class Table {
         // console.log(secondHighestBet)
         // console.log(qtdHighestBet)
         if (qtdHighestBet === 1) {
-            highestBetPlayer.stackSize += highestBetPlayer.betSize - secondHighestBet
+            highestBetPlayer.stackSize = highestBetPlayer.stackSize.plus(highestBetPlayer.betSize.minus(secondHighestBet))
             highestBetPlayer.betSize = secondHighestBet
             // console.log(this.currentHand.pots)
             // process.exit(1)
@@ -533,25 +535,20 @@ class Table {
         // if (this.currentHand.playersFolded + this.currentHand.playersAllin === this.playerIDByPositionIndex.length) return this.startNewRound()
         // let smallestAllin = highestBetPlayer
         // console.log(smallestAllin)
-        // console.log(this.currentHand.betSizesAllinThisRound)
-        // if (this.currentHand.betSizesAllinThisRound.length > 0) {
-        //     console.log(this.currentHand.betSizesAllinThisRound)
-        //     smallestAllin = this.currentHand.betSizesAllinThisRound.shift()
-        //     console.log(this.currentHand.betSizesAllinThisRound)
         // }
         // console.log(smallestAllin)
         console.log("putBetsIntoPot() 4")
         for (let i = 0; i<this.playerIDByPositionIndex.length;i++) {
             const player = this.players[this.playerIDByPositionIndex[i]]
             if (!player) continue
-            if (player.stackSize === 0 && player.betSize > 0) playersAllinOnThisRound++
-            if (player.betSize === 0) continue
-            if (player.betSize >= smallestAllin) {
-                this.currentHand.pots[lastPot] += smallestAllin
-                player.betSize -= smallestAllin
+            if (player.stackSize.equals(0) && player.betSize.greaterThan(0)) playersAllinOnThisRound++
+            if (player.betSize.equals(0)) continue
+            if (player.betSize.greaterThanOrEqualTo(smallestAllin)) {
+                this.currentHand.pots[lastPot] = this.currentHand.pots[lastPot].plus(smallestAllin)
+                player.betSize = player.betSize.minus(smallestAllin)
             } else {
-                this.currentHand.pots[lastPot] += player.betSize
-                player.betSize -= player.betSize
+                this.currentHand.pots[lastPot] = this.currentHand.pots[lastPot].plus(player.betSize)
+                player.betSize = player.betSize.minus(player.betSize)
             }
             if (!player.contestingPots.includes(lastPot)) player.contestingPots.push(lastPot)
             // player.actedSinceLastRaise = false;
@@ -560,7 +557,7 @@ class Table {
         // console.log(playersAllinOnThisRound)
         if (playersAllinOnThisRound > 0) {
         // if (qtdHighestBet != this.playerIDByPositionIndex.length - this.currentHand.playersFolded - (this.currentHand.playersAllin - playersAllinOnThisRound)) {
-            this.currentHand.pots.push(0)
+            this.currentHand.pots.push(new Decimal(0))
             // console.log(this.currentHand.pots)
             return this.putBetsIntoPot()
         }
@@ -582,8 +579,8 @@ class Table {
         if (this.currentHand.boardRound === 4) return console.log(this.evaluateHand())
         this.currentHand.actionSequence.push({round: this.currentHand.boardRound, boardCards : this.currentHand.boardCards})
         this.currentHand.positionActing = this.currentHand.dealerPos //its going to the next player
-        this.currentHand.minBet = this.bb
-        this.currentHand.biggestBet = 0
+        this.currentHand.minBet = new Decimal(this.bb)
+        this.currentHand.biggestBet = new Decimal(0)
         console.log(this.currentHand.actionSequence)
         // console.log(this.currentHand)
         // exit()
@@ -611,7 +608,6 @@ class Table {
         // this.currentHand.positionActing = 0;
         // this.currentHand.playersAllin = 0;
         // this.currentHand.playersFolded = 0;
-        // this.currentHand.betSizesAllinThisRound = [];
         // for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
         //     const player = this.players[this.playerIDByPositionIndex[i]]
         //     player.cards = []
@@ -622,8 +618,8 @@ class Table {
         //     player.contestingPots = [0]
         // } now im resetting these info when the player sits in
         console.log("closeHand() 2")
-        this.tableManager.socketManager.socketsLeave(`table:${this.id}`)
-        delete this.tableManager.tables[this.poolID][this.id]
+        // this.tableManager.socketManager.socketsLeave(`table:${this.id}`)
+        this.tableManager.deleteTable(this.poolID, this.id)
         console.log("closeHand() 1")
         // this.broadcastHandState() //talvez nao precise fazer isso aqui
         for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
@@ -667,17 +663,16 @@ class Table {
         this.waitingForPlayers = false;
         this.currentHand.handIsBeingPlayed = true;
         this.currentHand.isShowdown = false;
-        this.currentHand.pots = [0];
+        this.currentHand.pots = [new Decimal(0)];
         this.currentHand.actionSequence = [];
         this.currentHand.boardCards = [];
         this.currentHand.boardRound = 0;
-        this.currentHand.minBet = 0;
-        this.currentHand.maxBet = 9999999999;
-        this.currentHand.biggestBet = 0;
+        this.currentHand.minBet = new Decimal(0);
+        this.currentHand.maxBet = new Decimal(9999999999);
+        this.currentHand.biggestBet = new Decimal(0);
         this.currentHand.positionActing = 0;
         this.currentHand.playersAllin = 0;
         this.currentHand.playersFolded = 0;
-        this.currentHand.betSizesAllinThisRound = [];
         this.deck = new Deck()
         for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
             const player = this.players[this.playerIDByPositionIndex[i]]
@@ -717,8 +712,8 @@ class Table {
                 handHistory += `${action.round}: ${action.boardCards}\n`
             }
             else if (action.playerName) {
-                if (action.amount === 0) handHistory += `${action.playerName}: ${action.type}\n`
-                if (action.amount > 0) handHistory += `${action.playerName}: ${action.type} ${action.amount}\n`   
+                if (action.amount.equals(0)) handHistory += `${action.playerName}: ${action.type}\n`
+                if (action.amount.greaterThan(0)) handHistory += `${action.playerName}: ${action.type} ${action.amount}\n`   
             }
             else if (action.pot) {
                 handHistory += `${action.pot} - ${action.potSize} WINNERS: ${action.winnerNames}\n`
@@ -756,17 +751,17 @@ class Table {
         // if (this.currentHand.bbPos >= this.playerIDByPositionIndex.length) this.currentHand.bbPos -= this.playerIDByPositionIndex.length
         const sbPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.sbPos]]
         const bbPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.bbPos]]
-        sbPlayer.betSize = this.sb
-        bbPlayer.betSize = this.bb
-        if (sbPlayer.stackSize < this.sb) sbPlayer.betSize = sbPlayer.stackSize
-        if (bbPlayer.stackSize < this.bb) bbPlayer.betSize = bbPlayer.stackSize
-        sbPlayer.stackSize -= sbPlayer.betSize
-        bbPlayer.stackSize -= bbPlayer.betSize
+        sbPlayer.betSize = new Decimal(this.sb)
+        bbPlayer.betSize = new Decimal(this.bb)
+        if (sbPlayer.stackSize.lessThan(this.sb)) sbPlayer.betSize = sbPlayer.stackSize
+        if (bbPlayer.stackSize.lessThan(this.bb)) bbPlayer.betSize = bbPlayer.stackSize
+        sbPlayer.stackSize = sbPlayer.stackSize.minus(sbPlayer.betSize)
+        bbPlayer.stackSize = bbPlayer.stackSize.minus(bbPlayer.betSize)
         this.currentHand.actionSequence.push({playerName: sbPlayer.name, type: "sb", amount: sbPlayer.betSize})
         this.currentHand.actionSequence.push({playerName: bbPlayer.name, type: "bb", amount: bbPlayer.betSize})
         this.currentHand.positionActing = this.currentHand.bbPos
-        this.currentHand.biggestBet = this.bb
-        this.currentHand.minBet = this.bb * 2
+        this.currentHand.biggestBet = new Decimal(this.bb)
+        this.currentHand.minBet = new Decimal(this.bb * 2)
         this.prepareNextPlayerTurn()
         // const nextPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.positionActing]]
         // nextPlayer.possibleActions = [{type: "fold", amount: 0}, {type: "call", amount: this.bb}, {type: "raise", amount: this.bb*2}]

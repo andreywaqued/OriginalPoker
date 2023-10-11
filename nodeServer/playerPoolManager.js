@@ -5,6 +5,7 @@
 //initially will be just an object, later on possible becoming a microservice
 // const { parentPort } = require('worker_threads');
 
+const Decimal = require('decimal.js');
 const Player = require("./player")
 const TableManager = require("./tableManager")
 
@@ -44,6 +45,9 @@ class PlayerPoolManager {
         console.log(socket.id)
         console.log(poolID)
         console.log(stackSize)
+        if (!socket) return console.log("socket undefined")
+        if (!socket.user) return console.log("user undefined")
+        stackSize = new Decimal(stackSize)
         //player just entering the pool
         let player = new Player(socket, stackSize)
         if (!player && socket) return socket.emit("enterPoolResponse", { response: "failed to enter pool", status: 401 })
@@ -56,8 +60,8 @@ class PlayerPoolManager {
         // console.log(pool)
         // console.log(`${stackSize} >= ${pool.minBuyIn} : ${stackSize >= pool.minBuyIn}`)
         // console.log(`${stackSize} <= ${pool.maxBuyIn} : ${stackSize <= pool.maxBuyIn}`)
-        console.log(`${socket.user.balance} >= ${stackSize} : ${socket.user.balance >= stackSize}`)
-        if (stackSize >= pool.minBuyIn && stackSize <= pool.maxBuyIn && socket.user.balance >= stackSize) {
+        console.log(`${socket.user.balance} >= ${stackSize} : ${socket.user.balance.greaterThanOrEqualTo(stackSize)}`)
+        if (stackSize.greaterThanOrEqualTo(pool.minBuyIn) && stackSize.lessThanOrEqualTo(pool.maxBuyIn) && socket.user.balance.greaterThanOrEqualTo(stackSize)) {
             console.log("log1")
             // console.log(socket.id)
             // console.log(this.sockets)
@@ -73,11 +77,11 @@ class PlayerPoolManager {
             this.tableManager.placePlayerIntoTable(player)
             this.socketManager.to("lobby").emit("updatePools", this.pools)
             console.log("log4")
-            socket.user.balance -= stackSize
+            socket.user.balance = socket.user.balance.minus(stackSize)
             this.fastify.pg.connect().then(async (client) => {
                 console.log("updating balance")
                 try {
-                    const result = await client.query(`UPDATE users SET balance = balance - ${stackSize} WHERE username = '${socket.user.name}'`);
+                    const result = await client.query(`UPDATE users SET balance = balance - ${stackSize.toNumber()} WHERE username = '${socket.user.name}'`);
                     console.log(result)
                 } catch (error) {
                     console.log(error)
@@ -131,7 +135,7 @@ class PlayerPoolManager {
             console.log("returning rebuy")
             return this.tableManager.playerPoolManager.rebuy(player.id, player.poolID, player.rebuyAmount)
         }
-        if (player.stackSize === 0) {
+        if (player.stackSize.equals(0)) {
             console.log(`player.stackSize: ${player.stackSize}`)
             // this.leavePool(socket, player)
             if (socket) return socket.emit("askRebuy", {playerID : player.id, poolID: poolID, minBuyIn: pool.minBuyIn, maxBuyIn : pool.maxBuyIn})
@@ -176,10 +180,11 @@ class PlayerPoolManager {
         if (!pool) return console.log("pool invalid")
         if (!player) return console.log("player invalid")
         if (!socket) return console.log("socket invalid")
+        rebuyAmount = new Decimal(rebuyAmount)
         // console.log(pool)
         // console.log(`${rebuyAmount} >= ${pool.minBuyIn} : ${rebuyAmount >= pool.minBuyIn}`)
         // console.log(`${rebuyAmount} <= ${pool.maxBuyIn} : ${rebuyAmount <= pool.maxBuyIn}`)
-        if (player.stackSize + rebuyAmount > pool.maxBuyIn) rebuyAmount = pool.maxBuyIn - player.stackSize
+        if (player.stackSize.plus(rebuyAmount).greaterThan(pool.maxBuyIn)) rebuyAmount = new Decimal(pool.maxBuyIn).minus(player.stackSize)
         console.log("updated rebuy Amount :" + rebuyAmount)
         // if (rebuyAmount <= 0) {
         //     //send him back into the pool as he cant make any rebuy
@@ -189,7 +194,7 @@ class PlayerPoolManager {
         //     player.isSitout = false
         //     return this.reEnterPool(player) 
         // }
-        if (player.stackSize + rebuyAmount >= pool.minBuyIn && player.stackSize + rebuyAmount <= pool.maxBuyIn && socket.user.balance >= rebuyAmount) {
+        if (player.stackSize.plus(rebuyAmount).greaterThanOrEqualTo(pool.minBuyIn) && player.stackSize.plus(rebuyAmount).lessThanOrEqualTo(pool.maxBuyIn) && socket.user.balance.greaterThanOrEqualTo(rebuyAmount)) {
             console.log("rebuy 1")
             const table = this.tableManager.tables[poolID][player.tableID]
             if (table) {
@@ -202,16 +207,16 @@ class PlayerPoolManager {
             }
             if (rebuyAmount > 0) {
                 console.log("rebuyAmount > 0")
-                player.stackSize += rebuyAmount
-                socket.user.balance -= rebuyAmount
+                player.stackSize = player.stackSize.plus(rebuyAmount)
+                socket.user.balance = socket.user.balance.minus(rebuyAmount)
                 this.fastify.pg.connect().then(async (client) => {
                     console.log("updating balance")
-                    const result = await client.query(`UPDATE users SET balance = balance - ${rebuyAmount} WHERE username = '${socket.user.name}'`);
+                    const result = await client.query(`UPDATE users SET balance = balance - ${rebuyAmount.toNumber()} WHERE username = '${socket.user.name}'`);
                     console.log(result)
                     client.release();
                 });
                 player.askingRebuy = false
-                player.rebuyAmount = 0
+                player.rebuyAmount = new Decimal(0)
                 player.isSitout = false
                 socket.emit("updateUserInfo", { user : socket.user, status: 200})
                 if (table) {
@@ -221,7 +226,7 @@ class PlayerPoolManager {
             }
             console.log("rebuy amount <= 0")
             player.askingRebuy = false
-            player.rebuyAmount = 0
+            player.rebuyAmount = new Decimal(0)
             player.isSitout = false
         }
         console.log("rebuy 2")
@@ -263,10 +268,10 @@ class PlayerPoolManager {
                 if (!table.currentHand.handIsBeingPlayed) {
                     console.log("leavePool()5")
                     if (table.waitingForPlayers) table.removePlayer(player) //tira o jogador antes da mao começar
-                    if (socket) socket.user.balance += player.stackSize //devolver o balance pro jogador no banco de dados
+                    if (socket) socket.user.balance = socket.user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
                     this.fastify.pg.connect().then(async (client) => {
                         console.log("updating balance")
-                        const result = await client.query(`UPDATE users SET balance = balance + ${player.stackSize} WHERE username = '${player.name}'`);
+                        const result = await client.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'`);
                         console.log(result)
                         client.release();
 
@@ -290,10 +295,10 @@ class PlayerPoolManager {
                 }
             } else {
                 console.log("leavePool() 7 table undefined")
-                if (socket) socket.user.balance += player.stackSize //devolver o balance pro jogador no banco de dados
+                if (socket) socket.user.balance = socket.user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
                 this.fastify.pg.connect().then(async (client) => {
                     console.log("updating balance")
-                    const result = await client.query(`UPDATE users SET balance = balance + ${player.stackSize} WHERE username = '${player.name}'`);
+                    const result = await client.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'`);
                     console.log(result)
                     client.release();
 

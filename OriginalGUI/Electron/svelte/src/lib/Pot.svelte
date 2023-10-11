@@ -5,7 +5,7 @@
     export let potAmount
 </script>
 {#if potAmount != 0}
-    <div class="pot"><span>{Math.round(potAmount * 100) / 100}</span></div>
+    <div class="pot"><span>{potAmount}</span></div>
 {/if}
 
 <style>

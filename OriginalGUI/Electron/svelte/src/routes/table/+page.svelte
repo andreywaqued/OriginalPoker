@@ -62,6 +62,8 @@
         hero = player
         hero.isHero = true
         hero.showCards = true
+        hero.betSize = parseFloat(player.betSize)
+        hero.stackSize = parseFloat(player.stackSize)
         possibleActions = player.possibleActions
         if (possibleActions.length > 0) {
           if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize)*100)/100
@@ -91,7 +93,7 @@
           player.isHero = false
           // player.showCards = false
           player.isButton = false
-          sumOfBetSizes += player.betSize
+          sumOfBetSizes += parseFloat(player.betSize)
           
           if (gameState.positionActing === player.position) currentPlayerActing = player.id
           if (player.position === gameState.dealerPos) player.isButton = true
@@ -112,7 +114,7 @@
         pots = gameState.pots
         sbSize = gameState.sb
         bbSize = gameState.bb
-        biggestBet = gameState.biggestBet
+        biggestBet = parseFloat(gameState.biggestBet)
         currentGameState = gameState
         console.log(playersComponents)
         Object.values(playersComponents).forEach( playerComponent => { 
@@ -244,7 +246,7 @@
     // console.log(`updateBetValue(${potPerc})`)
     let sumOfPots = 0
     for (let i = 0; i< pots.length; i++) {
-      sumOfPots += pots[i]
+      sumOfPots += parseFloat(pots[i])
     }
     // console.log("betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount")
     betValue = potPerc/100*(sumOfPots + sumOfBetSizes + biggestBet - hero.betSize)+biggestBet
@@ -878,7 +880,7 @@ button:hover {
                 <button class="playButton" class:playerButtonHide={action.amount >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} >
                   <span>{action.type}</span>
                   {#if action.amount > 0}
-                    <span class="value">{action.amount}</span>
+                    <span class="value">{Math.round((action.amount - hero.betSize)*100)/100}</span>
                   {/if}
                 </button>
               {:else}

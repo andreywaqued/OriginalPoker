@@ -1,3 +1,4 @@
+const Decimal = require('decimal.js');
 //the user class, responsible for handling the object associated with a login
 class User {
     static async createAndLogin(name, password, db) {
@@ -28,7 +29,7 @@ class User {
         if (createdUser) {
             this.name = name;
             this.avatar = avatar;
-            this.balance = 0;
+            this.balance = new Decimal(0);
         }
         console.log(this)
         // await this.getUserFromDB(userId);
@@ -39,7 +40,7 @@ class User {
         const userData = await fetchUserFromDB(name, db);
         this.name = userData.username;
         this.avatar = userData.avatar;
-        this.balance = userData.balance;
+        this.balance = new Decimal(userData.balance);
     }
 
     async deposit(amount) {
@@ -108,7 +109,7 @@ async function fetchUserFromDB(name, db) {
         return {
             username: user.username,
             avatar: user.avatar,
-            balance: parseFloat(user.balance) //it looks like numeric type saves as string
+            balance: new Decimal(user.balance) //it looks like numeric type saves as string
         };
     }
     // Simulate fetching a user from the database
