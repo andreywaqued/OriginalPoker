@@ -88,7 +88,11 @@ fastify.get('/pools', async (request, reply) => {
   return playerPoolManager.playersByPool
 });
 fastify.get('/tables', async (request, reply) => {
-  return playerPoolManager.tableManager.tables
+  let handsBeingPlayed = []
+  Object.values(playerPoolManager.tableManager.tables).forEach((table) => {
+    handsBeingPlayed.push(table.currentHand)
+  })
+  return handsBeingPlayed
 });
 // fastify.get('/set', async (request, reply) => {
 //   const { user, name } = request.query
