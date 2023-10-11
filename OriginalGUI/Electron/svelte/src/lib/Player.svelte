@@ -905,9 +905,9 @@
             <div class="playerCircle"></div>
         </div>
         <div class="playerName" class:winner={isWinner}><span>{name}</span></div>
-        <div class="playerBalance" class:winner={isWinner}><span>{Math.round(stackSize * 100) / 100}</span></div>
+        <div class="playerBalance" class:winner={isWinner}><span>{stackSize}</span></div> <!-- {Math.round(stackSize * 100) / 100} -->
         {#if betSize > 0}
-            <div class="playerBet"><span class="value">{Math.round(betSize * 100) / 100}</span></div>
+            <div class="playerBet"><span class="value">{betSize}</span></div>
         {/if}
         {#if showCards}
             <div class="playerCardsHero" class:show={playerCardsShow} class:fold={hasFolded && isHero} bind:this={playerCardsHero}>
