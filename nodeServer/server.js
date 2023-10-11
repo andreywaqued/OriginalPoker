@@ -88,13 +88,20 @@ fastify.get('/pools', async (request, reply) => {
   return playerPoolManager.playersByPool
 });
 fastify.get('/tables', async (request, reply) => {
-  let handsBeingPlayed = []
-  Object.values(playerPoolManager.tableManager.tables).forEach((poolID) => {
-    Object.values(playerPoolManager.tableManager.tables[poolID]).forEach((table) => {
-      handsBeingPlayed.push(table.currentHand)
+  let tablesMap = {}
+  console.log(playerPoolManager.tableManager.tables)
+  Object.values(playerPoolManager.tableManager.tables).forEach((pool) => {
+    Object.values(pool).forEach((table) => {
+      tablesMap[table.id] = {
+        title: table.title,
+        players: table.players,
+        waitingForPlayers: table.waitingForPlayers,
+        hand: table.currentHand
+
+      }
     })
   })
-  return handsBeingPlayed
+  return tablesMap
 });
 // fastify.get('/set', async (request, reply) => {
 //   const { user, name } = request.query
