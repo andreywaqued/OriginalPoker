@@ -89,8 +89,10 @@ fastify.get('/pools', async (request, reply) => {
 });
 fastify.get('/tables', async (request, reply) => {
   let handsBeingPlayed = []
-  Object.values(playerPoolManager.tableManager.tables).forEach((table) => {
-    handsBeingPlayed.push(table.currentHand)
+  Object.values(playerPoolManager.tableManager.tables).forEach((poolID) => {
+    Object.values(playerPoolManager.tableManager.tables[poolID]).forEach((table) => {
+      handsBeingPlayed.push(table.currentHand)
+    })
   })
   return handsBeingPlayed
 });
