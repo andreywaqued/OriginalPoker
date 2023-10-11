@@ -122,12 +122,15 @@
         })
         console.log(currentPlayerActing)
         
-        if (gameState.handIsBeingPlayed && !gameState.isShowdown) tryStartPlayerTurn = setInterval(()=>{
-          if (currentPlayerActing in playersComponents) { //it may be called before the component is created
-            playersComponents[currentPlayerActing].startPlayerTurn(gameState.timeLimitToAct)
-            clearInterval(tryStartPlayerTurn)
-          }
-        }, 100)
+        if (gameState.handIsBeingPlayed && !gameState.isShowdown) {
+          clearInterval(tryStartPlayerTurn)
+          tryStartPlayerTurn = setInterval(()=>{
+            if (currentPlayerActing in playersComponents) { //it may be called before the component is created
+              playersComponents[currentPlayerActing].startPlayerTurn(gameState.timeLimitToAct)
+              clearInterval(tryStartPlayerTurn)
+            }
+          }, 100)
+        }
       })
       window.api.on('handTransition', () => {
         console.log("handTransition")

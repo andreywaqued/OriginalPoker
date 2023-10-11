@@ -193,6 +193,7 @@ socket.on("updateUserInfo", response => {
 socket.on("updatePlayerInfo", player => {
     console.log("updatePlayerInfo")
     console.log(player)
+    if (!player) return
     const playerIndex = playersID.indexOf(player.id)
     const table = tables[playerIndex]
     players[playerIndex] = player

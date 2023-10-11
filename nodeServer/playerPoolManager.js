@@ -51,6 +51,7 @@ class PlayerPoolManager {
         //player just entering the pool
         let player = new Player(socket, stackSize)
         if (!player && socket) return socket.emit("enterPoolResponse", { response: "failed to enter pool", status: 401 })
+        if (!player) return console.log("failed to enter pool")
         socket.user.playerIDs.push(player.id)
         socket.user.poolIDs.push(poolID)
         // console.log(poolID)
@@ -119,6 +120,7 @@ class PlayerPoolManager {
     reEnterPool(player) {
         //player reentering pool after played a hand
         console.log("reEnterPool()")
+        if (!player) return console.log("player is undefined")
         console.log(player.name)
         // console.log(player)
         let poolID = player.poolID
