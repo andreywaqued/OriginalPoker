@@ -50,6 +50,7 @@ class TableManager {
             const table = this.tables[player.poolID][key]
             if (!table.waitingForPlayers) continue
             if (player.socketID in table.sockets) continue
+            if (table.countPlayers() === table.tableSize) continue
             table.sitPlayer(player)
             return
         }

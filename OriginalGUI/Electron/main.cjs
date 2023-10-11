@@ -435,6 +435,9 @@ ipcMain.on('close-window', (event) => {
         if (response.response === 0) {
           // Destroy the window to ensure that it is closed
           const tableIndex = tables.indexOf(win)
+          console.log(tableIndex)
+          console.log(playersID)
+          console.log(players)
           socket.emit("leavePool", players[tableIndex])
           win.close()
           tables.splice(tableIndex,1)

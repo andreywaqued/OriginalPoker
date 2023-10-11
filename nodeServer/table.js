@@ -99,7 +99,12 @@ class Table {
                 break
             }
         }
-        if (player.position === -1) return console.log("failed to find a seat")
+        if (player.position === -1) {
+            //TODO talvez isso daqui possa bugar qnd tiver muitos jogadores e 2 jogadores sentarem exatamente ao mesmo tempo e a mesa estiver cheia (1 jogador sentou qnd tinham 5 e outro qnd tinham 6)
+            //testando implementacao
+            console.log("failed to find a seat")
+            return this.tableManager.placePlayerIntoTable(player)
+        }
         player.cards = []
         player.actedSinceLastRaise = false
         player.possibleActions = []
@@ -127,8 +132,10 @@ class Table {
         }
         // if (this.playerIDByPositionIndex.length === this.tableSize) this.startHandTimer = setTimeout(() => this.startNewHand(), 0)
         if (this.countPlayers() === this.tableSize) {
+            this.waitingForPlayers = false
             clearTimeout(this.startHandTimer)
-            this.startNewHand()
+            this.startHandTimer = setTimeout(() => this.startNewHand(), 500)
+            // this.startNewHand()
         }
         if (!this.currentHand.handIsBeingPlayed) this.broadcastHandState()
         // this.socketManager.to(`table:${this.id}`).emit("updateGameState", this.currentHand);
@@ -273,7 +280,7 @@ class Table {
         // console.log(player.possibleActions)
         console.log("validateAction 1")
         const playerSocket = this.sockets[playerFromClient.socketID]
-        const player = this.players[playerFromClient.id]
+        let player = this.players[playerFromClient.id]
         // player.isSitout = playerFromClient.isSitout
         // console.log(player)
         if (!this.currentHand.handIsBeingPlayed && playerSocket) return console.log(playerSocket.emit("actionResponse", {message: "hand is over", status:401}), "hand is over")
@@ -286,6 +293,7 @@ class Table {
         // console.log(player.possibleActions[1] === action)
         // console.log(action.type != "raise")
         let actionAllowed = false;
+        if (player.possibleActions.length === 0) console.log("possibleActions is empty")
         console.log(player.possibleActions)
         for (let i = 0; i<player.possibleActions.length; i++) {
             if (actionAllowed) continue
@@ -321,6 +329,9 @@ class Table {
                 const playerCopy = JSON.parse(JSON.stringify(player))
                 this.players[player.id] = playerCopy
                 this.tableManager.playerPoolManager.reEnterPool(player)
+                player = playerCopy
+                player.stackSize = new Decimal(player.stackSize)
+                player.betSize = new Decimal(player.betSize)
             }
         }
         console.log("validateAction 5")
@@ -410,13 +421,19 @@ class Table {
             if (!player) continue
             if (!player.hasFolded) player.showCards = true
         }
+        this.currentHand.positionActing = -1 //sending this only for showing the moment when the player acts before showing the new round
+        this.broadcastHandState() //sending this only for showing the moment when the player acts before showing the new round
         this.startNewRound(1000)
     }
     prepareNextPlayerTurn(){
         console.log("prepareNextPlayerTurn()")
         if (!this.currentHand.handIsBeingPlayed) return console.log("hand is over")
         
-        if (this.currentHand.playersFolded === this.countPlayers() - 1) return this.startNewRound()
+        if (this.currentHand.playersFolded === this.countPlayers() - 1) {
+            this.currentHand.positionActing = -1 //sending this only for showing the moment when the player acts before showing the new round
+            this.broadcastHandState() //sending this only for showing the moment when the player acts before showing the new round
+            return setTimeout(() => {this.startNewRound()}, 500)
+        }
         let playersLeftWithChips = 0
         if (this.currentHand.playersFolded + this.currentHand.playersAllin === this.countPlayers()) return this.startNewRoundAtShowdown()
         console.log("prepareNextPlayerTurn() 1")
@@ -441,7 +458,11 @@ class Table {
         }
         if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
 
-        if (nextPlayer.actedSinceLastRaise && this.currentHand.boardRound != 4) return this.startNewRound()
+        if (nextPlayer.actedSinceLastRaise && this.currentHand.boardRound != 4) {
+            this.currentHand.positionActing = -1 //sending this only for showing the moment when the player acts before showing the new round
+            this.broadcastHandState() //sending this only for showing the moment when the player acts before showing the new round
+            return setTimeout(() => {this.startNewRound()}, 500)
+        }
         console.log("prepareNextPlayerTurn() 2")
         // if (nextPlayer.stackSize === 0) {
         //     nextPlayer.actedSinceLastRaise = true
@@ -582,7 +603,6 @@ class Table {
         if (this.currentHand.boardRound === 3) this.currentHand.boardCards.push(this.deck.getCard())
         if (this.currentHand.boardRound === 4) return console.log(this.evaluateHand())
         this.currentHand.actionSequence.push({round: this.currentHand.boardRound, boardCards : this.currentHand.boardCards})
-        this.currentHand.positionActing = this.currentHand.dealerPos //its going to the next player
         this.currentHand.minBet = new Decimal(this.bb)
         this.currentHand.biggestBet = new Decimal(0)
         console.log(this.currentHand.actionSequence)
@@ -597,6 +617,7 @@ class Table {
         // if (playersLeftWithChips < 2) return this.startNewRound()
         this.setAllPlayerActedSinceLastRaiseToFalse()
         this.broadcastHandState()
+        this.currentHand.positionActing = this.currentHand.dealerPos //its going to the next player
         setTimeout(() => {this.prepareNextPlayerTurn()}, timeout)
     }
     closeHand() {

@@ -332,6 +332,12 @@
         aspect-ratio: 6/8;
         z-index: 1;
     }
+    .player.fold {
+        opacity: 0.8;
+    }
+    .player.sitout {
+        opacity: 0.5;
+    }
     .playerImage {
         position: relative;
         margin: 0 auto;
@@ -899,7 +905,7 @@
 </style>
 
 <div class={positioningClass}>
-    <div class="player">
+    <div class="player" class:fold={hasFolded} class:sitout={isSitout}>
         <div class="playerGlow" class:glowPlayerAnimation={playerTurn}></div>
         <div class="playerImage" style={cssVarStyles}>
             <div class="playerCircle"></div>
