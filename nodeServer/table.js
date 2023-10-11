@@ -426,12 +426,16 @@ class Table {
         // console.log(this.currentHand.positionActing)
         // console.log(this.playerIDByPositionIndex.length)
         const nextPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.positionActing]]
+        nextPlayer.stackSize = new Decimal(nextPlayer.stackSize)
+        nextPlayer.betSize = new Decimal(nextPlayer.betSize)
         // console.log(nextPlayer)
         //check to see if the players left are already allin
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             if (playersLeftWithChips > 2) continue
             const player = this.players[this.playerIDByPositionIndex[i]]
             if (!player) continue
+            player.stackSize = new Decimal(player.stackSize)
+            player.betSize = new Decimal(player.betSize)
             if (!player.hasFolded && nextPlayer.betSize.lessThan(player.stackSize.plus(player.betSize))) playersLeftWithChips++ //old way
             // if (!player.hasFolded && player.stackSize.greaterThan(0)) playersLeftWithChips++ //teste (NAO FUNCIONOU DIREITO, QUANDO O JOGADOR VAI ALLIN ELE FICA COM STACK 0, DAI BUGA)
         }
