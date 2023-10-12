@@ -71,7 +71,7 @@ class Table {
             minBet : new Decimal(0),
             maxBet : new Decimal(9999999999),
             biggestBet : new Decimal(0),
-            positionActing : 0,
+            positionActing : -1,
             timeLimitToAct: 0,
             playersAllin : 0,
             playersFolded : 0,
@@ -215,7 +215,7 @@ class Table {
             minBet : 0,
             maxBet : 9999999999,
             biggestBet : 0,
-            positionActing : 0,
+            positionActing : -1,
             timeLimitToAct: 0,
             playersAllin : 0,
             playersFolded : 0,
@@ -695,7 +695,7 @@ class Table {
         this.currentHand.minBet = new Decimal(0);
         this.currentHand.maxBet = new Decimal(9999999999);
         this.currentHand.biggestBet = new Decimal(0);
-        this.currentHand.positionActing = 0;
+        this.currentHand.positionActing = -1;
         this.currentHand.playersAllin = 0;
         this.currentHand.playersFolded = 0;
         this.deck = new Deck()

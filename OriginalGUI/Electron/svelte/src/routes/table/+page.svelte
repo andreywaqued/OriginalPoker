@@ -82,6 +82,7 @@
         console.log("updateGameState")
         console.log(gameState)
         sumOfBetSizes = 0
+        currentPlayerActing = "empty player"
         if (!gameState.handIsBeingPlayed) possibleActions = []
         if (gameState.handIsBeingPlayed || gameState.isShowdown) {
           waitingForPlayers = false
