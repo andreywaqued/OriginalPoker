@@ -19,6 +19,7 @@ class Player {
         this.position = 0;
         this.isButton = false;
         this.showCards = false;
+        this.handHistoryArray = []
     }
 }
 module.exports = Player;

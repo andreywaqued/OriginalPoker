@@ -35,6 +35,8 @@ class Deck {
     }
 }
 
+roundStr = ["Preflop", "Flop", "Turn", "River"]
+
 class Table {
     constructor(TableManager, pool, poolID) {
         this.tableManager = TableManager;
@@ -78,6 +80,7 @@ class Table {
             dealerPos: -1,
             sbPos: 0,
             bbPos: 0,
+            handHistory: "",
         }
     }
 
@@ -114,7 +117,8 @@ class Table {
         player.isWinner = false
         player.betSize = new Decimal(0)
         player.contestingPots = [0]
-        player.finalHandRank = {rank: -1}
+        player.finalHandRank = {rank: -1, combination: ""}
+        player.lastAction = ""
         // player.isSitout = false;
         this.players[player.id] = player;
         // this.playerIDByPositionIndex.push(player.id);
@@ -154,6 +158,7 @@ class Table {
             const player = this.players[playerID]
             if (!player) continue
             console.log(player)//this gave an error recently,
+            if (this.currentHand.boardCards.length>=3 && !player.hasFolded && player.cards.length>0) player.finalHandRank = rankHands(this.pokerVariant, this.currentHand.boardCards, [player.cards])[0]
             // trying to verify what it is sending to see if can filter to avoid sending too much information
             if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("updatePlayerInfo", player)
         }
@@ -162,6 +167,7 @@ class Table {
         console.log("broadcasting handState")
         let handState = JSON.parse(JSON.stringify(this.currentHand)) // copies the current hand
         handState.players = {}
+        delete handState.handHistory
         console.log(this.playerIDByPositionIndex)
         console.log(this.id)
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
@@ -183,7 +189,8 @@ class Table {
                 isButton : player.isButton,
                 position : player.position,
                 showCards : player.showCards,
-                isWinner : player.isWinner
+                isWinner : player.isWinner,
+                lastAction: player.lastAction
             }
             if (player.cards.length > 0) handState.players[playerID].cards = ["cb", "cb"]
             if (handState.isShowdown && player.showCards) handState.players[playerID].cards = player.cards
@@ -237,7 +244,8 @@ class Table {
             possibleActions: [],
             isButton : false,
             position : player.position,
-            showCards : false
+            showCards : false,
+            lastAction: player.lastAction
         }
         const socket = this.sockets[player.socketID]
         if (socket) socket.emit("updateGameState", handState);
@@ -269,7 +277,7 @@ class Table {
         console.log(`validateAction(playerFromClient, action)`)
         console.log(playerFromClient.name)
         console.log(action)
-        action.amount = parseFloat(action.amount.toString().replace(",", "."))
+        action.amount = parseFloat(action.amount.toString().replaceAll(",", "."))
         action.amount = new Decimal(action.amount)
         if (action.amount.isNaN()) return playerSocket.emit("actionResponse", {message: "action not allowed", status:401})
         
@@ -310,6 +318,7 @@ class Table {
         console.log(`actionAllowed: ${actionAllowed}`)
         if (!actionAllowed && playerSocket) return playerSocket.emit("actionResponse", {message: "action not allowed", status:401})
         clearTimeout(this.timeLimitCounter) //validou a acao
+        player.lastAction = action.type
         console.log("validateAction 4")
         // if (action.amount < this.currentHand.biggestBet && action.amount < player.stackSize) return "amount is not allowed"
         //action valid
@@ -362,7 +371,6 @@ class Table {
     }
     evaluateHand() {
         console.log("evaluateHand()")
-        const gameType = "texas"
         
         // const board = [this.deck[0], this.deck[1], this.deck[2], this.deck[3], this.deck[4]]
         for (let potIndex = 0; potIndex < this.currentHand.pots.length; potIndex ++) {
@@ -377,7 +385,7 @@ class Table {
                 playersContestingThisPot++
                 // player.finalHandRank = {rank: -1}
                 // console.log(this.currentHand.boardCards, [player.cards])
-                if (this.currentHand.boardCards.length > 0 && player.finalHandRank.rank === -1) player.finalHandRank = rankHands(gameType, this.currentHand.boardCards, [player.cards])[0]
+                if (this.currentHand.boardCards.length > 0 && player.finalHandRank.rank === -1) player.finalHandRank = rankHands(this.pokerVariant, this.currentHand.boardCards, [player.cards])[0]
                 if (player.finalHandRank.rank < winnerRank) {
                     winnerRank = player.finalHandRank.rank
                     winners = []
@@ -392,7 +400,7 @@ class Table {
                 winners[i].stackSize = winners[i].stackSize.plus(this.currentHand.pots[potIndex].dividedBy(winners.length))
                 if (playersContestingThisPot > 1) winners[i].showCards = true
                 winners[i].isWinner = true
-                winnerNames.push(winners[i].name)
+                winnerNames.push(JSON.stringify(winners[i].name).replaceAll("\"", ""))
             }
             if (winners.length > 0) this.currentHand.actionSequence.push({pot: potIndex, potSize: this.currentHand.pots[potIndex], winners: winnerNames})
             this.currentHand.pots[potIndex] = new Decimal(0)
@@ -525,6 +533,7 @@ class Table {
             if (!player) continue
             player.stackSize = new Decimal(player.stackSize) //player here may be copied when he folds and the value doesnt come as Decimal
             player.betSize = new Decimal(player.betSize) //player here may be copied when he folds and the value doesnt come as Decimal
+            player.lastAction = ""; //reset the lastAction
             if (player.stackSize.equals(0) && player.betSize.greaterThan(0)) {
                 if (player.betSize.lessThanOrEqualTo(smallestAllin)) smallestAllin = player.betSize
             }
@@ -602,7 +611,11 @@ class Table {
         if (this.currentHand.boardRound === 2) this.currentHand.boardCards.push(this.deck.getCard())
         if (this.currentHand.boardRound === 3) this.currentHand.boardCards.push(this.deck.getCard())
         if (this.currentHand.boardRound === 4) return console.log(this.evaluateHand())
-        this.currentHand.actionSequence.push({round: this.currentHand.boardRound, boardCards : this.currentHand.boardCards})
+        let sumOfPots = new Decimal(0)
+        this.currentHand.pots.forEach((pot) => {
+            sumOfPots = sumOfPots.add(pot)
+        })
+        this.currentHand.actionSequence.push({round: this.currentHand.boardRound, boardCards : JSON.stringify(this.currentHand.boardCards), potSize: sumOfPots})
         this.currentHand.minBet = new Decimal(this.bb)
         this.currentHand.biggestBet = new Decimal(0)
         console.log(this.currentHand.actionSequence)
@@ -685,6 +698,8 @@ class Table {
     }
     startNewHand() {
         console.log("startNewHand()")
+        const randomStart = Math.floor(Math.random() * this.countPlayers())
+        this.currentHand.dealerPos = this.findNextPlayer(randomStart)
         this.waitingForPlayers = false;
         this.currentHand.handIsBeingPlayed = true;
         this.currentHand.isShowdown = false;
@@ -698,6 +713,7 @@ class Table {
         this.currentHand.positionActing = -1;
         this.currentHand.playersAllin = 0;
         this.currentHand.playersFolded = 0;
+        this.currentHand.handHistory = `OriginalPoker ${this.title} ${this.tableSize}-max ${this.sb}/${this.bb} Button:${this.currentHand.dealerPos} - ${new Date().toUTCString()}\n`
         this.deck = new Deck()
         for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
             const player = this.players[this.playerIDByPositionIndex[i]]
@@ -715,6 +731,7 @@ class Table {
             player.hasFolded = false
             player.isButton = false
             player.contestingPots = [0]
+            this.currentHand.handHistory += `Seat ${i+1}: ${player.name} ($${player.stackSize}) - cards:${JSON.stringify(player.cards).replaceAll("\"", "")}\n`
         }
         if (this.countPlayers() < 2) {
             this.waitingForPlayers = true;
@@ -725,45 +742,56 @@ class Table {
     }
     saveHandHistoryToDB() {
         console.log("saveHandHistoryToDB()")
-        let handHistory = `OriginalPoker ${this.title} ${this.tableSize}-max ${this.sb}/${this.bb} Button:${this.currentHand.dealerPos} - ${new Date().toUTCString()}\n`
-        let playerIndex = 1
-        Object.values(this.players).forEach(player => {
-            if (!player) return
-            handHistory += `Seat ${playerIndex}: ${player.name} ($${player.stackSize}) - cards:${player.cards}\n`
-            playerIndex++
-        })
+        // let playerIndex = 1
+        // Object.values(this.players).forEach(player => {
+        //     if (!player) return
+        //     this.currentHand.handHistory += `Seat ${playerIndex}: ${player.name} ($${player.stackSize}) - cards:${player.cards}\n`
+        //     playerIndex++
+        // })
         this.currentHand.actionSequence.forEach(action => {
+            console.log(action)
             if (action.round) {
-                handHistory += `${action.round}: ${action.boardCards}\n`
+                this.currentHand.handHistory += `\n${roundStr[action.round]}: ${action.boardCards.replaceAll("\"", "")} Pot: ${action.potSize}\n`
             }
             else if (action.playerName) {
-                if (action.amount.equals(0)) handHistory += `${action.playerName}: ${action.type}\n`
-                if (action.amount.greaterThan(0)) handHistory += `${action.playerName}: ${action.type} ${action.amount}\n`   
+                if (action.amount.equals(0)) this.currentHand.handHistory += `${action.playerName}: ${action.type}\n`
+                if (action.amount.greaterThan(0)) this.currentHand.handHistory += `${action.playerName}: ${action.type} ${action.amount}\n`   
             }
-            else if (action.pot) {
-                handHistory += `${action.pot} - ${action.potSize} WINNERS: ${action.winnerNames}\n`
+            else if (action.pot != undefined) {
+                this.currentHand.handHistory += `\nPotIndex ${action.pot} - PotSize: ${action.potSize} WINNERS: ${action.winners}\n`
             }
         })
-        this.tableManager.fastify.pg.connect().then(async (client) => {
-            console.log("saving hand history")
-            try {
-                const result = await client.query(`INSERT INTO hands(handHistory) VALUES ('${handHistory}')`);
-                console.log(result)
-            } catch (error) {
-                console.log(error)
+        console.log("updating player hand history arrays")
+        for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
+            if (this.playerIDByPositionIndex[i] === null) continue
+            const player = this.tableManager.playerPoolManager.playersByPool[this.poolID][this.playerIDByPositionIndex[i]]
+            if (!player) continue
+            console.log(`added hand history to player ${player.name}`)
+            player.handHistoryArray.push(this.currentHand.handHistory)
+        }
+        this.tableManager.fastify.pg.query(`INSERT INTO hands(handHistory) VALUES ('${this.currentHand.handHistory}')`);
+        // this.tableManager.fastify.pg.connect().then(async (client) => {
+        //     console.log("saving hand history")
+        //     try {
+        //         const result = await client.query(`INSERT INTO hands(handHistory) VALUES ('${this.currentHand.handHistory}')`);
+        //         console.log(result)
+        //     } catch (error) {
+        //         console.log(error)
                 
-            }
-            client.release();
-        });
+        //     }
+        //     client.release();
+        // });
     }
     determinePlayerPositions(){
         console.log("determinePlayerPositions()")
         //bb, sb, button, etc
         //set initial playerTurn
-        const randomStart = Math.floor(Math.random() * this.countPlayers())
-        console.log(randomStart)
-        this.currentHand.dealerPos = this.findNextPlayer(randomStart)
-        console.log(this.currentHand.dealerPos)
+        // const randomStart = Math.floor(Math.random() * this.countPlayers()) //changed to startNewHand
+        // console.log(randomStart) //changed to startNewHand
+        // this.currentHand.dealerPos = this.findNextPlayer(randomStart) //changed to startNewHand
+        // console.log(this.currentHand.dealerPos) //changed to startNewHand
+
+
         // if (this.currentHand.dealerPos >= this.playerIDByPositionIndex.length) this.currentHand.dealerPos -= this.playerIDByPositionIndex.length
         const dealerPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.dealerPos]]
         console.log(this.playerIDByPositionIndex)

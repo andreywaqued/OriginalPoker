@@ -6,13 +6,13 @@ const Decimal = require('decimal.js');
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
 // })
 //internal render acess
-fastify.register(require('@fastify/postgres'), {
-  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
-})
-//external render acess
 // fastify.register(require('@fastify/postgres'), {
-//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
 // })
+//external render acess
+fastify.register(require('@fastify/postgres'), {
+  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+})
 const PlayerPoolManager = require('./playerPoolManager');
 // const TableManager = require('./tableManager');
 const User = require('./user');
@@ -20,12 +20,13 @@ const User = require('./user');
 // const { Worker } = require('worker_threads');
 fastify.addHook('onReady', async () => {
   console.log("connected")
-  const client = await fastify.pg.connect()
+  // const client = await fastify.pg.connect()
   // client.query("DROP TABLE users")
   // client.query("DROP TABLE hands")
-  client.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 20 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-  client.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-  client.release()
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 20 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS moneyTransactions(id serial PRIMARY KEY, userid serial NOT NULL, amount NUMERIC NOT NULL, source VARCHAR(50) NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  // client.release()
 })
 fastify.addHook('onClose', async () => {
   console.log("onClose")
@@ -50,26 +51,33 @@ playerPoolManager = new PlayerPoolManager(socketManager, fastify)
 // tableManager.test()
 console.log("starting")
 fastify.get('/users', async (request, reply) => {
-  const client = await fastify.pg.connect();
-  const { rows } = await client.query('SELECT * FROM users');
-  client.release();
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query('SELECT * FROM users');
+  // client.release();
   console.log(rows)
   return rows;
 });
 fastify.get('/hands', async (request, reply) => {
-  const client = await fastify.pg.connect();
-  const { rows } = await client.query('SELECT * FROM hands');
-  client.release();
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query('SELECT * FROM hands');
+  // client.release();
+  console.log(rows)
+  return rows;
+});
+fastify.get('/transactions', async (request, reply) => {
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query('SELECT * FROM moneyTransactions');
+  // client.release();
   console.log(rows)
   return rows;
 });
 fastify.get('/addchips', async (request, reply) => {
   console.log(request.query)
-  const username = request.query.user
+  const userid = request.query.user
   const chips = new Decimal(request.query.chips)
-  const client = await fastify.pg.connect();
-  const result = await client.query(`UPDATE users SET balance = balance + ${chips} WHERE username = '${username}'`);
-  client.release();
+  // const client = await fastify.pg.connect();
+  const result = await fastify.pg.query(`UPDATE users SET balance = balance + ${chips} WHERE userid = '${userid}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${userid}, ${chips}, 'ORIGINAL CASHIER')`);
+  // client.release();
   console.log("socketManager.sockets.sockets")
   console.log(socketManager.sockets.sockets)
   socketManager.sockets.sockets.forEach((socket, socketID) => {
@@ -176,6 +184,13 @@ socketManager.on('connection', (socket) => {
     console.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
     return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
   })
+  socket.on('getTransactions', () => {
+    // const client = await fastify.pg.connect();
+    const { rows } = fastify.pg.query(`SELECT * FROM moneyTransactions WHERE userid = ${socket.user.id}`);
+    // client.release();
+    console.log(rows)
+    return rows;
+  });
   
 
 

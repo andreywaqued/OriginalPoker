@@ -1,5 +1,5 @@
 <script>
-	import { afterUpdate } from "svelte";
+    import { afterUpdate } from "svelte";
     import Card from "./Card.svelte";
     /**
      * @type {Number}
@@ -9,14 +9,29 @@
      * @type {Number}
      */
     export let tableRotateAmount
-
+    
     // /**
     //  * @type {Object.<string,any>}
     //  */
     // export let player
-    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions, isWinner;
+    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions, isWinner, lastAction;
     const deck = "boardDeck"
     let playerTurn = false;
+    let lastActionShowed = ""
+    let actionShowingTimeout = undefined
+    let showLastAction = false
+    let updateLastActionShowed = (lastAction) => {
+        if (!lastAction) return
+        console.log(`updateLastActionShowed(${lastAction})`)
+        if (lastActionShowed != lastAction && lastAction != "") {
+            showLastAction = true
+            clearTimeout(actionShowingTimeout)
+            lastActionShowed = lastAction
+            actionShowingTimeout = setTimeout(()=>{showLastAction=false}, 1000)
+        }
+    
+    }
+    $: updateLastActionShowed(lastAction)
     // export let playerName, balance: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["As", "5c"], deck : "boardDeck", isButton : true, isHero : true, lastAction : "cardDealt"
     /**
      * @type {Object.<Number, String>}
@@ -910,7 +925,15 @@
         <div class="playerImage" style={cssVarStyles}>
             <div class="playerCircle"></div>
         </div>
-        <div class="playerName" class:winner={isWinner}><span>{name}</span></div>
+        <div class="playerName" class:winner={isWinner}>
+            <span>
+                {#if !showLastAction}
+                    {name}
+                {:else}
+                    {lastActionShowed.toUpperCase()}
+                {/if}
+            </span>
+        </div>
         <div class="playerBalance" class:winner={isWinner}><span>{stackSize}</span></div> <!-- {Math.round(stackSize * 100) / 100} -->
         {#if betSize > 0}
             <div class="playerBet"><span class="value">{betSize}</span></div>

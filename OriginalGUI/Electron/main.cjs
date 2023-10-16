@@ -32,8 +32,8 @@ const { shell } = require('electron');
 //   require('electron-reloader')(module)
 // } catch (_) {}
 
-// const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
+const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
+// const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
 
 
 // Serve the static SvelteKit build files
@@ -59,7 +59,7 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     width: initialHeight * aspectRatio,
     minWidth: 600,
     maximizable: false,
-
+    icon: __dirname + '/icon.png',
     fullscreenable: false,
 
     frame: false,

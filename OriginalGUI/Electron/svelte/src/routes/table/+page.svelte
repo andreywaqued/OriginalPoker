@@ -17,18 +17,8 @@
   let tableStarted = true;
   let api;
   let winTitle = ""
-  let handHistories = [
-    "hh 1",
-    "hh 2",
-    "hh 3",
-    "hh 4",
-    "hh 5",
-    "hh 6",
-    "hh 7",
-    "hh 8",
-    "hh 9",
-    "hh 10",
-  ]
+  let handHistories = []
+  let hhIndex = 0
   let hero = { id: "", poolID: "", position : 0, cards: [], betSize: 0, stackSize : 0};
   let players = {};
   let playersComponents = {};
@@ -48,6 +38,7 @@
   let waitingForPlayers = true
   let doordashTable = false
   $: console.log(tableRotateAmount = hero.position)
+  let handStrength = ""
   let callChangeAds
   onMount(() => {
     const setHeight = () => {
@@ -64,6 +55,9 @@
         hero.showCards = true
         hero.betSize = parseFloat(player.betSize)
         hero.stackSize = parseFloat(player.stackSize)
+        handHistories = player.handHistoryArray
+        console.log(handHistories)
+        if (player.finalHandRank) handStrength = player.finalHandRank.combination
         possibleActions = player.possibleActions
         if (possibleActions.length > 0) {
           if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize)*100)/100
@@ -83,6 +77,7 @@
         console.log(gameState)
         sumOfBetSizes = 0
         currentPlayerActing = "empty player"
+        clearInterval(tryStartPlayerTurn)
         if (!gameState.handIsBeingPlayed) possibleActions = []
         if (gameState.handIsBeingPlayed || gameState.isShowdown) {
           waitingForPlayers = false
@@ -124,7 +119,6 @@
         console.log(currentPlayerActing)
         
         if (gameState.handIsBeingPlayed && !gameState.isShowdown) {
-          clearInterval(tryStartPlayerTurn)
           tryStartPlayerTurn = setInterval(()=>{
             if (currentPlayerActing in playersComponents) { //it may be called before the component is created
               playersComponents[currentPlayerActing].startPlayerTurn(gameState.timeLimitToAct)
@@ -136,6 +130,7 @@
       window.api.on('handTransition', () => {
         console.log("handTransition")
         possibleActions = []
+        handStrength = ""
         transitionBackground()
         callChangeAds()
       });
@@ -363,7 +358,12 @@
     if (hhPopoverActive) target?.hidePopover()
     if (!hhPopoverActive) target?.showPopover()
     hhPopoverActive = !hhPopoverActive;
+    hhIndex = handHistories.length - 1
     // popovertarget="test"
+  }
+  function changeHandHistoryIndex(direction){
+    console.log(`changeHandHistoryIndex(${direction})`)
+    if (hhIndex + direction >= 0 && hhIndex + direction < handHistories.length) hhIndex += direction
   }
   let transitioning = false;
   function transitionBackground() {
@@ -514,7 +514,7 @@
     // background-color: azure;
     aspect-ratio: 6/9;
 }
-button:active {
+button:active:enabled {
   transform: scale(0.95);
 }
 button {
@@ -526,6 +526,19 @@ button {
 }
 button:hover {
   background-color: white;
+}
+button:disabled {
+  opacity:0.7
+}
+.handStrengthDiv {
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #c1c1c1;
+  width: 10%;
+  top: 90%;
+  left: 45%
 }
 .playButtonsContainer {
     position: absolute;
@@ -785,17 +798,26 @@ button:hover {
     // background-color: blue;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: space-around;
     align-items: center;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid #888888;
     padding: 0 1%;
+    background-color: #1d1d1d;
+    color: #e5e5e5;
     button {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100%;
+      height: 90%;
       aspect-ratio: 1;
       font-size: 1em;
+    }
+    .closeButton {
+      position: absolute;
+      color: #1d1d1d;
+      height: 4%;
+      right: 0.25%;
+      top: 0.25%;
     }
   }
   .popoverMain {
@@ -806,7 +828,19 @@ button:hover {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 0 1%;
+    padding: 1%;
+    background-color: #1d1d1d;
+    color: #e5e5e5;
+    .handHistory {
+      font-size: 0.75em;
+      white-space: pre-line;
+      background-color: #2d2d2d;
+      width: 96%;
+      height: 95%;
+      border-radius: 5px;
+      padding: 1%;
+      overflow-y: auto;
+    }
   }
   .popoverOverlay.active {
     position: absolute;
@@ -904,12 +938,17 @@ button:hover {
         </div>
       </div>
     {/if}
+    {#if handStrength && handStrength != ""}
+      <div class="handStrengthDiv">
+        <span>{handStrength}</span>
+      </div>
+    {/if}
     
     <div class="popoverOverlay" class:active={sitoutPopoverActive} on:click={() => sitoutPopover(false)}></div>
     <div class="sitoutPopover" popover id="sitoutPopover">
       <div class="popoverTitle">
         <span>Sitout</span>
-        <button on:click={() => sitoutPopover(false)}>X</button>
+        <button class="closeButton" on:click={() => sitoutPopover(false)}>X</button>
       </div>
       <div class="popoverMain">
         You are sitout
@@ -919,20 +958,24 @@ button:hover {
     <div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
     <div class="hhPopover" popover id="hhPopover">
       <div class="popoverTitle">
-        <span>Hand History</span>
-        <button on:click={toggleHH}>X</button>
+        <button disabled={hhIndex<=0} on:click={() => {changeHandHistoryIndex(-1)}}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></button>
+        <span><pre>Hand History {hhIndex+1}/{handHistories.length}</pre></span>
+        <button disabled={hhIndex>=handHistories.length-1} on:click={() => {changeHandHistoryIndex(1)}}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"/></svg></button>
+        <button class="closeButton" on:click={toggleHH}>X</button>
       </div>
       <div class="popoverMain">
-        {#each handHistories as hh, index}
-          <div class="handHistory">{hh} {index}</div>
-        {/each}
+        {#if handHistories.length>0}
+          <div class="handHistory">{handHistories[hhIndex]}</div>
+        {:else}
+          <div class="handHistory">Hand History Is Empty</div>
+        {/if}
       </div>
     </div>
     <div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
     <div class="rebuyPopover" popover id="rebuyPopover">
       <div class="popoverTitle">
         <span>Rebuy</span>
-        <button on:click={toggleRebuy}>X</button>
+        <button class="closeButton" on:click={toggleRebuy}>X</button>
       </div>
       <div class="popoverMain">
         <label for="rebuyAmount">Amount to Rebuy</label>

@@ -217,6 +217,9 @@
                 align-items: center;
                 border-radius: 5px;
             }
+            button:hover {
+                background: linear-gradient(rgb(50,50,50) 00%, rgb(30,30,30)50%);
+            }
             .balance {
                 position: relative;
                 height: 20%;
@@ -276,6 +279,9 @@
             height: 10%;
             align-items: center;
             font-size: 0.8em;
+        }
+        button:hover {
+            background-color: #1d1d1d;
         }
     }
     .menuItem.selected {
@@ -423,6 +429,9 @@
             }
             button:disabled {
                 opacity: 0.7;
+            }
+            button:hover {
+                background-color: rgb(120,200,250);
             }
         }
         .inputDiv {
@@ -644,8 +653,8 @@
                     </div>
                 </div>
                 <div class="clock">
-                    <span>13:32</span>
-                    <span class="timezone">ET</span>
+                    <span>{new Date().getUTCHours()}:{new Date().getUTCMinutes()}</span>
+                    <span class="timezone">GMT</span>
                 </div>
             </div>
             <div class="main">
