@@ -928,7 +928,7 @@
         <div class="playerName" class:winner={isWinner}>
             <span>
                 {#if !showLastAction}
-                    {name}
+                    {name.length >= 10 ? name.substring(0, 7) + "..." : name}
                 {:else}
                     {lastActionShowed.toUpperCase()}
                 {/if}

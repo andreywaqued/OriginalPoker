@@ -2,6 +2,7 @@
     export const ssr = false;
 	import Ads from "$lib/Ads.svelte";
 	import Login from "$lib/Login.svelte";
+	import Profile from "./Profile.svelte";
     import TitleBar from "$lib/Title_Bar.svelte";
     import { onMount } from 'svelte';
     let winHeight = 0;
@@ -763,60 +764,64 @@
                     <!-- <button class="menuItem profile">profile</button>
                     <button class="menuItem settings">settings</button> -->
                 </div>
-                <div class="gameDiv">
-                    <div class="gameSelection">
-                        {#each tabSelectionTitles as tabSelection, index}
-                            <button class="tabSelection" class:selected={index === tabSelected} on:click={() => selectTab(index)}><span>{tabSelection}</span></button>
-                        {/each}
-                    </div>
+                {#if menuIndexSelected == 0}
+                    <div class="gameDiv">
+                        <div class="gameSelection">
+                            {#each tabSelectionTitles as tabSelection, index}
+                                <button class="tabSelection" class:selected={index === tabSelected} on:click={() => selectTab(index)}><span>{tabSelection}</span></button>
+                            {/each}
+                        </div>
                     
-                    <div class="gamesAvaiable">
-                        {#if tabSelected === 0}
-                            {#each Object.entries(gamesAvaiable) as [key, game], index}
-                            <div class="wrapper" on:mouseenter={() => changeDoordashClass(index)} on:mouseleave={() => changeDoordashClass(index)}>
-                                {#if index === 1}
-                                    <div class= "doordashDiv" class:show={doordashDivShow}>
-                                        <div class="doordashLogo"></div>
-                                        <div class="doordashInfo"><span>$10 GIFT CARDS</span></div>
-                                    </div>
-                                {/if}
-                                <div class="gameSelector" >
-                                    <div class="gameTitle">{game.gameTitle}</div>
-                                    <div class="gameInfo">
-                                        <div class="blinds">{game.blinds}</div>
-                                        <div class="players">{game.players}</div>
-                                        <div class="buyInRow">
-                                            <div class="buyIn minBuyIn">${game.minBuyIn}</div>
-                                            <div class="buyIn maxBuyIn">${game.maxBuyIn}</div>
+                        <div class="gamesAvaiable">
+                            {#if tabSelected === 0}
+                                {#each Object.entries(gamesAvaiable) as [key, game], index}
+                                <div class="wrapper" on:mouseenter={() => changeDoordashClass(index)} on:mouseleave={() => changeDoordashClass(index)}>
+                                    {#if index === 1}
+                                        <div class= "doordashDiv" class:show={doordashDivShow}>
+                                            <div class="doordashLogo"></div>
+                                            <div class="doordashInfo"><span>$10 GIFT CARDS</span></div>
                                         </div>
-                                    </div>
-                                    <div class="inputDiv">
-                                        <span>BUY IN:</span>
-                                        <div class="inputWrapper">
-                                            <span>$</span>
-                                            <input class="buyInAmount" type="number" bind:value={gamesAvaiable[key].buyInAmount}/>
+                                    {/if}
+                                    <div class="gameSelector" >
+                                        <div class="gameTitle">{game.gameTitle}</div>
+                                        <div class="gameInfo">
+                                            <div class="blinds">{game.blinds}</div>
+                                            <div class="players">{game.players}</div>
+                                            <div class="buyInRow">
+                                                <div class="buyIn minBuyIn">${game.minBuyIn}</div>
+                                                <div class="buyIn maxBuyIn">${game.maxBuyIn}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="buttonDiv" >
-                                        <button class="joinNow" disabled='{userBalance < gamesAvaiable[key].buyInAmount || gamesAvaiable[key].buyInAmount < game.minBuyIn || gamesAvaiable[key].buyInAmount > game.maxBuyIn}' on:click={()=>openNewTable(key)}>JOIN NOW</button> <!-- {} -->
+                                        <div class="inputDiv">
+                                            <span>BUY IN:</span>
+                                            <div class="inputWrapper">
+                                                <span>$</span>
+                                                <input class="buyInAmount" type="number" bind:value={gamesAvaiable[key].buyInAmount}/>
+                                            </div>
+                                        </div>
+                                        <div class="buttonDiv" >
+                                            <button class="joinNow" disabled='{userBalance < gamesAvaiable[key].buyInAmount || gamesAvaiable[key].buyInAmount < game.minBuyIn || gamesAvaiable[key].buyInAmount > game.maxBuyIn}' on:click={()=>openNewTable(key)}>JOIN NOW</button> <!-- {} -->
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            {/each}
-                        {:else}
-                            <div class="avaiableSoonDiv">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="483" height="69" viewBox="0 0 483 69">
-                                    <text id="Available_soon" data-name="Available soon" transform="translate(0 55)" fill="#e5e5e5" font-size="57" font-family="Montserrat-Regular, Montserrat" letter-spacing="0.1em"><tspan x="0" y="0">Available soon</tspan></text>
-                                </svg>
-                            </div>
-                        {/if}
+                                {/each}
+                            {:else}
+                                <div class="avaiableSoonDiv">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="483" height="69" viewBox="0 0 483 69">
+                                        <text id="Available_soon" data-name="Available soon" transform="translate(0 55)" fill="#e5e5e5" font-size="57" font-family="Montserrat-Regular, Montserrat" letter-spacing="0.1em"><tspan x="0" y="0">Available soon</tspan></text>
+                                    </svg>
+                                </div>
+                            {/if}
 
                         
+                        </div>
+                        <div class="adsDiv">
+                            <Ads />
+                        </div>
                     </div>
-                    <div class="adsDiv">
-                        <Ads />
-                    </div>
-                </div>
+                {:else if menuIndexSelected === 1}
+                <Profile {avatarUrl} {userName} />
+                {/if}
             </div>
         
         {/if}
