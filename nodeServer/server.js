@@ -85,7 +85,7 @@ fastify.get('/addchips', async (request, reply) => {
     console.log(socket)
     if (socket.user) {
       console.log(socket.user)
-      if (socket.user.name === username) socket.user.balance = socket.user.balance.plus(chips)
+      if (socket.user.id === userid) socket.user.balance = socket.user.balance.plus(chips)
       socket.emit("updateUserInfo", { user : socket.user, status: 200})
     }
   })
