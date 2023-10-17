@@ -76,7 +76,7 @@ fastify.get('/addchips', async (request, reply) => {
   const userid = request.query.user
   const chips = new Decimal(request.query.chips)
   // const client = await fastify.pg.connect();
-  const result = await fastify.pg.query(`UPDATE users SET balance = balance + ${chips} WHERE userid = '${userid}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${userid}, ${chips}, 'ORIGINAL CASHIER')`);
+  const result = await fastify.pg.query(`UPDATE users SET balance = balance + ${chips} WHERE userid = ${userid}; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${userid}, ${chips}, 'ORIGINAL CASHIER')`);
   // client.release();
   console.log("socketManager.sockets.sockets")
   console.log(socketManager.sockets.sockets)
