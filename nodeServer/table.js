@@ -111,7 +111,7 @@ class Table {
         player.cards = []
         player.actedSinceLastRaise = false
         player.possibleActions = []
-        player.hasFolded = false
+        player.hasFolded = true //just for animation purposes, it will be setted to false when the hand starts.
         player.askedToFold = false
         player.isButton = false
         player.showCards = false
