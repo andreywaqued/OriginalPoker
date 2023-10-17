@@ -487,7 +487,7 @@ class Table {
             player.stackSize = new Decimal(player.stackSize)
             player.betSize = new Decimal(player.betSize)
             if (!player.hasFolded && nextPlayer.betSize.lessThan(player.stackSize.plus(player.betSize))) playersLeftWithChips++ //old way
-            if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
+            // if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
             // if (!player.hasFolded && player.stackSize.greaterThan(0)) playersLeftWithChips++ //teste (NAO FUNCIONOU DIREITO, QUANDO O JOGADOR VAI ALLIN ELE FICA COM STACK 0, DAI BUGA)
         }
         if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
@@ -521,7 +521,7 @@ class Table {
         if (this.currentHand.biggestBet.greaterThan(0)) nextPlayer.possibleActions.push({type: "raise", amount: this.currentHand.minBet.toNumber()}) 
 
         this.currentHand.timeLimitToAct = new Date().getTime() + this.timeBank //timestamp + 20sec
-        clearTimeout(this.timeLimitCounter)
+        // clearTimeout(this.timeLimitCounter)
         this.timeLimitCounter = setTimeout(()=> {
             console.log("time is over, folding player")
             console.log(nextPlayer)
