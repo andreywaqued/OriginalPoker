@@ -80,7 +80,7 @@ class PlayerPoolManager {
             console.log("log4")
             socket.user.balance = socket.user.balance.minus(stackSize)
             console.log("updating balance")
-            const result = this.fastify.pg.query(`UPDATE users SET balance = balance - ${stackSize.toNumber()} WHERE username = '${socket.user.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${socket.user.id}, ${-stackSize.toNumber()}, '${poolID}')`);
+            const result = this.fastify.pg.query(`UPDATE users SET balance = balance - ${stackSize.toNumber()} WHERE username = '${socket.user.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${socket.user.id}, ${-stackSize.toNumber()}, '⚡ ${this.pools[poolID].gameTitle}')`);
             console.log(result)
             // this.fastify.pg.connect().then(async (client) => {
             //     console.log("updating balance")
@@ -94,7 +94,7 @@ class PlayerPoolManager {
                 
             //     client.release();
             // });
-            if (socket) socket.emit("updatePlayerInfo", player)
+            // if (socket) socket.emit("updatePlayerInfo", player)
             if (socket) socket.emit("updateUserInfo", { user : socket.user, status: 200})
             return 
         }
@@ -164,7 +164,7 @@ class PlayerPoolManager {
         console.log(`playerPool: ${playerPool}`)
         console.log(Object.keys(playerPool))
         this.tableManager.placePlayerIntoTable(player)
-        if (socket) socket.emit("updatePlayerInfo", player)
+        // if (socket) socket.emit("updatePlayerInfo", player)
             // this.playersByPool.poolID[player.id] = player
     }
     /**
@@ -215,7 +215,7 @@ class PlayerPoolManager {
                 player.stackSize = player.stackSize.plus(rebuyAmount)
                 socket.user.balance = socket.user.balance.minus(rebuyAmount)
                 console.log("updating balance")
-                const result = this.fastify.pg.query(`UPDATE users SET balance = balance - ${rebuyAmount.toNumber()} WHERE username = '${socket.user.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${socket.user.id}, ${-rebuyAmount.toNumber()}, '${poolID}')`);
+                const result = this.fastify.pg.query(`UPDATE users SET balance = balance - ${rebuyAmount.toNumber()} WHERE username = '${socket.user.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${socket.user.id}, ${-rebuyAmount.toNumber()}, '⚡ ${this.pools[poolID].gameTitle}')`);
                 console.log(result)
                 // this.fastify.pg.connect().then(async (client) => {
                 //     console.log("updating balance")
@@ -278,7 +278,7 @@ class PlayerPoolManager {
                     if (table.waitingForPlayers) table.removePlayer(player) //tira o jogador antes da mao começar
                     if (socket) socket.user.balance = socket.user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
                     console.log("updating balance")
-                    const result = this.fastify.pg.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${socket.user.id}, ${player.stackSize.toNumber()}, '${player.poolID}')`);
+                    const result = this.fastify.pg.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${socket.user.id}, ${player.stackSize.toNumber()}, '⚡ ${this.pools[player.poolID].gameTitle}')`);
                     console.log(result)
                     // this.fastify.pg.connect().then(async (client) => {
                     //     console.log("updating balance")
@@ -307,7 +307,7 @@ class PlayerPoolManager {
                 console.log("leavePool() 7 table undefined")
                 if (socket) socket.user.balance = socket.user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
                 console.log("updating balance")
-                const result = this.fastify.pg.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${socket.user.id}, ${player.stackSize.toNumber()}, '${player.poolID}')`);
+                const result = this.fastify.pg.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${socket.user.id}, ${player.stackSize.toNumber()}, '⚡ ${this.pools[player.poolID].gameTitle}')`);
                 console.log(result)
                 // this.fastify.pg.connect().then(async (client) => {
                 //     console.log("updating balance")

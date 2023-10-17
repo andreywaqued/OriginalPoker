@@ -112,6 +112,7 @@ class Table {
         player.actedSinceLastRaise = false
         player.possibleActions = []
         player.hasFolded = false
+        player.askedToFold = false
         player.isButton = false
         player.showCards = false
         player.isWinner = false
@@ -150,15 +151,15 @@ class Table {
         //send hand transition when player folds or the hand is over
         if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("handTransition", player)
     }
-    broadcastPlayerCards() {
-        console.log(`broadcastPlayerCards()`)
+    broadCastIndividualPlayerInfo() {
+        console.log(`broadCastIndividualPlayerInfo()`)
         //send cardback to all players except the player holding its cards
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             const playerID = this.playerIDByPositionIndex[i]
             const player = this.players[playerID]
             if (!player) continue
             console.log(player)//this gave an error recently,
-            if (this.currentHand.boardCards.length>=3 && !player.hasFolded && player.cards.length>0) player.finalHandRank = rankHands(this.pokerVariant, this.currentHand.boardCards, [player.cards])[0]
+            if (this.currentHand.boardCards.length>=3 && !player.hasFolded && !player.askedToFold && player.cards.length>0) player.finalHandRank = rankHands(this.pokerVariant, this.currentHand.boardCards, [player.cards])[0]
             // trying to verify what it is sending to see if can filter to avoid sending too much information
             if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("updatePlayerInfo", player)
         }
@@ -203,7 +204,8 @@ class Table {
         // console.log(handState)
 
         this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
-        if (this.currentHand.handIsBeingPlayed) this.broadcastPlayerCards()
+        // if (this.currentHand.handIsBeingPlayed) this.broadCastIndividualPlayerInfo()
+        this.broadCastIndividualPlayerInfo()
     }
     sendEmptyTable(player) {
         console.log("sendEmptyTable")
@@ -291,9 +293,31 @@ class Table {
         let player = this.players[playerFromClient.id]
         // player.isSitout = playerFromClient.isSitout
         // console.log(player)
+        //treat fast fold
+        if (player.possibleActions.length === 1) {
+            console.log("⚡Fold")
+            if (player.possibleActions[0].type === action.type && action.type === "⚡Fold") {
+                console.log("player fast folded")
+                player.askedToFold = true;
+                if (player.socketID in this.sockets) {
+                    console.log("player fast folded with socket")
+                    playerSocket.leave(`table:${this.id}`);
+                    this.sendEmptyTable(player)//send empty table
+                    delete this.sockets[player.socketID]
+                    const playerCopy = JSON.parse(JSON.stringify(player))
+                    this.players[player.id] = playerCopy
+                    this.tableManager.playerPoolManager.reEnterPool(player)
+                    player = playerCopy
+                    player.stackSize = new Decimal(player.stackSize)
+                    player.betSize = new Decimal(player.betSize)
+                }
+            }
+        } 
+        //
         if (!this.currentHand.handIsBeingPlayed && playerSocket) return console.log(playerSocket.emit("actionResponse", {message: "hand is over", status:401}), "hand is over")
         const currentPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.positionActing]]
         if (currentPlayer.id != player.id && playerSocket) return playerSocket.emit("actionResponse", {message: "wrong player", status:401})
+        if (player.askedToFold && playerSocket) return playerSocket.emit("actionResponse", {message: "player already asked to fold", status:401})
         if (player.hasFolded && playerSocket) return playerSocket.emit("actionResponse", {message: "player already folded", status:401})
         console.log("validateAction 2")
         // if (player.isSitout) return "player is sitout"
@@ -308,7 +332,7 @@ class Table {
             const actionAtIndex = player.possibleActions[i]
             if (action.type === actionAtIndex.type) {
                 console.log(`(${action.type} === "raise" || ${action.type} === "bet") && ${action.amount} >= ${actionAtIndex.amount} : ${(action.type === "raise" || action.type === "bet") && action.amount.greaterThanOrEqualTo(actionAtIndex.amount)}`)
-                if (action.amount.greaterThanOrEqualTo(actionAtIndex.amount))
+                // if (action.amount.greaterThanOrEqualTo(actionAtIndex.amount))
                 if ((action.type === "call" || action.type === "fold" || action.type === "check") && action.amount.equals(actionAtIndex.amount)) actionAllowed = true;
                 if ((action.type === "raise" || action.type === "bet") && action.amount.lessThan(this.currentHand.minBet)) return this.validateAction(player, {type: "raise", amount: this.currentHand.minBet.toNumber()});
                 if ((action.type === "raise" || action.type === "bet") && action.amount.greaterThanOrEqualTo(this.currentHand.minBet)) actionAllowed = true;
@@ -456,12 +480,13 @@ class Table {
         // console.log(nextPlayer)
         //check to see if the players left are already allin
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
-            if (playersLeftWithChips > 2) continue
+            // if (playersLeftWithChips > 2) continue
             const player = this.players[this.playerIDByPositionIndex[i]]
             if (!player) continue
             player.stackSize = new Decimal(player.stackSize)
             player.betSize = new Decimal(player.betSize)
             if (!player.hasFolded && nextPlayer.betSize.lessThan(player.stackSize.plus(player.betSize))) playersLeftWithChips++ //old way
+            if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
             // if (!player.hasFolded && player.stackSize.greaterThan(0)) playersLeftWithChips++ //teste (NAO FUNCIONOU DIREITO, QUANDO O JOGADOR VAI ALLIN ELE FICA COM STACK 0, DAI BUGA)
         }
         if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
@@ -477,6 +502,12 @@ class Table {
         //     return this.prepareNextPlayerTurn()
         // } 
         if (nextPlayer.hasFolded || nextPlayer.stackSize.equals(0)) return this.prepareNextPlayerTurn()
+        console.log("prepareNextPlayerTurn() 2.5")
+        if (nextPlayer.askedToFold) {
+            nextPlayer.hasFolded = true;
+            this.currentHand.playersFolded++
+            return this.prepareNextPlayerTurn()
+        } 
         console.log("prepareNextPlayerTurn() 3")
         if (this.currentHand.minBet.lessThanOrEqualTo(this.bb)) this.currentHand.minBet = new Decimal(this.bb)
         nextPlayer.possibleActions = [{type: "fold", amount: 0}]
@@ -729,6 +760,7 @@ class Table {
             player.actedSinceLastRaise = false
             player.possibleActions = []
             player.hasFolded = false
+            player.askedToFold = false
             player.isButton = false
             player.contestingPots = [0]
             this.currentHand.handHistory += `Seat ${i+1}: ${player.name} ($${player.stackSize}) - cards:${JSON.stringify(player.cards).replaceAll("\"", "")}\n`
