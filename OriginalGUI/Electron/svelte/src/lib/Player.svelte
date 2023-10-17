@@ -9,6 +9,8 @@
      * @type {Number}
      */
     export let tableRotateAmount
+
+    export let handIsBeingPlayed
     
     // /**
     //  * @type {Object.<string,any>}
@@ -920,7 +922,7 @@
 </style>
 
 <div class={positioningClass}>
-    <div class="player" class:fold={hasFolded} class:sitout={isSitout}>
+    <div class="player" class:fold={hasFolded && handIsBeingPlayed} class:sitout={isSitout}>
         <div class="playerGlow" class:glowPlayerAnimation={playerTurn}></div>
         <div class="playerImage" style={cssVarStyles}>
             <div class="playerCircle"></div>

@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 class Player {
     constructor(socket, stackSize) {
         this.id = uuidv4();
+        this.userid = socket.user.id
         this.name = socket.user.name;
         this.avatar = socket.user.avatar;
         this.stackSize = stackSize;

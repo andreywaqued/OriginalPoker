@@ -35,6 +35,7 @@
   let betValue = 50
   let tableRotateAmount = hero.position
   let tryStartPlayerTurn
+  let handIsBeingPlayed = false
   let waitingForPlayers = true
   let doordashTable = false
   $: console.log(tableRotateAmount = hero.position)
@@ -59,7 +60,7 @@
         console.log(handHistories)
         if (player.finalHandRank) handStrength = player.finalHandRank.combination
         possibleActions = player.possibleActions
-        if (possibleActions.length > 0) {
+        if (possibleActions.length > 1) {
           if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize)*100)/100
           callAmount = possibleActions[1].amount
           betValue = Math.round(possibleActions[2].amount * 100) / 100
@@ -77,6 +78,7 @@
         console.log(gameState)
         sumOfBetSizes = 0
         currentPlayerActing = "empty player"
+        handIsBeingPlayed = gameState.handIsBeingPlayed
         clearInterval(tryStartPlayerTurn)
         if (!gameState.handIsBeingPlayed) possibleActions = []
         if (gameState.handIsBeingPlayed || gameState.isShowdown) {
@@ -662,6 +664,12 @@ button:disabled {
           text-transform: uppercase;
           // font-weight: bold;
       }
+      .fastFold{
+        text-decoration: underline;
+        font-weight: bold;
+        font-style: italic;
+        text-underline-offset: 0.25em;
+      }
       span {
         transform: translateY(0.2vh);
       }
@@ -889,7 +897,7 @@ button:disabled {
     </div>
     {#if tableStarted}
       {#each Object.entries(players) as [playerID, player]}
-        <Player {...player} bind:tableRotateAmount={tableRotateAmount} bind:tableSize = {tableSize} bind:this={playersComponents[playerID]}/> 
+        <Player {...player} bind:tableRotateAmount={tableRotateAmount} bind:tableSize = {tableSize} bind:handIsBeingPlayed = {handIsBeingPlayed} bind:this={playersComponents[playerID]}/> 
         <!--bind:this={playersComponents[playerID]}-->
       {/each}
     {:else}
@@ -897,26 +905,28 @@ button:disabled {
     {/if}
     {#if possibleActions.length > 0}
       <div class="playButtonsContainer"> <!--transition:slide={{duration: 250, axis:"x"}}-->
-        <div class="betDisplayRow">
-          <div class="presetButtons">
-            <button class="presetBetSizeButton" on:click={()=>updateBetValue(25)}>25%</button>
-            <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
-            <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
-            <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
+        {#if possibleActions.length > 1}
+          <div class="betDisplayRow">
+            <div class="presetButtons">
+              <button class="presetBetSizeButton" on:click={()=>updateBetValue(25)}>25%</button>
+              <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
+              <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
+              <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
+            </div>
+            <label class="dolarSign">$</label>
+            <input class="betDisplay" bind:value={betValue} type="number" step=0.01/>
           </div>
-          <label class="dolarSign">$</label>
-          <input class="betDisplay" bind:value={betValue} type="number" step=0.01/>
-        </div>
-        <div class="betSlider">
-          <button class="betSliderButton" on:click={minusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg></button>
-          <input type="range" min={minBet} max={maxBet} step=0.01 bind:value={betValue} class="slider" id="myRange">
-          <button class="betSliderButton" on:click={plusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg></button>
-        </div>
+          <div class="betSlider">
+            <button class="betSliderButton" on:click={minusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg></button>
+            <input type="range" min={minBet} max={maxBet} step=0.01 bind:value={betValue} class="slider" id="myRange">
+            <button class="betSliderButton" on:click={plusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"/></svg></button>
+          </div>
+        {/if}
         <div class="buttons">
             {#each possibleActions as action, index}
               {#if index<2}
                 <button class="playButton" class:playerButtonHide={action.amount >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} >
-                  <span>{action.type}</span>
+                  <span class:fastFold={action.type === "⚡Fold"}>{action.type}</span>
                   {#if action.amount > 0}
                     <span class="value">{Math.round((action.amount - hero.betSize)*100)/100}</span>
                   {/if}
