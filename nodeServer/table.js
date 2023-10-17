@@ -311,6 +311,7 @@ class Table {
                     player.stackSize = new Decimal(player.stackSize)
                     player.betSize = new Decimal(player.betSize)
                 }
+                return console.log("player fast folded final")
             }
         } 
         //
@@ -520,6 +521,7 @@ class Table {
         if (this.currentHand.biggestBet.greaterThan(0)) nextPlayer.possibleActions.push({type: "raise", amount: this.currentHand.minBet.toNumber()}) 
 
         this.currentHand.timeLimitToAct = new Date().getTime() + this.timeBank //timestamp + 20sec
+        clearTimeout(this.timeLimitCounter)
         this.timeLimitCounter = setTimeout(()=> {
             console.log("time is over, folding player")
             console.log(nextPlayer)
