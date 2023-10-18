@@ -2,6 +2,7 @@
     export const ssr = false;
 	import Ads from "$lib/Ads.svelte";
 	import Login from "$lib/Login.svelte";
+	import Profile from "./Profile.svelte";
     import TitleBar from "$lib/Title_Bar.svelte";
     import { onMount } from 'svelte';
     let winHeight = 0;
@@ -609,7 +610,171 @@
     .doordashDiv.show {
         top: -16%;
     }
-    
+
+    .profileDiv {
+        display: flex;
+        flex-direction: column;
+        width: 90%;
+        height: 94%;
+        padding: 2% 3%;
+        background-color: rgb(24, 24, 24);
+        gap: 2em;
+        letter-spacing: 0.1em;
+        .upper {
+            display: flex;
+            gap: 2em;
+            justify-content: space-between;
+            height: 50%;
+        }
+        .lower {
+            width: 100%;
+            margin: auto 0;
+        }
+        .caixa {
+            width: 50%;
+            h2 {
+                text-transform: uppercase;
+                font-size: 1em;
+            }
+            .container {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.5em;
+                margin-top: 0.5em;
+            }
+            h3 {
+                font-weight: unset;
+                text-transform: uppercase;
+                color: gray;
+                font-size: 0.6em;
+            }
+            .item {
+                p {
+                    font-size: 0.6em;
+                }
+                button {
+                    text-align: center;
+                    border-radius: 4px;
+                    background-color: gray;
+                    box-shadow: 0 25px 50px -12px rgb(49 49 49 / 0.25);
+                    padding: 0.5em 1em;
+                }
+            }
+            .item > * {
+                margin-top: 0.5em;
+            }
+            .item:nth-of-type(2) {
+                text-align: right;
+            }
+            .item:nth-of-type(3) {
+                border: 0;
+                padding-top: 0.5em;
+                border-top-width: 2px;
+                border-style: solid;
+                border-color: gray;
+                grid-column: span 2 / span 2;
+            }
+            .item:nth-of-type(4) {
+            grid-column: span 2 / span 2;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.5em;
+            }    
+        }
+        .historico {
+            grid-column: span 2 / span 2;
+            width: 70%;
+            h2 {
+                text-transform: uppercase;
+                font-size: 1em;
+            }
+            .container {
+                height: 90%;
+                overflow: auto;
+            }
+            table {
+                margin-top: 0.5em;
+                width: 100%;
+                text-align: center;
+                border-radius: 10px;
+                background-color: rgb(49, 49, 49);
+                th {
+                    font-size: 0.6em;
+                    height: 2em;
+                }
+                td {
+                    font-size: 0.6em;
+                    height: 2.4em;
+                }
+            }
+        }
+        .jogador {
+                margin-top: auto;
+                display: flex;
+                justify-content: space-between;
+                gap: 0.5em;
+            .container:nth-of-type(1) {
+                display: flex;
+                align-items: end;
+                gap: 0.5em;
+                width: 50%;
+            }
+            .container:nth-of-type(2) {
+                width: 50%;
+                display: grid;
+                justify-content: end;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0 0.5em;
+            }
+            .item > * {
+                margin-top: 0.5em;
+            }
+            .container {
+                .item {
+                    h2 {
+                        text-transform: uppercase;
+                        color: gray;
+                        font-weight: unset;
+                        font-size: 0.6em;
+                    }
+                    .bigText {
+                        color: white;
+                        font-size: 1.25em;
+                        word-break: break-all;
+                        width: 100%;
+                    }
+                    h3 {
+                        text-transform: uppercase;
+                        font-weight: unset;
+                        color: gray;
+                        font-size: 0.6em;
+                    }
+                    p {
+                        color: white;
+                        font-size: 0.6em;
+                    }
+                }
+            }
+            .playerAvatar {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                // width: 100%;
+                height: 90%;
+                margin: 2%;
+                aspect-ratio: 1;
+                background-image: var(--avatar-url);
+                background-position: center;
+                background-size: contain;
+                background-repeat: no-repeat;
+                background-color: rgba(255,255,255,0.1);
+                // z-index: 10;
+                border-radius: 50%;
+                // border: 1px solid white;
+            }
+        }
+    }
+
 </style>
 
 <main>
@@ -763,60 +928,235 @@
                     <!-- <button class="menuItem profile">profile</button>
                     <button class="menuItem settings">settings</button> -->
                 </div>
-                <div class="gameDiv">
-                    <div class="gameSelection">
-                        {#each tabSelectionTitles as tabSelection, index}
-                            <button class="tabSelection" class:selected={index === tabSelected} on:click={() => selectTab(index)}><span>{tabSelection}</span></button>
-                        {/each}
-                    </div>
+                {#if menuIndexSelected == 0}
+                    <div class="gameDiv">
+                        <div class="gameSelection">
+                            {#each tabSelectionTitles as tabSelection, index}
+                                <button class="tabSelection" class:selected={index === tabSelected} on:click={() => selectTab(index)}><span>{tabSelection}</span></button>
+                            {/each}
+                        </div>
                     
-                    <div class="gamesAvaiable">
-                        {#if tabSelected === 0}
-                            {#each Object.entries(gamesAvaiable) as [key, game], index}
-                            <div class="wrapper" on:mouseenter={() => changeDoordashClass(index)} on:mouseleave={() => changeDoordashClass(index)}>
-                                {#if index === 1}
-                                    <div class= "doordashDiv" class:show={doordashDivShow}>
-                                        <div class="doordashLogo"></div>
-                                        <div class="doordashInfo"><span>$10 GIFT CARDS</span></div>
-                                    </div>
-                                {/if}
-                                <div class="gameSelector" >
-                                    <div class="gameTitle">{game.gameTitle}</div>
-                                    <div class="gameInfo">
-                                        <div class="blinds">{game.blinds}</div>
-                                        <div class="players">{game.players}</div>
-                                        <div class="buyInRow">
-                                            <div class="buyIn minBuyIn">${game.minBuyIn}</div>
-                                            <div class="buyIn maxBuyIn">${game.maxBuyIn}</div>
+                        <div class="gamesAvaiable">
+                            {#if tabSelected === 0}
+                                {#each Object.entries(gamesAvaiable) as [key, game], index}
+                                <div class="wrapper" on:mouseenter={() => changeDoordashClass(index)} on:mouseleave={() => changeDoordashClass(index)}>
+                                    {#if index === 1}
+                                        <div class= "doordashDiv" class:show={doordashDivShow}>
+                                            <div class="doordashLogo"></div>
+                                            <div class="doordashInfo"><span>$10 GIFT CARDS</span></div>
                                         </div>
-                                    </div>
-                                    <div class="inputDiv">
-                                        <span>BUY IN:</span>
-                                        <div class="inputWrapper">
-                                            <span>$</span>
-                                            <input class="buyInAmount" type="number" bind:value={gamesAvaiable[key].buyInAmount}/>
+                                    {/if}
+                                    <div class="gameSelector" >
+                                        <div class="gameTitle">{game.gameTitle}</div>
+                                        <div class="gameInfo">
+                                            <div class="blinds">{game.blinds}</div>
+                                            <div class="players">{game.players}</div>
+                                            <div class="buyInRow">
+                                                <div class="buyIn minBuyIn">${game.minBuyIn}</div>
+                                                <div class="buyIn maxBuyIn">${game.maxBuyIn}</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="buttonDiv" >
-                                        <button class="joinNow" disabled='{userBalance < gamesAvaiable[key].buyInAmount || gamesAvaiable[key].buyInAmount < game.minBuyIn || gamesAvaiable[key].buyInAmount > game.maxBuyIn}' on:click={()=>openNewTable(key)}>JOIN NOW</button> <!-- {} -->
+                                        <div class="inputDiv">
+                                            <span>BUY IN:</span>
+                                            <div class="inputWrapper">
+                                                <span>$</span>
+                                                <input class="buyInAmount" type="number" bind:value={gamesAvaiable[key].buyInAmount}/>
+                                            </div>
+                                        </div>
+                                        <div class="buttonDiv" >
+                                            <button class="joinNow" disabled='{userBalance < gamesAvaiable[key].buyInAmount || gamesAvaiable[key].buyInAmount < game.minBuyIn || gamesAvaiable[key].buyInAmount > game.maxBuyIn}' on:click={()=>openNewTable(key)}>JOIN NOW</button> <!-- {} -->
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            {/each}
-                        {:else}
-                            <div class="avaiableSoonDiv">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="483" height="69" viewBox="0 0 483 69">
-                                    <text id="Available_soon" data-name="Available soon" transform="translate(0 55)" fill="#e5e5e5" font-size="57" font-family="Montserrat-Regular, Montserrat" letter-spacing="0.1em"><tspan x="0" y="0">Available soon</tspan></text>
-                                </svg>
-                            </div>
-                        {/if}
+                                {/each}
+                            {:else}
+                                <div class="avaiableSoonDiv">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="483" height="69" viewBox="0 0 483 69">
+                                        <text id="Available_soon" data-name="Available soon" transform="translate(0 55)" fill="#e5e5e5" font-size="57" font-family="Montserrat-Regular, Montserrat" letter-spacing="0.1em"><tspan x="0" y="0">Available soon</tspan></text>
+                                    </svg>
+                                </div>
+                            {/if}
 
                         
+                        </div>
+                        <div class="adsDiv">
+                            <Ads />
+                        </div>
                     </div>
-                    <div class="adsDiv">
-                        <Ads />
+                {:else if menuIndexSelected === 1}
+                    <div class="profileDiv">
+                      <div class="upper">
+                        <div class="caixa">
+                          <h2>
+                            Cashier
+                          </h2>
+                          <div class="container">
+                            <div class="item">
+                              <h3>
+                                  Available
+                              </h3>
+                              <p>
+                                $numero
+                              </p>
+                            </div>
+                            <div class="item">
+                              <h3>
+                                  In-game
+                              </h3>
+                              <p>
+                                $numero
+                              </p>
+                            </div>
+                            <div class="item">
+                              <h3>
+                                  Total
+                              </h3>
+                              <p>
+                                $numero
+                              </p>
+                            </div>
+                            <div class="item">
+                              <button>Deposit</button>
+                              <button>Withdraw</button>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="historico">
+                          <h2>
+                            Player history
+                          </h2>
+                          <div class="container">
+                            <table rules=rows>
+                              <tr>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>From</th>
+                                <th>Balance</th>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                              <tr>
+                                <td>$Data</td>
+                                <td>$Hora</td>
+                                <td>$From</td>
+                                <td>$Resultado</td>
+                              </tr>
+                            </table>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="lower">
+                        <div class="jogador">
+                          <div class="container">
+                            <div class="playerAvatar" style={cssVarStyles} />
+                            <div class="item">
+                              <h2>
+                                User
+                              </h2>
+                              <p class="bigText">
+                                {userName}
+                              </p>
+                            </div>
+                          </div>
+                          <div class="container">
+                            <div class="item">
+                              <h3>
+                                  Full Name
+                              </h3>
+                              <p>
+                                $Nome
+                              </p>
+                            </div>
+                            <div class="item">
+                              <h3>
+                                  Birthday
+                              </h3>
+                              <p>
+                                $Data
+                              </p>
+                            </div>
+                            <div class="item">
+                              <h3>
+                                  E-mail
+                              </h3>
+                              <p>
+                                $Email
+                              </p>
+                            </div>
+                            <div class="item">
+                              <h3>
+                                  Telephone
+                              </h3>
+                              <p>
+                                $Celular
+                              </p>
+                            </div>
+                            <div class="item">
+                              <h3>
+                                  Address
+                              </h3>
+                              <p>
+                                $Endereco
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                </div>
+
+                {/if}
             </div>
         
         {/if}
