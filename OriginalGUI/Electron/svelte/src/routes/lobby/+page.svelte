@@ -2,7 +2,6 @@
     export const ssr = false;
 	import Ads from "$lib/Ads.svelte";
 	import Login from "$lib/Login.svelte";
-	import Profile from "./Profile.svelte";
     import TitleBar from "$lib/Title_Bar.svelte";
     import { onMount } from 'svelte';
     let winHeight = 0;
