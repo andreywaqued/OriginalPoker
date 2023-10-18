@@ -119,6 +119,15 @@ class PlayerPoolManager {
             if (!table) return this.reEnterPool(player) //player is coming back from sitout
             if (player.hasFolded) return this.reEnterPool(player) //player is coming back from sitout
         }
+        if (isSitout) {
+            const table = this.tableManager.tables[poolID][player.tableID]
+            if (table) {
+                if (table.waitingForPlayers) {
+                    table.removePlayer(player)
+                    this.reEnterPool(player)
+                }
+            }
+        }
     }
     reEnterPool(player) {
         //player reentering pool after played a hand
@@ -149,12 +158,13 @@ class PlayerPoolManager {
             console.log(`player.isSitout: ${player.isSitout}`)
             console.log(player.isSitout)
             if (socket) socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
-            const playerFromID = this.playersByPool[poolID][player.id]
+            const playerFromID = JSON.parse(JSON.stringify(this.playersByPool[poolID][player.id])) //need to create a copy of this user instead of using a reference, because the user may have already leaved.
+            if (!playerFromID) return console.log("something went wrong on player from id")
             if (this.leavePoolTimeout[player.id]) clearTimeout(this.leavePoolTimeout[player.id])
             if (!this.tableManager.tables[poolID][player.tableID]) this.leavePoolTimeout[player.id] = setTimeout(()=>{
                 console.log("leave pool timeout")
                 if (socket) socket.emit("closeTable", player.id)
-                this.leavePool(socket, playerFromID)
+                this.leavePool(socket, playerFromID) 
             }, 300000)
             return
             //  this.leavePool(socket, player)
@@ -186,6 +196,10 @@ class PlayerPoolManager {
         if (!player) return console.log("player invalid")
         if (!socket) return console.log("socket invalid")
         rebuyAmount = new Decimal(rebuyAmount)
+        player.stackSize = new Decimal(player.stackSize)
+        console.log(player.stackSize)
+        player.betSize = new Decimal(player.betSize)
+        if (player.rebuyAmount) player.rebuyAmount = new Decimal(player.rebuyAmount)
         // console.log(pool)
         // console.log(`${rebuyAmount} >= ${pool.minBuyIn} : ${rebuyAmount >= pool.minBuyIn}`)
         // console.log(`${rebuyAmount} <= ${pool.maxBuyIn} : ${rebuyAmount <= pool.maxBuyIn}`)
@@ -241,6 +255,7 @@ class PlayerPoolManager {
         // console.log(pool)
         console.log(player.stackSize)
         console.log(socket.user.balance)
+        return this.reEnterPool(player)
     }
     leavePool(socket, playerFromClient, tableClosed = false) {
         console.log("leavePool()")
@@ -251,6 +266,9 @@ class PlayerPoolManager {
         const player = this.playersByPool[playerFromClient.poolID][playerFromClient.id]
         // if (!socket) return console.log("socket already gone")
         if (!player) return console.log("player already leaved")
+        player.stackSize = new Decimal(player.stackSize)
+        player.betSize = new Decimal(player.betSize)
+        if (this.leavePoolTimeout[player.id]) clearTimeout(this.leavePoolTimeout[player.id])
         //player reentering pool after played a hand
         console.log("leavePool()1")
         if (!socket || socket.id === player.socketID) {
@@ -270,7 +288,7 @@ class PlayerPoolManager {
                     console.log(player.isSitout)
                     console.log(table.currentHand.positionActing)
                     player.isSitout = true
-                    if (tableClosed) player.tableClosed = true
+                    player.tableClosed = tableClosed
                     if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) return table.validateAction(player, {type: "fold", amount: 0})
                 }
                 if (!table.currentHand.handIsBeingPlayed) {

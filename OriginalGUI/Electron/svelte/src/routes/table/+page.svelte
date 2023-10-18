@@ -349,7 +349,7 @@
   }
   function tryRebuy(){
     console.log("toggleRebuy")
-    api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: rebuyAmount})
+    api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: Math.round(rebuyAmount * 100) / 100})
     toggleRebuy()
   }
   let hhPopoverActive = false;

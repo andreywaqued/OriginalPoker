@@ -922,7 +922,7 @@
 </style>
 
 <div class={positioningClass}>
-    <div class="player" class:fold={hasFolded && handIsBeingPlayed} class:sitout={isSitout}>
+    <div class="player" class:fold={hasFolded && handIsBeingPlayed} class:sitout={isSitout && (!isHero || !handIsBeingPlayed)}>
         <div class="playerGlow" class:glowPlayerAnimation={playerTurn}></div>
         <div class="playerImage" style={cssVarStyles}>
             <div class="playerCircle"></div>

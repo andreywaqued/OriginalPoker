@@ -2,7 +2,6 @@
     export const ssr = false;
 	import Ads from "$lib/Ads.svelte";
 	import Login from "$lib/Login.svelte";
-	import Profile from "./Profile.svelte";
     import TitleBar from "$lib/Title_Bar.svelte";
     import { onMount } from 'svelte';
     let winHeight = 0;
@@ -960,7 +959,7 @@
                                             <span>BUY IN:</span>
                                             <div class="inputWrapper">
                                                 <span>$</span>
-                                                <input class="buyInAmount" type="number" bind:value={gamesAvaiable[key].buyInAmount}/>
+                                                <input class="buyInAmount" type="number" step=0.01 bind:value={gamesAvaiable[key].buyInAmount}/>
                                             </div>
                                         </div>
                                         <div class="buttonDiv" >
