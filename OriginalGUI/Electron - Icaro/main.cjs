@@ -3,6 +3,7 @@ const {app, BrowserWindow, ipcMain, Notification, dialog, screen} = require('ele
 const io = require('socket.io-client');
 const path = require('path');
 const { shell } = require('electron');
+const { dialog } = require('electron');
 // const express = require('express');
 // const { fileURLToPath } = require('url');
 // const {handler} = require("./build/handler")
@@ -35,26 +36,45 @@ const { shell } = require('electron');
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
 const socket = io('https://originaltesteicaro.onrender.com'); // Replace with your server's address
 
+function showReconnectDialog() {
+  dialog.showMessageBox({
+    type: 'question',
+    buttons: ['Yes', 'No'],
+    title: 'Reconnect',
+    message: 'Failed to reconnect to the server. Would you like to try reconnecting manually?',
+  }).then((response) => {
+    if (response.response === 0) {
+      // O usuário escolheu tentar reconectar
+      reconnectToServer();
+    }
+  });
+}
+
 function reconnectToServer() {
-  if (!socket.connected) {
-    console.log('Attempting to reconnect...');
+  if (!socket.connected && reconnectAttempts < 1) {
+    // Tentativa de reconexão automática
     socket.connect();
+    reconnectAttempts += 1;
+  } else {
+    console.log('Failed to reconnect after one attempt.');
+    showReconnectDialog();  // Exibe o diálogo de reconexão manual
   }
 }
 
 socket.on("disconnect", () => {
   console.log('Disconnected from server');
-  // Tentar reconectar após 5 segundos
-  setTimeout(reconnectToServer, 5000);
+  reconnectAttempts = 0;
+  reconnectToServer();
 });
 
 socket.on('connect', () => {
-    console.log(`Connected to the server with id: ${socket.id}`);
-    // Se o usuário estiver definido, tentamos reconectar
-    if (user) {
-        socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
-    }
+  console.log(`Connected to the server with id: ${socket.id}`);
+  // Se o usuário estiver definido, tentamos reconectar
+  if (user) {
+    socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
+  }
 });
+
 
 // Serve the static SvelteKit build files
 // serverApp.use(express.static(path.join(__dirname, 'svelte/myapp/build/client')));
