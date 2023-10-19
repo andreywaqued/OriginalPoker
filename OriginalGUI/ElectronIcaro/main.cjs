@@ -41,25 +41,7 @@ const socket = io('https://originaltesteicaro.onrender.com', {
 });
 
 let reconnectTimer;
-let isDialogShowing = false;  // Nova variável para rastrear se a caixa de diálogo está sendo exibida
-
-function showReconnectDialog() {
-  if (!isDialogShowing) {  // Verifica se a caixa de diálogo já está sendo exibida
-    isDialogShowing = true;  // Marca que a caixa de diálogo está sendo exibida
-    dialog.showMessageBox({
-      type: 'question',
-      buttons: ['Yes', 'No'],
-      title: 'Reconnect',
-      message: 'Failed to reconnect to the server. Would you like to try reconnecting manually?',
-    }).then((response) => {
-      isDialogShowing = false;  // Marca que a caixa de diálogo não está mais sendo exibida
-      if (response.response === 0) {
-        // O usuário escolheu tentar reconectar
-        reconnectToServer();
-      }
-    });
-  }
-}
+let isDialogShowing = false;
 
 function reconnectToServer() {
   if (!socket.connected) {
@@ -69,7 +51,7 @@ function reconnectToServer() {
       if (elapsedTime >= 5 * 1000) {  // 5 segundos
         clearInterval(reconnectTimer);
         console.log('Failed to reconnect after 5 seconds.');
-        showReconnectDialog();  // Mostra a caixa de diálogo
+        showReconnectDialog();
       } else {
         console.log('Trying to reconnect...');
         socket.connect();
@@ -86,12 +68,33 @@ socket.on('disconnect', () => {
 socket.on('connect', () => {
   console.log(`Connected to the server with id: ${socket.id}`);
   clearInterval(reconnectTimer);
+  isDialogShowing = false;
   // Se o usuário estiver definido, tentamos reconectar
   if (user) {
     socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
     console.log("Tentando reconectar");
   }
 });
+
+function showReconnectDialog() {
+  if (!isDialogShowing) {
+    isDialogShowing = true;
+    dialog.showMessageBox({
+      type: 'question',
+      buttons: ['Yes', 'No'],
+      title: 'Reconnect',
+      message: 'Failed to reconnect to the server. Would you like to try reconnecting manually?',
+    }).then((response) => {
+      isDialogShowing = false;
+      if (response.response === 0) {
+        reconnectToServer();
+      } else {
+        app.quit();
+      }
+    });
+  }
+}
+
 
 
 // Serve the static SvelteKit build files
