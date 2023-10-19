@@ -523,7 +523,7 @@ class Table {
             nextPlayer.tableID = undefined
             nextPlayer.actedSinceLastRaise = true;
             this.currentHand.playersFolded++
-            const action = {type: "fold", amount: 0, playerName: nextPlayer.name}
+            const action = {type: "fold", amount: new Decimal(0), playerName: nextPlayer.name}
             this.currentHand.actionSequence.push(action)
             return this.prepareNextPlayerTurn()
         } 
