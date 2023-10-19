@@ -152,6 +152,7 @@ class PlayerPoolManager {
         if (player.stackSize.equals(0)) {
             console.log(`player.stackSize: ${player.stackSize}`)
             // this.leavePool(socket, player)
+            player.tableID = undefined
             if (socket) return socket.emit("askRebuy", {playerID : player.id, poolID: poolID, minBuyIn: pool.minBuyIn, maxBuyIn : pool.maxBuyIn})
         }
         if (player.isSitout) {
@@ -316,10 +317,10 @@ class PlayerPoolManager {
                     this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
                     this.socketManager.to("lobby").emit("updatePools", this.pools)
                     // delete this.sockets[player.socketID]
-                    if (table.countPlayers() === 0) {
-                        this.socketManager.socketsLeave(`table:${table.id}`)
-                        delete this.tableManager.tables[player.poolID][table.id]
-                    }
+                    // if (table.countPlayers() === 0) {
+                    //     this.socketManager.socketsLeave(`table:${table.id}`)
+                    //     delete this.tableManager.tables[player.poolID][table.id]
+                    // }
                     return 
                 }
             } else {

@@ -138,6 +138,7 @@ class Table {
     }
     startHandRountine(){
         clearTimeout(this.startHandTimer)
+        if (this.countPlayers() === 0) this.tableManager.deleteTable(this.poolID, this.id)
         if (this.countPlayers() < this.tableSize) this.waitingForPlayers = true
         if (this.countPlayers() >= 2) {
             // clearTimeout(this.startHandTimer)
@@ -310,13 +311,13 @@ class Table {
                     playerSocket.leave(`table:${this.id}`);
                     this.sendEmptyTable(player)//send empty table
                     delete this.sockets[player.socketID]
-                    const playerCopy = JSON.parse(JSON.stringify(player))
-                    this.players[player.id] = playerCopy
-                    this.tableManager.playerPoolManager.reEnterPool(player)
-                    player = playerCopy
-                    player.stackSize = new Decimal(player.stackSize)
-                    player.betSize = new Decimal(player.betSize)
                 }
+                const playerCopy = JSON.parse(JSON.stringify(player))
+                this.players[player.id] = playerCopy
+                this.tableManager.playerPoolManager.reEnterPool(player)
+                player = playerCopy
+                player.stackSize = new Decimal(player.stackSize)
+                player.betSize = new Decimal(player.betSize)
                 return console.log("player fast folded final")
             }
         } 
@@ -358,21 +359,22 @@ class Table {
         if (action.type === "fold") {
             console.log("player folded")
             player.hasFolded = true;
+            player.tableID = undefined
             console.log(`player.isSitout: ${player.isSitout}`)
             // player.cards = [];
             this.currentHand.playersFolded++
             if (player.socketID in this.sockets) {
                 console.log("player folded 1")
-                this.sendEmptyTable(player)//send empty table
                 playerSocket.leave(`table:${this.id}`);
+                this.sendEmptyTable(player)//send empty table
                 delete this.sockets[player.socketID]
-                const playerCopy = JSON.parse(JSON.stringify(player))
-                this.players[player.id] = playerCopy
-                this.tableManager.playerPoolManager.reEnterPool(player)
-                player = playerCopy
-                player.stackSize = new Decimal(player.stackSize)
-                player.betSize = new Decimal(player.betSize)
             }
+            const playerCopy = JSON.parse(JSON.stringify(player))
+            this.players[player.id] = playerCopy
+            this.tableManager.playerPoolManager.reEnterPool(player)
+            player = playerCopy
+            player.stackSize = new Decimal(player.stackSize)
+            player.betSize = new Decimal(player.betSize)
         }
         console.log("validateAction 5")
         if (action.type === "check" && this.currentHand.biggestBet.greaterThan(player.betSize)) return this.validateAction(player, player.possibleActions[0])

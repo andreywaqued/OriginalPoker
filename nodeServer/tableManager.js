@@ -24,9 +24,9 @@ class TableManager {
         // this.redis = fastify.redis
         this.playerPoolManager = playerPoolManager
         this.tables = {}
-        Object.keys(this.playerPoolManager.pools).forEach(poolID => {
-            this.createNewTable(poolID)
-        })
+        // Object.keys(this.playerPoolManager.pools).forEach(poolID => {
+        //     this.createNewTable(poolID)
+        // })
     }
     createNewTable(poolID) {
         console.log("createNewTable(poolID)")
@@ -42,12 +42,15 @@ class TableManager {
         console.log("placePlayerIntoTable(player)")
         // let playerJoined = false
         //check if player can join table
-        if (player.isSitout) return
-        if (player.stackSize.equals(0)) return //ask if wants to rebuy
+
+        if (!player) return console.log("player is undefined, something went wrong.")
+        if (player.isSitout) return player.tableID = undefined
+        if (player.stackSize.equals(0)) return player.tableID = undefined//ask if wants to rebuy
         // console.log(player.poolID)
         // console.log(this.tables[player.poolID])
         for (const key in this.tables[player.poolID]) {
             const table = this.tables[player.poolID][key]
+            if (!table) continue
             if (!table.waitingForPlayers) continue
             if (player.socketID in table.sockets) continue
             if (table.countPlayers() === table.tableSize) continue
