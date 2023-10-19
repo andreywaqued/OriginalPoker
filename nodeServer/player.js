@@ -24,7 +24,8 @@ class Player {
         this.handHistoryArray = [],
         this.askingRebuy = false,
         this.rebuyAmount = new Decimal(0),
-        this.tableID = undefined
+        this.tableID = undefined,
+        this.tableClosed = false
     }
 }
 module.exports = Player;

@@ -200,7 +200,8 @@ class Table {
                 position : player.position,
                 showCards : player.showCards,
                 isWinner : player.isWinner,
-                lastAction: player.lastAction
+                lastAction: player.lastAction,
+                tableClosed: player.tableClosed
             }
             if (player.cards.length > 0) handState.players[playerID].cards = ["cb", "cb"]
             if (handState.isShowdown && player.showCards) handState.players[playerID].cards = player.cards
@@ -522,7 +523,7 @@ class Table {
             nextPlayer.tableID = undefined
             nextPlayer.actedSinceLastRaise = true;
             this.currentHand.playersFolded++
-            action = {type: "fold", amount: 0, playerName: nextPlayer.name}
+            const action = {type: "fold", amount: 0, playerName: nextPlayer.name}
             this.currentHand.actionSequence.push(action)
             return this.prepareNextPlayerTurn()
         } 
