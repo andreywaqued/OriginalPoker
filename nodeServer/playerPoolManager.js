@@ -259,7 +259,8 @@ class PlayerPoolManager {
     }
     leavePool(socket, playerFromClient, tableClosed = false) {
         console.log("leavePool()")
-        console.log(playerFromClient.name)
+        if (!playerFromClient) return console.log("playerFromClient is undefined")
+        console.log(`playerFromClient.name: ${playerFromClient.name}`)
         console.log(`playerFromClient.tableID: ${playerFromClient.tableID}`)
         // console.log(socket)
         // console.log(playerFromClient)
@@ -276,7 +277,7 @@ class PlayerPoolManager {
             console.log(`player.tableID: ${player.tableID}`)
             
             const table = this.tableManager.tables[player.poolID][player.tableID]
-            if (table) {
+            if (table && !player.tableClosed) {
                 console.log("leavePool()3")
                 console.log(table.id)
                 if (table.currentHand.handIsBeingPlayed) {
@@ -322,7 +323,7 @@ class PlayerPoolManager {
                     return 
                 }
             } else {
-                console.log("leavePool() 7 table undefined")
+                console.log("leavePool() 7 table undefined or player.tableClosed = true")
                 if (socket) socket.user.balance = socket.user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
                 console.log("updating balance")
                 const result = this.fastify.pg.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${player.userid}, ${player.stackSize.toNumber()}, '⚡ ${this.pools[player.poolID].gameTitle}')`);
