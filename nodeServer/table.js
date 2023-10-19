@@ -309,6 +309,7 @@ class Table {
             if (player.possibleActions[0].type === action.type && action.type === "⚡Fold") {
                 console.log("player fast folded")
                 player.askedToFold = true;
+                player.tableID = undefined
                 if (player.socketID in this.sockets) {
                     console.log("player fast folded with socket")
                     playerSocket.leave(`table:${this.id}`);
@@ -516,8 +517,13 @@ class Table {
         if (nextPlayer.hasFolded || nextPlayer.stackSize.equals(0)) return this.prepareNextPlayerTurn()
         console.log("prepareNextPlayerTurn() 2.5")
         if (nextPlayer.askedToFold) {
+            console.log("folding player that has fast folded")
             nextPlayer.hasFolded = true;
+            nextPlayer.tableID = undefined
+            nextPlayer.actedSinceLastRaise = true;
             this.currentHand.playersFolded++
+            action = {type: "fold", amount: 0, playerName: nextPlayer.name}
+            this.currentHand.actionSequence.push(action)
             return this.prepareNextPlayerTurn()
         } 
         console.log("prepareNextPlayerTurn() 3")
