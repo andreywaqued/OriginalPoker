@@ -3,7 +3,7 @@ const {app, BrowserWindow, ipcMain, Notification, dialog, screen} = require('ele
 const io = require('socket.io-client');
 const path = require('path');
 const { shell } = require('electron');
-const { dialog } = require('electron');
+
 // const express = require('express');
 // const { fileURLToPath } = require('url');
 // const {handler} = require("./build/handler")
@@ -34,46 +34,45 @@ const { dialog } = require('electron');
 // } catch (_) {}
 
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('https://originaltesteicaro.onrender.com'); // Replace with your server's address
+const socket = io('https://originaltesteicaro.onrender.com', {
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,  // 1 segundo
+});
 
-function showReconnectDialog() {
-  dialog.showMessageBox({
-    type: 'question',
-    buttons: ['Yes', 'No'],
-    title: 'Reconnect',
-    message: 'Failed to reconnect to the server. Would you like to try reconnecting manually?',
-  }).then((response) => {
-    if (response.response === 0) {
-      // O usuário escolheu tentar reconectar
-      reconnectToServer();
-    }
-  });
-}
+let reconnectTimer;
 
 function reconnectToServer() {
-  if (!socket.connected && reconnectAttempts < 1) {
-    // Tentativa de reconexão automática
-    socket.connect();
-    reconnectAttempts += 1;
-  } else {
-    console.log('Failed to reconnect after one attempt.');
-    showReconnectDialog();  // Exibe o diálogo de reconexão manual
+  if (!socket.connected) {
+    const startTime = Date.now();
+    reconnectTimer = setInterval(() => {
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime >= 3 * 60 * 1000) {  // 3 minutos
+        clearInterval(reconnectTimer);
+        console.log('Failed to reconnect after 3 minutes.');
+      } else {
+        console.log('Trying to reconnect...');
+        socket.connect();
+      }
+    }, 1000);
   }
 }
 
-socket.on("disconnect", () => {
+socket.on('disconnect', () => {
   console.log('Disconnected from server');
-  reconnectAttempts = 0;
   reconnectToServer();
 });
 
 socket.on('connect', () => {
   console.log(`Connected to the server with id: ${socket.id}`);
+  clearInterval(reconnectTimer);
   // Se o usuário estiver definido, tentamos reconectar
   if (user) {
     socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
+    console.log("Tentando reconectar")
   }
 });
+
 
 
 // Serve the static SvelteKit build files
