@@ -10,7 +10,7 @@
     let balanceHidden = false;
     let tabSelected = 0
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
-    let userName, userBalance, userAvatar
+    let userName, userBalance, userAvatar, userTx = []
     let userLoggedIn = false
    
     let gamesAvaiable = {
@@ -64,10 +64,17 @@
             })
             // displaySize = window.api.getDisplaySize()
             api.send("window-ready")
+            api.on("updateUserTx", tx => {
+                console.log(tx)
+                userTx = tx
+            })
         }
         // alert(window.api.getDisplaySize())
     });
-
+    function getUserTx() {
+        if (userTx.length > 0) return
+        api.send("getUserTx")
+    }
     function toggleBalanceView() {
         balanceHidden = !balanceHidden
     }
@@ -116,6 +123,10 @@
     }
     $: avatarUrl = `url('../../../avatar/${userAvatar}.png')`
     $: cssVarStyles = `--avatar-url:${avatarUrl};`;
+    // ask for user transactions when entered on profile (1) tab
+    $: if (menuIndexSelected == 1) {
+        getUserTx()
+    }
 </script>
 
 <style lang="scss">
@@ -697,12 +708,11 @@
                 text-align: center;
                 border-radius: 10px;
                 background-color: rgb(49, 49, 49);
+                font-size: 0.5em;
                 th {
-                    font-size: 0.6em;
                     height: 2em;
                 }
                 td {
-                    font-size: 0.6em;
                     height: 2.4em;
                 }
             }
@@ -995,7 +1005,7 @@
                                   Available
                               </h3>
                               <p>
-                                $numero
+                                EM BREVE
                               </p>
                             </div>
                             <div class="item">
@@ -1003,7 +1013,7 @@
                                   In-game
                               </h3>
                               <p>
-                                $numero
+                                EM BREVE
                               </p>
                             </div>
                             <div class="item">
@@ -1011,7 +1021,7 @@
                                   Total
                               </h3>
                               <p>
-                                $numero
+                                ${userBalance}
                               </p>
                             </div>
                             <div class="item">
@@ -1026,72 +1036,20 @@
                           </h2>
                           <div class="container">
                             <table rules=rows>
-                              <tr>
-                                <th>Date</th>
-                                <th>Time</th>
-                                <th>From</th>
-                                <th>Balance</th>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
-                              <tr>
-                                <td>$Data</td>
-                                <td>$Hora</td>
-                                <td>$From</td>
-                                <td>$Resultado</td>
-                              </tr>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Time</th>
+                                    <th>From</th>
+                                    <th>Balance</th>
+                                </tr>
+                                {#each userTx as {id, userid, amount, source, created_on}}
+                                	  <tr>
+                                        <td>{created_on.split('T')[0]}</td>
+                                        <td>{created_on.split('T')[1]}</td>
+                                        <td>{source}</td>
+                                        <td style={amount > 0 ? "color: green;" : "color: red;"}>{amount > 0 ? `+${amount}` : `-${amount}`}</td>
+                                    </tr>
+                                {/each}
                             </table>
                           </div>
                         </div>
@@ -1115,7 +1073,7 @@
                                   Full Name
                               </h3>
                               <p>
-                                $Nome
+                                EM BREVE
                               </p>
                             </div>
                             <div class="item">
@@ -1123,7 +1081,7 @@
                                   Birthday
                               </h3>
                               <p>
-                                $Data
+                                EM BREVE
                               </p>
                             </div>
                             <div class="item">
@@ -1131,7 +1089,7 @@
                                   E-mail
                               </h3>
                               <p>
-                                $Email
+                                EM BREVE
                               </p>
                             </div>
                             <div class="item">
@@ -1139,7 +1097,7 @@
                                   Telephone
                               </h3>
                               <p>
-                                $Celular
+                                EM BREVE
                               </p>
                             </div>
                             <div class="item">
@@ -1147,7 +1105,7 @@
                                   Address
                               </h3>
                               <p>
-                                $Endereco
+                                EM BREVE
                               </p>
                             </div>
                           </div>

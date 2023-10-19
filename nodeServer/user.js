@@ -117,6 +117,7 @@ async function fetchUserFromDB(name, db) {
         return {
             id: user.userid,
             name: user.username,
+            email: user.email,
             avatar: user.avatar,
             balance: new Decimal(user.balance) //it looks like numeric type saves as string
         };
