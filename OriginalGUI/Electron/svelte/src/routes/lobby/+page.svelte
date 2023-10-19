@@ -1072,7 +1072,7 @@
                                 {:else}
                                     {#each Array(4) as _}
                                     	  <tr class="pulse">
-                                            {#each Array(6) as _}
+                                            {#each Array(8) as _}
                                                 <td />
                                             {/each}
                                         </tr>
