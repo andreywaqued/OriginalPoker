@@ -185,13 +185,14 @@ socketManager.on('connection', (socket) => {
     console.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
     return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
   })
-  socket.on('getTransactions', () => {
+  socket.on('getUserTx', async () => {
     // const client = await fastify.pg.connect();
-    const { rows } = fastify.pg.query(`SELECT * FROM moneyTransactions WHERE userid = ${socket.user.id}`);
+    const { rows } = await fastify.pg.query(`SELECT * FROM moneyTransactions WHERE userid = ${socket.user.id}`);
     // client.release();
-    console.log(rows)
-    return rows;
-  });
+    console.log(`received request getUserTx: ${socket.user.id}`)
+    // console.log(rows)
+    return socket.emit('updateUserTx', rows)
+  })
   
 
 

@@ -128,6 +128,7 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
   
 let mainLobby
 let user
+let userTx
 app.whenReady().then( () => {
   mainLobby = createWindow("Main Lobby", "lobby")
 });
@@ -189,6 +190,12 @@ socket.on("updateUserInfo", response => {
     console.log(response)
     user = response.user
     if (mainLobby) mainLobby.addMessage("updateUser", user)
+})
+socket.on("updateUserTx", response => {
+  console.log("updateUserTx")
+  console.log(response)
+  userTx = response
+  if (mainLobby) mainLobby.addMessage("updateUserTx", userTx)
 })
 socket.on("updatePlayerInfo", player => {
     console.log("updatePlayerInfo")
@@ -378,6 +385,10 @@ ipcMain.on('set-window-size', (event, arg) => {
     win.setPosition(position[0], position[1]);
   }
 });
+ipcMain.on('getUserTx', () => {
+  console.log("Requesting getUserTx")
+  socket.emit('getUserTx')
+})
 
 // Listen for window size get request
 ipcMain.on('get-screen-size', (event) => {
