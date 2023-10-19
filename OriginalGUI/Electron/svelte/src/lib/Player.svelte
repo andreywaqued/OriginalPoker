@@ -16,7 +16,7 @@
     //  * @type {Object.<string,any>}
     //  */
     // export let player
-    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions, isWinner, lastAction;
+    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions, isWinner, lastAction, tableClosed;
     const deck = "boardDeck"
     let playerTurn = false;
     let lastActionShowed = ""
@@ -922,7 +922,7 @@
 </style>
 
 <div class={positioningClass}>
-    <div class="player" class:fold={hasFolded && handIsBeingPlayed} class:sitout={isSitout && (!isHero || !handIsBeingPlayed)}>
+    <div class="player" class:fold={hasFolded && handIsBeingPlayed} class:sitout={isSitout && (tableClosed || !handIsBeingPlayed)}>
         <div class="playerGlow" class:glowPlayerAnimation={playerTurn}></div>
         <div class="playerImage" style={cssVarStyles}>
             <div class="playerCircle"></div>
