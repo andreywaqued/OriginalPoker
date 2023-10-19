@@ -10,7 +10,7 @@
     let balanceHidden = false;
     let tabSelected = 0
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
-    let userName, userBalance, userAvatar, userTx = []
+    let userName, userBalance, userAvatar, userTx
     let userLoggedIn = false
    
     let gamesAvaiable = {
@@ -72,7 +72,7 @@
         // alert(window.api.getDisplaySize())
     });
     function getUserTx() {
-        if (userTx.length > 0) return
+        if (userTx) return
         api.send("getUserTx")
     }
     function toggleBalanceView() {
@@ -715,6 +715,24 @@
                 td {
                     height: 2.4em;
                 }
+                .pulse {
+                  $from: rgb(49, 49, 49);
+                  $to: scale-color($from, $lightness: -10%);
+                  height: 100%;
+                  width: 100%;
+                  background: linear-gradient(-90deg, rgb(49,49,49), rgb(60,60,60), rgb(49,49,49));
+                  background-size: 400% 400%;
+                  animation: pulse 1.2s ease-in-out infinite;
+                  @keyframes pulse {
+                    0% {
+                      background-position: 0% 0%
+                    }
+                    100% {
+                      background-position: -135% 0%
+                    }
+                  }
+                }
+
             }
         }
         .jogador {
@@ -1042,14 +1060,24 @@
                                     <th>From</th>
                                     <th>Balance</th>
                                 </tr>
-                                {#each userTx as {id, userid, amount, source, created_on}}
-                                	  <tr>
-                                        <td>{created_on.split('T')[0]}</td>
-                                        <td>{created_on.split('T')[1]}</td>
-                                        <td>{source}</td>
-                                        <td style={amount > 0 ? "color: green;" : "color: red;"}>{amount > 0 ? `+${amount}` : `-${amount}`}</td>
-                                    </tr>
-                                {/each}
+                                {#if userTx}
+                                    {#each userTx as {id, userid, amount, source, created_on}}
+                                    	  <tr>
+                                            <td>{created_on.split('T')[0]}</td>
+                                            <td>{created_on.split('T')[1]}</td>
+                                            <td>{source}</td>
+                                            <td style={amount > 0 ? "color: green;" : "color: red;"}>{amount > 0 ? `+${amount}` : amount}</td>
+                                        </tr>
+                                    {/each}
+                                {:else}
+                                    {#each Array(4) as _}
+                                    	  <tr class="pulse">
+                                            {#each Array(6) as _}
+                                                <td />
+                                            {/each}
+                                        </tr>
+                                    {/each}
+                                {/if}
                             </table>
                           </div>
                         </div>
