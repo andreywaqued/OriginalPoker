@@ -56,6 +56,16 @@ function showReconnectDialog() {
       if (response.response === 0) {
         // O usuário escolheu tentar reconectar
         reconnectToServer();
+      } else {
+        const tableIndex = tables.indexOf(win)
+        console.log(tableIndex)
+        console.log(playersID)
+        console.log(players)
+        socket.emit("leavePool", players[tableIndex])
+        win.close()
+        tables.splice(tableIndex,1)
+        players.splice(tableIndex,1)
+        playersID.splice(tableIndex,1)
       }
     });
   }
