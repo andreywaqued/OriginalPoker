@@ -117,7 +117,7 @@ class PlayerPoolManager {
             // clearTimeout(player.leavePoolTimeout)
             clearTimeout(this.leavePoolTimeout[player.id])
             if (!table) return this.reEnterPool(player) //player is coming back from sitout
-            if (player.hasFolded) return this.reEnterPool(player) //player is coming back from sitout
+            if (table.currentHand.handIsBeingPlayed && player.hasFolded) return this.reEnterPool(player) //player is coming back from sitout
         }
         if (isSitout) {
             const table = this.tableManager.tables[poolID][player.tableID]

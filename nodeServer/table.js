@@ -138,6 +138,7 @@ class Table {
     }
     startHandRountine(){
         clearTimeout(this.startHandTimer)
+        if (this.countPlayers() < this.tableSize) this.waitingForPlayers = true
         if (this.countPlayers() >= 2) {
             // clearTimeout(this.startHandTimer)
             this.startHandTimer = setTimeout(() => this.startNewHand(), 5000)
@@ -732,10 +733,14 @@ class Table {
 
     removePlayer(player) {
         console.log("removePlayer()")
+        if (!player) return
         console.log(player.name)
         this.sendEmptyTable(player)
         const playerIndex = this.playerIDByPositionIndex.indexOf(player.id)
+        console.log("playerIndex " + playerIndex)
         const playerKey = this.playerIDByPositionIndex[playerIndex]
+        console.log("playerKey " + playerKey)
+        this.sockets[player.socketID].leave(`table:${this.id}`)
         delete this.players[playerKey]
         delete this.sockets[player.socketID]
         this.playerIDByPositionIndex[playerIndex] = null
