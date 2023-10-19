@@ -208,12 +208,30 @@ socketManager.on('connection', (socket) => {
     socket.leave("lobby")
     if (!socket.user) return console.log("player didnt loggedin")
     for (let i = 0; i< socket.user.playerIDs.length; i++) {
-      const playerID = socket.user.playerIDs[i]
-      const poolID = socket.user.poolIDs[i]
-      playerPoolManager.leavePool(socket, {id:playerID, poolID: poolID}, true)
+      const playerID = socket.user.playerIDs[i];
+      // Mark the player as disconnected
+      let player = playerPoolManager.playersByPool[socket.user.poolIDs[i]][playerID];
+      if (player) {
+          player.isDisconnected = true;
+      }
     }
     delete playerPoolManager.sockets[socket.id]
   });
+
+  socket.on('reconnectPlayer', (data) => {
+    const player = playerPoolManager.playersByPool[data.poolID][data.id];
+    if (player && player.isDisconnected) {
+        // Reset the disconnected status
+        player.isDisconnected = false;
+        
+        // Inform the player about the current state of the hand
+        const table = tableManager.tables[player.tableID];
+        if (table) {
+            socket.emit('updateHandState', table.getCurrentHandState());
+        }
+    }
+  });
+
 });
 const port = process.env.PORT || 3000
 fastify.listen({
