@@ -42,14 +42,29 @@ const socket = io('https://originaltesteicaro.onrender.com', {
 
 let reconnectTimer;
 
+function showReconnectDialog() {
+  dialog.showMessageBox({
+    type: 'question',
+    buttons: ['Yes', 'No'],
+    title: 'Reconnect',
+    message: 'Failed to reconnect to the server. Would you like to try reconnecting manually?',
+  }).then((response) => {
+    if (response.response === 0) {
+      // O usuário escolheu tentar reconectar
+      reconnectToServer();
+    }
+  });
+}
+
 function reconnectToServer() {
   if (!socket.connected) {
     const startTime = Date.now();
     reconnectTimer = setInterval(() => {
       const elapsedTime = Date.now() - startTime;
-      if (elapsedTime >= 3 * 60 * 1000) {  // 3 minutos
+      if (elapsedTime >= 5 * 1000) {  // 5 segundos
         clearInterval(reconnectTimer);
-        console.log('Failed to reconnect after 3 minutes.');
+        console.log('Failed to reconnect after 5 seconds.');
+        showReconnectDialog();  // Mostra a caixa de diálogo
       } else {
         console.log('Trying to reconnect...');
         socket.connect();
@@ -69,9 +84,10 @@ socket.on('connect', () => {
   // Se o usuário estiver definido, tentamos reconectar
   if (user) {
     socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
-    console.log("Tentando reconectar")
+    console.log("Tentando reconectar");
   }
 });
+
 
 
 
