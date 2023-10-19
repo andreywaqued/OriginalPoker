@@ -227,7 +227,7 @@ socketManager.on('connection', (socket) => {
         // Inform the player about the current state of the hand
         const table = tableManager.tables[data.poolID][player.tableID];
         if (table) {
-            socket.emit('updateHandState', table.getCurrentHandState());
+          socket.emit('updateGameState', table.getCurrentGameState());
         } else {
             // Se a mesa não existe, coloca o jogador em outra mesa
             tableManager.placePlayerIntoTable(player);
