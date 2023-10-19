@@ -130,15 +130,17 @@ class Table {
         // console.log(this.players)
         // console.log(this.playerIDByPositionIndex)
         // console.log(this.sockets)
-        this.startHandRountine()
+        this.startHandRoutine()
         
         if (!this.currentHand.handIsBeingPlayed) this.broadcastHandState()
         // this.socketManager.to(`table:${this.id}`).emit("updateGameState", this.currentHand);
         
     }
-    startHandRountine(){
+    startHandRoutine(){
+        console.log("startHandRoutine()")
         clearTimeout(this.startHandTimer)
         const countPlayers = this.countPlayers()
+        console.log("countPlayers " + countPlayers)
         if (countPlayers === 0) this.tableManager.deleteTable(this.poolID, this.id)
         if (countPlayers < this.tableSize) this.waitingForPlayers = true
         if (countPlayers >= 2) {
@@ -496,7 +498,7 @@ class Table {
             player.stackSize = new Decimal(player.stackSize)
             player.betSize = new Decimal(player.betSize)
             if (!player.hasFolded && nextPlayer.betSize.lessThan(player.stackSize.plus(player.betSize))) playersLeftWithChips++ //old way
-            // if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
+            if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
             // if (!player.hasFolded && player.stackSize.greaterThan(0)) playersLeftWithChips++ //teste (NAO FUNCIONOU DIREITO, QUANDO O JOGADOR VAI ALLIN ELE FICA COM STACK 0, DAI BUGA)
         }
         if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
@@ -749,11 +751,12 @@ class Table {
         delete this.players[playerKey]
         delete this.sockets[player.socketID]
         this.playerIDByPositionIndex[playerIndex] = null
-        this.startHandRountine()
+        this.startHandRoutine()
         this.broadcastHandState()
     }
     startNewHand() {
         console.log("startNewHand()")
+        console.log(this.id)
         if (this.currentHand.handIsBeingPlayed) return console.log("hand is already being played, something went wrong.")
         const randomStart = Math.floor(Math.random() * this.countPlayers())
         this.currentHand.dealerPos = this.findNextPlayer(randomStart)
