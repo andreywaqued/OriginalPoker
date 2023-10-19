@@ -41,19 +41,24 @@ const socket = io('https://originaltesteicaro.onrender.com', {
 });
 
 let reconnectTimer;
+let isDialogShowing = false;  // Nova variável para rastrear se a caixa de diálogo está sendo exibida
 
 function showReconnectDialog() {
-  dialog.showMessageBox({
-    type: 'question',
-    buttons: ['Yes', 'No'],
-    title: 'Reconnect',
-    message: 'Failed to reconnect to the server. Would you like to try reconnecting manually?',
-  }).then((response) => {
-    if (response.response === 0) {
-      // O usuário escolheu tentar reconectar
-      reconnectToServer();
-    }
-  });
+  if (!isDialogShowing) {  // Verifica se a caixa de diálogo já está sendo exibida
+    isDialogShowing = true;  // Marca que a caixa de diálogo está sendo exibida
+    dialog.showMessageBox({
+      type: 'question',
+      buttons: ['Yes', 'No'],
+      title: 'Reconnect',
+      message: 'Failed to reconnect to the server. Would you like to try reconnecting manually?',
+    }).then((response) => {
+      isDialogShowing = false;  // Marca que a caixa de diálogo não está mais sendo exibida
+      if (response.response === 0) {
+        // O usuário escolheu tentar reconectar
+        reconnectToServer();
+      }
+    });
+  }
 }
 
 function reconnectToServer() {
@@ -87,8 +92,6 @@ socket.on('connect', () => {
     console.log("Tentando reconectar");
   }
 });
-
-
 
 
 // Serve the static SvelteKit build files
