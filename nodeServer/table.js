@@ -138,14 +138,15 @@ class Table {
     }
     startHandRountine(){
         clearTimeout(this.startHandTimer)
-        if (this.countPlayers() === 0) this.tableManager.deleteTable(this.poolID, this.id)
-        if (this.countPlayers() < this.tableSize) this.waitingForPlayers = true
-        if (this.countPlayers() >= 2) {
+        const countPlayers = this.countPlayers()
+        if (countPlayers === 0) this.tableManager.deleteTable(this.poolID, this.id)
+        if (countPlayers < this.tableSize) this.waitingForPlayers = true
+        if (countPlayers >= 2) {
             // clearTimeout(this.startHandTimer)
             this.startHandTimer = setTimeout(() => this.startNewHand(), 5000)
         }
         // if (this.playerIDByPositionIndex.length === this.tableSize) this.startHandTimer = setTimeout(() => this.startNewHand(), 0)
-        if (this.countPlayers() === this.tableSize) {
+        if (countPlayers === this.tableSize) {
             this.waitingForPlayers = false
             // clearTimeout(this.startHandTimer)
             this.startHandTimer = setTimeout(() => this.startNewHand(), 500)
@@ -753,6 +754,7 @@ class Table {
     }
     startNewHand() {
         console.log("startNewHand()")
+        if (this.currentHand.handIsBeingPlayed) return console.log("hand is already being played, something went wrong.")
         const randomStart = Math.floor(Math.random() * this.countPlayers())
         this.currentHand.dealerPos = this.findNextPlayer(randomStart)
         this.waitingForPlayers = false;
