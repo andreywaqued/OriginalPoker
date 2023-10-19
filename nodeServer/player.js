@@ -23,7 +23,8 @@ class Player {
         this.showCards = false;
         this.handHistoryArray = [],
         this.askingRebuy = false,
-        this.rebuyAmount = new Decimal(0)
+        this.rebuyAmount = new Decimal(0),
+        this.tableID = undefined
     }
 }
 module.exports = Player;

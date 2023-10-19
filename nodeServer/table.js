@@ -736,11 +736,13 @@ class Table {
         if (!player) return
         console.log(player.name)
         this.sendEmptyTable(player)
+        player.tableID = undefined
         const playerIndex = this.playerIDByPositionIndex.indexOf(player.id)
         console.log("playerIndex " + playerIndex)
         const playerKey = this.playerIDByPositionIndex[playerIndex]
         console.log("playerKey " + playerKey)
-        this.sockets[player.socketID].leave(`table:${this.id}`)
+        const playerSocket = this.sockets[player.socketID]
+        if (playerSocket) playerSocket.leave(`table:${this.id}`)
         delete this.players[playerKey]
         delete this.sockets[player.socketID]
         this.playerIDByPositionIndex[playerIndex] = null
