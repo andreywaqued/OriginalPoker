@@ -481,16 +481,6 @@ class Table {
         // console.log(this.playerIDByPositionIndex.length)
         const nextPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.positionActing]]
 
-        if (nextPlayer.isDisconnected) {
-            console.log("Player is disconnected. Taking default action.");
-            if (nextPlayer.possibleActions.some(action => action.type === "check")) {
-                this.check(nextPlayer);
-            } else {
-                this.fold(nextPlayer);
-            }
-            return;
-        }
-
         nextPlayer.stackSize = new Decimal(nextPlayer.stackSize)
         nextPlayer.betSize = new Decimal(nextPlayer.betSize)
         // console.log(nextPlayer)
