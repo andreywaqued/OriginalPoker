@@ -1,3 +1,4 @@
+const Decimal = require('decimal.js');
 //the user class, responsible for handling the object associated with a login
 class User {
     static async createAndLogin(name, password, db) {
@@ -26,9 +27,10 @@ class User {
         // Save user to DB and get the user's id
         const createdUser = await saveUserToDB(name, password, avatar, db);
         if (createdUser) {
-            this.name = name;
-            this.avatar = avatar;
-            this.balance = 0;
+            this.id = createdUser.userid;
+            this.name = createdUser.username;
+            this.avatar = createdUser.avatar;
+            this.balance = new Decimal(createdUser.balance);
         }
         console.log(this)
         // await this.getUserFromDB(userId);
@@ -37,9 +39,10 @@ class User {
     async getUserFromDB(name, db) {
         // Fetch user details from DB
         const userData = await fetchUserFromDB(name, db);
-        this.name = userData.username;
+        this.id = userData.id;
+        this.name = userData.name;
         this.avatar = userData.avatar;
-        this.balance = userData.balance;
+        this.balance = new Decimal(userData.balance);
     }
 
     async deposit(amount) {
@@ -71,10 +74,10 @@ class User {
 async function checkLogin(name, password, db) {
     console.log("checkLogin")
     // Simulate a database check
-    const client = await db.connect();
-    const { rows } = await client.query(`SELECT * FROM users WHERE username = '${name}' AND password = '${password}'`);
+    // const client = await db.connect();
+    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}' AND password = '${password}'`);
     console.log(rows)
-    client.release();
+    // client.release();
     return rows.length>0;
     // return true;
 }
@@ -82,33 +85,41 @@ async function checkLogin(name, password, db) {
 async function saveUserToDB(name, password, avatar, db) {
     // Simulate saving a new user to the database
     console.log("saveUserToDB")
-    const client = await db.connect();
-    const { rowCount } = await client.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${name}@test.com.br', ${avatar}, 0)`);
-    client.release();
-    if (rowCount > 0) {
+    // const client = await db.connect();
+    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${name}@test.com.br', ${avatar}, 0) RETURNING *`);
+    if (rows.length>0) {
         console.log("inserted user into db")
-        return true
+        console.log(rows[0])
+        return rows[0]
     }
     console.log("failed to insert user")
-    return false
+    // // client.release();
+    // if (rowCount > 0) {
+    //     console.log("inserted user into db")
+    //     return true
+    // }
+    // console.log("failed to insert user")
+    // return false
 }
 
 async function fetchUserFromDB(name, db) {
     console.log("fetchUserFromDB")
-    const client = await db.connect();
-    const { rows } = await client.query(`SELECT * FROM users WHERE username = '${name}'`);
-    client.release();
+    // const client = await db.connect();
+    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
+    // client.release();
     if (rows.length > 0) {
         console.log("fetchUserFromDB 1")
         const user = rows[0] ; // Return user id
         console.log(user)
-        const client = await db.connect();
-        await client.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = '${name}'`);
-        client.release();
+        // const client = await db.connect();
+        await db.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = '${name}'`);
+        // client.release();
         return {
-            username: user.username,
+            id: user.userid,
+            name: user.username,
+            email: user.email,
             avatar: user.avatar,
-            balance: parseFloat(user.balance) //it looks like numeric type saves as string
+            balance: new Decimal(user.balance) //it looks like numeric type saves as string
         };
     }
     // Simulate fetching a user from the database

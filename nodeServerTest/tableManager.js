@@ -1,3 +1,4 @@
+const Decimal = require('decimal.js');
 //responsible for update a table game state
 //will map each action to its correct table and so on.
 //initially will be just an object, later on possible becoming a microservice
@@ -42,13 +43,14 @@ class TableManager {
         // let playerJoined = false
         //check if player can join table
         if (player.isSitout) return
-        if (player.stackSize === 0) return //ask if wants to rebuy
+        if (player.stackSize.equals(0)) return //ask if wants to rebuy
         // console.log(player.poolID)
         // console.log(this.tables[player.poolID])
         for (const key in this.tables[player.poolID]) {
             const table = this.tables[player.poolID][key]
             if (!table.waitingForPlayers) continue
             if (player.socketID in table.sockets) continue
+            if (table.countPlayers() === table.tableSize) continue
             table.sitPlayer(player)
             return
         }
@@ -69,10 +71,10 @@ class TableManager {
         // this.socketManager.to(`table:${table.id}`).emit("updateGameState", {tableID : table.id, gameState : table.currentHand})
         if (socket) socket.emit("parseActionResponse", {response: "action received", status: 200, action: action, player: player})
     }
-    deleteTable(id) {
+    deleteTable(poolID, tableID) {
         console.log("deleteTable(id)")
-        this.socketManager.socketsLeave(`table:${id}`)
-        delete this.tables[id]
+        this.socketManager.socketsLeave(`table:${tableID}`)
+        delete this.tables[poolID][tableID]
     }
     test() {
         console.log("TableManager working")

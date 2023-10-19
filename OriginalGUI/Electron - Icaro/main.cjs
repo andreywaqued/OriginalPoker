@@ -35,6 +35,26 @@ const { shell } = require('electron');
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
 const socket = io('https://originaltesteicaro.onrender.com'); // Replace with your server's address
 
+function reconnectToServer() {
+  if (!socket.connected) {
+    console.log('Attempting to reconnect...');
+    socket.connect();
+  }
+}
+
+socket.on("disconnect", () => {
+  console.log('Disconnected from server');
+  // Tentar reconectar após 5 segundos
+  setTimeout(reconnectToServer, 5000);
+});
+
+socket.on('connect', () => {
+    console.log(`Connected to the server with id: ${socket.id}`);
+    // Se o usuário estiver definido, tentamos reconectar
+    if (user) {
+        socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
+    }
+});
 
 // Serve the static SvelteKit build files
 // serverApp.use(express.static(path.join(__dirname, 'svelte/myapp/build/client')));
@@ -136,10 +156,7 @@ app.whenReady().then( () => {
 let tables = []
 let players = []
 let playersID = []
-socket.on('connect', () => {
-    console.log(`Connected to the server with id: ${socket.id}`);
-    // socket.emit("signIn", {user: "asd", password: "asd"})
-});
+
 socket.on("signInResponse", response => {
     console.log("signInResponse")
     console.log(response)
@@ -256,9 +273,6 @@ socket.on("updatePools", (pools) => {
     // console.log(mainLobby)
     console.log("chamando send message 2")
     if (mainLobby) mainLobby.addMessage("updatePools", pools)
-})
-socket.on("disconnect", () => {
-  app.quit()
 })
 
 // socket.send("SIGN_IN;ALEXANDER;123456")

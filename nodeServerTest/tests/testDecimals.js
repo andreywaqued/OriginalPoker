@@ -1,0 +1,15 @@
+const Decimal = require('decimal.js');
+
+console.log(0.1 + 0.2)
+x = new Decimal(0)
+y = new Decimal(0.2)
+z = new Decimal(parseFloat("asd"))
+// x = x.plus(y)
+console.log(x)
+console.log(y)
+console.log(x + y)
+console.log(x.minus(y))
+console.log(x.equals(0.3))
+console.log(x)
+console.log(x.toNumber())
+console.log(z.isNaN())

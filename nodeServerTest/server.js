@@ -1,5 +1,6 @@
 const fastify = require('fastify')({ logger: true });
 const socketManager = require('socket.io')(fastify.server);
+const Decimal = require('decimal.js');
 //docker acess
 // fastify.register(require('@fastify/postgres'), {
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
@@ -19,12 +20,14 @@ const User = require('./user');
 // const { Worker } = require('worker_threads');
 fastify.addHook('onReady', async () => {
   console.log("connected")
-  const client = await fastify.pg.connect()
-  // client.query("DROP TABLE users")
-  // client.query("DROP TABLE hands")
-  client.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 20 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-  client.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
-  client.release()
+  // const client = await fastify.pg.connect()
+  // fastify.pg.query("DROP TABLE users")
+  // fastify.pg.query("DROP TABLE hands")
+  // fastify.pg.query("DROP TABLE moneyTransactions")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 20 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS moneyTransactions(id serial PRIMARY KEY, userid serial NOT NULL, amount NUMERIC NOT NULL, source VARCHAR(50) NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  // client.release()
 })
 fastify.addHook('onClose', async () => {
   console.log("onClose")
@@ -38,6 +41,10 @@ fastify.addHook('onClose', async () => {
   })
   done()
 })
+fastify.setErrorHandler((error, request, reply) => {
+  request.log.error(error.toString());
+  reply.send({ error: 'Internal server error' });
+});
 // fastify.register(require('@fastify/redis'), { host: 'redis', port: 6379 })
 
 playerPoolManager = new PlayerPoolManager(socketManager, fastify)
@@ -45,35 +52,41 @@ playerPoolManager = new PlayerPoolManager(socketManager, fastify)
 // tableManager.test()
 console.log("starting")
 fastify.get('/users', async (request, reply) => {
-  const client = await fastify.pg.connect();
-  const { rows } = await client.query('SELECT * FROM users');
-  client.release();
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query('SELECT * FROM users');
+  // client.release();
   console.log(rows)
   return rows;
 });
 fastify.get('/hands', async (request, reply) => {
-  const client = await fastify.pg.connect();
-  const { rows } = await client.query('SELECT * FROM hands');
-  client.release();
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query('SELECT * FROM hands');
+  // client.release();
+  console.log(rows)
+  return rows;
+});
+fastify.get('/transactions', async (request, reply) => {
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query('SELECT * FROM moneyTransactions');
+  // client.release();
   console.log(rows)
   return rows;
 });
 fastify.get('/addchips', async (request, reply) => {
   console.log(request.query)
-  const username = request.query.user
-  const chips = parseFloat(request.query.chips)
-  const client = await fastify.pg.connect();
-  const result = await client.query(`UPDATE users SET balance = balance + ${chips} WHERE username = '${username}'`);
-  client.release();
-  //TODO FAZER ISSO DAQUI FUNCIONAR
+  const userid = parseInt(request.query.user)
+  const chips = new Decimal(request.query.chips)
+  // const client = await fastify.pg.connect();
+  const result = await fastify.pg.query(`UPDATE users SET balance = balance + ${chips} WHERE userid = ${userid}; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${userid}, ${chips}, 'ORIGINAL CASHIER')`);
+  // client.release();
   console.log("socketManager.sockets.sockets")
   console.log(socketManager.sockets.sockets)
   socketManager.sockets.sockets.forEach((socket, socketID) => {
     console.log(socketID)
     console.log(socket)
     if (socket.user) {
-      console.log(socket.user)
-      if (socket.user.name === username) socket.user.balance += chips
+      console.log("updating chips on player " + socket.user.name)
+      if (socket.user.id === userid) socket.user.balance = socket.user.balance.plus(chips)
       socket.emit("updateUserInfo", { user : socket.user, status: 200})
     }
   })
@@ -82,6 +95,22 @@ fastify.get('/addchips', async (request, reply) => {
 });
 fastify.get('/pools', async (request, reply) => {
   return playerPoolManager.playersByPool
+});
+fastify.get('/tables', async (request, reply) => {
+  let tablesMap = {}
+  console.log(playerPoolManager.tableManager.tables)
+  Object.values(playerPoolManager.tableManager.tables).forEach((pool) => {
+    Object.values(pool).forEach((table) => {
+      tablesMap[table.id] = {
+        title: table.title,
+        players: table.players,
+        waitingForPlayers: table.waitingForPlayers,
+        hand: table.currentHand
+
+      }
+    })
+  })
+  return tablesMap
 });
 // fastify.get('/set', async (request, reply) => {
 //   const { user, name } = request.query
@@ -155,6 +184,14 @@ socketManager.on('connection', (socket) => {
   socket.on("sitoutUpdate", (data) => {
     console.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
     return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
+  })
+  socket.on('getUserTx', async () => {
+    // const client = await fastify.pg.connect();
+    const { rows } = await fastify.pg.query(`SELECT * FROM moneyTransactions WHERE userid = ${socket.user.id}`);
+    // client.release();
+    console.log(`received request getUserTx: ${socket.user.id}`)
+    // console.log(rows)
+    return socket.emit('updateUserTx', rows)
   })
   
 
