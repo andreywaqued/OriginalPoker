@@ -138,6 +138,8 @@ class Table {
     }
     startHandRountine(){
         clearTimeout(this.startHandTimer)
+        if (this.countPlayers() === 0) this.tableManager.deleteTable(this.poolID, this.id)
+        if (this.countPlayers() < this.tableSize) this.waitingForPlayers = true
         if (this.countPlayers() >= 2) {
             // clearTimeout(this.startHandTimer)
             this.startHandTimer = setTimeout(() => this.startNewHand(), 5000)
@@ -295,6 +297,7 @@ class Table {
         console.log("validateAction 1")
         const playerSocket = this.sockets[playerFromClient.socketID]
         let player = this.players[playerFromClient.id]
+        if (!player) return console.log("player undefined, something went wrong!")
         // player.isSitout = playerFromClient.isSitout
         // console.log(player)
         //treat fast fold
@@ -308,13 +311,13 @@ class Table {
                     playerSocket.leave(`table:${this.id}`);
                     this.sendEmptyTable(player)//send empty table
                     delete this.sockets[player.socketID]
-                    const playerCopy = JSON.parse(JSON.stringify(player))
-                    this.players[player.id] = playerCopy
-                    this.tableManager.playerPoolManager.reEnterPool(player)
-                    player = playerCopy
-                    player.stackSize = new Decimal(player.stackSize)
-                    player.betSize = new Decimal(player.betSize)
                 }
+                const playerCopy = JSON.parse(JSON.stringify(player))
+                this.players[player.id] = playerCopy
+                this.tableManager.playerPoolManager.reEnterPool(player)
+                player = playerCopy
+                player.stackSize = new Decimal(player.stackSize)
+                player.betSize = new Decimal(player.betSize)
                 return console.log("player fast folded final")
             }
         } 
@@ -356,21 +359,22 @@ class Table {
         if (action.type === "fold") {
             console.log("player folded")
             player.hasFolded = true;
+            player.tableID = undefined
             console.log(`player.isSitout: ${player.isSitout}`)
             // player.cards = [];
             this.currentHand.playersFolded++
             if (player.socketID in this.sockets) {
                 console.log("player folded 1")
-                this.sendEmptyTable(player)//send empty table
                 playerSocket.leave(`table:${this.id}`);
+                this.sendEmptyTable(player)//send empty table
                 delete this.sockets[player.socketID]
-                const playerCopy = JSON.parse(JSON.stringify(player))
-                this.players[player.id] = playerCopy
-                this.tableManager.playerPoolManager.reEnterPool(player)
-                player = playerCopy
-                player.stackSize = new Decimal(player.stackSize)
-                player.betSize = new Decimal(player.betSize)
             }
+            const playerCopy = JSON.parse(JSON.stringify(player))
+            this.players[player.id] = playerCopy
+            this.tableManager.playerPoolManager.reEnterPool(player)
+            player = playerCopy
+            player.stackSize = new Decimal(player.stackSize)
+            player.betSize = new Decimal(player.betSize)
         }
         console.log("validateAction 5")
         if (action.type === "check" && this.currentHand.biggestBet.greaterThan(player.betSize)) return this.validateAction(player, player.possibleActions[0])
@@ -491,7 +495,7 @@ class Table {
             player.stackSize = new Decimal(player.stackSize)
             player.betSize = new Decimal(player.betSize)
             if (!player.hasFolded && nextPlayer.betSize.lessThan(player.stackSize.plus(player.betSize))) playersLeftWithChips++ //old way
-            if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
+            // if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
             // if (!player.hasFolded && player.stackSize.greaterThan(0)) playersLeftWithChips++ //teste (NAO FUNCIONOU DIREITO, QUANDO O JOGADOR VAI ALLIN ELE FICA COM STACK 0, DAI BUGA)
         }
         if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
@@ -518,7 +522,7 @@ class Table {
         nextPlayer.possibleActions = [{type: "fold", amount: 0}]
         if (this.currentHand.biggestBet.equals(nextPlayer.betSize)) nextPlayer.possibleActions.push({type: "check", amount: 0})
         console.log("prepareNextPlayerTurn() 4")
-        console.log(nextPlayer)
+        console.log("nextPlayer: " + nextPlayer.name)
         // if (nextPlayer.isSitout) return this.validateAction(nextPlayer, nextPlayer.possibleActions[nextPlayer.possibleActions.length -1])
         if (!this.currentHand.biggestBet.equals(nextPlayer.betSize)) nextPlayer.possibleActions.push({type: "call", amount: this.currentHand.biggestBet.toNumber()})
         if (this.currentHand.biggestBet.equals(0)) nextPlayer.possibleActions.push({type: "bet", amount: this.bb})
@@ -526,18 +530,19 @@ class Table {
 
         this.currentHand.timeLimitToAct = new Date().getTime() + this.timeBank //timestamp + 20sec
         // clearTimeout(this.timeLimitCounter)
+        const playerToTimeout = JSON.parse(JSON.stringify(nextPlayer))
         this.timeLimitCounter = setTimeout(()=> {
             console.log("time is over, folding player")
-            console.log(nextPlayer)
-            nextPlayer.isSitout = true;
-            if (nextPlayer.possibleActions.length === 0) return console.log("nextPlayer.possibleActions.length === 0")//server protection case for when something went wrong.
-            let timeoutAction = nextPlayer.possibleActions[0]
-            if (nextPlayer.possibleActions[1].type === "check") timeoutAction = nextPlayer.possibleActions[1]
+            console.log(playerToTimeout.name)
+            playerToTimeout.isSitout = true;
+            if (playerToTimeout.possibleActions.length === 0) return console.log("playerToTimeout.possibleActions.length === 0")//server protection case for when something went wrong.
+            let timeoutAction = playerToTimeout.possibleActions[0]
+            if (playerToTimeout.possibleActions[1].type === "check") timeoutAction = playerToTimeout.possibleActions[1]
             //send sitout
-            const socket = this.sockets[nextPlayer.socketID]
-            if (socket) socket.emit("sitoutUpdate", {playerID: nextPlayer.id, isSitout: true})
+            const socket = this.sockets[playerToTimeout.socketID]
+            if (socket) socket.emit("sitoutUpdate", {playerID: playerToTimeout.id, isSitout: true})
             //
-            this.validateAction(nextPlayer, timeoutAction)
+            this.validateAction(playerToTimeout, timeoutAction)
             console.log("time is over, folding player 2")
         }, this.currentHand.timeLimitToAct - new Date().getTime())
         
@@ -708,7 +713,10 @@ class Table {
             console.log(player.hasFolded)
             console.log(player.isSitout)
             const socket = this.sockets[player.socketID]
-
+            if(this.id != player.tableID) {
+                console.log("tableID is not matching, player is already in another table.")
+                continue
+            }
             if (player.isSitout && player.hasFolded) continue //player already reentered the pool
             if (player.isSitout) this.sendEmptyTable(player)
             if (!player.hasFolded || player.isSitout) this.tableManager.playerPoolManager.reEnterPool(player) //if player folded, it had already reentered the pool
@@ -727,10 +735,16 @@ class Table {
 
     removePlayer(player) {
         console.log("removePlayer()")
+        if (!player) return
         console.log(player.name)
         this.sendEmptyTable(player)
+        player.tableID = undefined
         const playerIndex = this.playerIDByPositionIndex.indexOf(player.id)
+        console.log("playerIndex " + playerIndex)
         const playerKey = this.playerIDByPositionIndex[playerIndex]
+        console.log("playerKey " + playerKey)
+        const playerSocket = this.sockets[player.socketID]
+        if (playerSocket) playerSocket.leave(`table:${this.id}`)
         delete this.players[playerKey]
         delete this.sockets[player.socketID]
         this.playerIDByPositionIndex[playerIndex] = null
