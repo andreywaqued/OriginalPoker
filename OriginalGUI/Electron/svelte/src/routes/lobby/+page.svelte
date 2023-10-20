@@ -155,7 +155,7 @@
     {
     	border-radius: 10px;
     	-webkit-box-shadow: inset 0 0 6px rgba(60, 60, 60, 0.7);
-    	background-color: rgba(31, 31, 31);
+    	background-color: rgba(49, 49, 49);
     }
     main {
         background-color: black;
@@ -720,7 +720,7 @@
             .container {
                 height: 90%;
                 overflow: auto;
-                padding-right: 0.5em;
+                padding-right: 0.3em;
             }
             table {
                 margin-top: 0.5em;
