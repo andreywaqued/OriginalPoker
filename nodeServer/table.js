@@ -319,12 +319,14 @@ class Table {
                     console.log("player fast folded with socket")
                     playerSocket.leave(`table:${this.id}`);
                     this.sendEmptyTable(player)//send empty table
-                    // delete this.sockets[player.socketID]
+                    delete this.sockets[player.socketID]
                 }
                 const playerCopy = JSON.parse(JSON.stringify(player))
-                playerCopy.stackSize = new Decimal(playerCopy.stackSize)
-                playerCopy.betSize = new Decimal(playerCopy.betSize)
-                this.tableManager.playerPoolManager.reEnterPool(playerCopy)
+                this.players[player.id] = playerCopy
+                this.tableManager.playerPoolManager.reEnterPool(player)
+                player = playerCopy
+                player.stackSize = new Decimal(player.stackSize)
+                player.betSize = new Decimal(player.betSize)
                 return console.log("player fast folded final")
             }
         } 
@@ -379,9 +381,11 @@ class Table {
             if (!player.askedToFold) {
                 console.log(player.name + " reentering pool when not fast folded")
                 const playerCopy = JSON.parse(JSON.stringify(player))
-                playerCopy.stackSize = new Decimal(playerCopy.stackSize)
-                playerCopy.betSize = new Decimal(playerCopy.betSize)
-                this.tableManager.playerPoolManager.reEnterPool(playerCopy)
+                this.players[player.id] = playerCopy
+                this.tableManager.playerPoolManager.reEnterPool(player)
+                player = playerCopy
+                player.stackSize = new Decimal(player.stackSize)
+                player.betSize = new Decimal(player.betSize)
             }
             // const playerCopy = JSON.parse(JSON.stringify(player))
             // this.players[player.id] = playerCopy
