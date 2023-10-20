@@ -142,6 +142,9 @@ class PlayerPoolManager {
         // console.log("sockets")
         // console.log(Object.keys(this.sockets))
         const socket = this.sockets[player.socketID]
+        let playerPool = this.playersByPool[poolID]
+        playerPool[player.id] = player
+        player.tableID = undefined //reset player tableID
         // console.log("socket")
         // console.log(socket)
         if (!socket || player.tableClosed) return this.leavePool(socket, player)
@@ -152,7 +155,6 @@ class PlayerPoolManager {
         if (player.stackSize.equals(0)) {
             console.log(`player.stackSize: ${player.stackSize}`)
             // this.leavePool(socket, player)
-            player.tableID = undefined
             if (socket) return socket.emit("askRebuy", {playerID : player.id, poolID: poolID, minBuyIn: pool.minBuyIn, maxBuyIn : pool.maxBuyIn})
         }
         if (player.isSitout) {
@@ -170,8 +172,6 @@ class PlayerPoolManager {
             return
             //  this.leavePool(socket, player)
         }
-        let playerPool = this.playersByPool[poolID]
-        playerPool[player.id] = player
         console.log(`playerPool: ${playerPool}`)
         console.log(Object.keys(playerPool))
         this.tableManager.placePlayerIntoTable(player)
