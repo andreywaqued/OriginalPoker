@@ -176,12 +176,10 @@ class Table {
         }
     }
     broadcastHandState() {
-        console.log("broadcasting handState")
+        console.log("broadcasting handState for table: " + this.id)
         let handState = JSON.parse(JSON.stringify(this.currentHand)) // copies the current hand
         handState.players = {}
         delete handState.handHistory
-        console.log(this.playerIDByPositionIndex)
-        console.log(this.id)
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             console.log("entrou no player " + this.playerIDByPositionIndex[i])
             const playerID = this.playerIDByPositionIndex[i]
@@ -306,6 +304,7 @@ class Table {
         let player = this.players[playerFromClient.id]
         if (!player) return console.log("player undefined, something went wrong!")
         if (!playerSocket) return console.log("player socket undefined, something went wrong!")
+        if (playerFromClient.tableID != this.id) return console.log("playerFromClient.tableID is not from this table, something went wrong!")
         if (player.tableID != this.id) return console.log("player.tableID is not from this table, something went wrong!")
         // player.isSitout = playerFromClient.isSitout
         // console.log(player)
@@ -852,8 +851,13 @@ class Table {
             if (this.playerIDByPositionIndex[i] === null) continue
             const player = this.tableManager.playerPoolManager.playersByPool[this.poolID][this.playerIDByPositionIndex[i]]
             if (!player) continue
-            console.log(`added hand history to player ${player.name}`)
-            player.handHistoryArray.push(this.currentHand.handHistory)
+            console.log(`sending hand history to ${player.name}`)
+            const socket = this.tableManager.playerPoolManager.sockets[player.socketID]
+            if (!socket) {
+                console.log("socket is undefined")
+                continue
+            }
+            if (socket) socket.emit("updateHandHistory", {player: player, handHistory: this.currentHand.handHistory})
         }
         this.tableManager.fastify.pg.query(`INSERT INTO hands(handHistory) VALUES ('${this.currentHand.handHistory}')`);
         // this.tableManager.fastify.pg.connect().then(async (client) => {

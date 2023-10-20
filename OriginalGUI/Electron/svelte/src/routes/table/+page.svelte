@@ -56,8 +56,6 @@
         hero.showCards = true
         hero.betSize = parseFloat(player.betSize)
         hero.stackSize = parseFloat(player.stackSize)
-        handHistories = player.handHistoryArray
-        console.log(handHistories)
         if (player.finalHandRank) handStrength = player.finalHandRank.combination
         possibleActions = player.possibleActions
         if (possibleActions.length > 1) {
@@ -136,6 +134,12 @@
         handStrength = ""
         transitionBackground()
         callChangeAds()
+      });
+      window.api.on('updateHandHistory', (handHistory) => {
+        console.log("updateHandHistory")
+        handHistories.push(handHistory)
+        handHistories = handHistories //forcing the update
+        if (hhIndex === -1) hhIndex = handHistories.length - 1
       });
       window.api.on('askRebuy', (data) => {
         toggleRebuy()

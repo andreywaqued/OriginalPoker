@@ -234,6 +234,17 @@ socket.on("handTransition", player => {
     // const table = tables[playersID.indexOf(playerID)]
     // if (table) table.addMessage("askRebuy", data)
 })
+socket.on("updateHandHistory", data => {
+    console.log("updateHandHistory")
+    if (!data.player) return console.log("player is undefined")
+    if (!data.handHistory) return console.log("handHistory is undefined")
+    const player = data.player
+    const handHistory = data.handHistory
+    const table = tables[playersID.indexOf(player.id)]
+    if (table) table.addMessage("updateHandHistory", handHistory)
+    // const table = tables[playersID.indexOf(playerID)]
+    // if (table) table.addMessage("askRebuy", data)
+})
 socket.on("closeTable", playerID => {
     console.log("closeTable")
     console.log(playerID)

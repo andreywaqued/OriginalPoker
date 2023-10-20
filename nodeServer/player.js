@@ -21,7 +21,6 @@ class Player {
         this.position = 0;
         this.isButton = false;
         this.showCards = false;
-        this.handHistoryArray = [],
         this.askingRebuy = false,
         this.rebuyAmount = new Decimal(0),
         this.tableID = undefined,
