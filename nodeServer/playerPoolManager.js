@@ -113,7 +113,7 @@ class PlayerPoolManager {
         if (!socket) return console.log("socket invalid")
         player.isSitout = isSitout //player can become sitout or not
         const table = this.tableManager.tables[poolID][player.tableID]
-        if (table) table.broadcastHandState()
+        // if (table && player.tableClosed) table.broadcastHandState()
         if (!isSitout) {
             // clearTimeout(player.leavePoolTimeout)
             clearTimeout(this.leavePoolTimeout[player.id])

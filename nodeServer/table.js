@@ -330,8 +330,9 @@ class Table {
         if (!this.currentHand.handIsBeingPlayed && playerSocket) return console.log(playerSocket.emit("actionResponse", {message: "hand is over", status:401}), "hand is over")
         const currentPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.positionActing]]
         if (currentPlayer.id != player.id && playerSocket) return playerSocket.emit("actionResponse", {message: "wrong player", status:401})
-        if (player.askedToFold && playerSocket) return playerSocket.emit("actionResponse", {message: "player already asked to fold", status:401})
+        if (player.askedToFold && player.hasFolded && playerSocket) return playerSocket.emit("actionResponse", {message: "player already asked to fold", status:401})
         if (player.hasFolded && playerSocket) return playerSocket.emit("actionResponse", {message: "player already folded", status:401})
+        if (player.hasFolded) return console.log("player has already folded, something went wrong")
         console.log("validateAction 2")
         // if (player.isSitout) return "player is sitout"
         // console.log(player.possibleActions.includes(action))
@@ -376,7 +377,7 @@ class Table {
             }
             const playerCopy = JSON.parse(JSON.stringify(player))
             this.players[player.id] = playerCopy
-            this.tableManager.playerPoolManager.reEnterPool(player)
+            if (!player.askedToFold) this.tableManager.playerPoolManager.reEnterPool(player)
             player = playerCopy
             player.stackSize = new Decimal(player.stackSize)
             player.betSize = new Decimal(player.betSize)
@@ -516,17 +517,7 @@ class Table {
         //     return this.prepareNextPlayerTurn()
         // } 
         if (nextPlayer.hasFolded || nextPlayer.stackSize.equals(0)) return this.prepareNextPlayerTurn()
-        console.log("prepareNextPlayerTurn() 2.5")
-        if (nextPlayer.askedToFold) {
-            console.log("folding player that has fast folded")
-            nextPlayer.hasFolded = true;
-            nextPlayer.tableID = undefined
-            nextPlayer.actedSinceLastRaise = true;
-            this.currentHand.playersFolded++
-            const action = {type: "fold", amount: new Decimal(0), playerName: nextPlayer.name}
-            this.currentHand.actionSequence.push(action)
-            return this.prepareNextPlayerTurn()
-        } 
+         
         console.log("prepareNextPlayerTurn() 3")
         if (this.currentHand.minBet.lessThanOrEqualTo(this.bb)) this.currentHand.minBet = new Decimal(this.bb)
         nextPlayer.possibleActions = [{type: "fold", amount: 0}]
@@ -537,22 +528,25 @@ class Table {
         if (!this.currentHand.biggestBet.equals(nextPlayer.betSize)) nextPlayer.possibleActions.push({type: "call", amount: this.currentHand.biggestBet.toNumber()})
         if (this.currentHand.biggestBet.equals(0)) nextPlayer.possibleActions.push({type: "bet", amount: this.bb})
         if (this.currentHand.biggestBet.greaterThan(0)) nextPlayer.possibleActions.push({type: "raise", amount: this.currentHand.minBet.toNumber()}) 
-
+        console.log("prepareNextPlayerTurn() 5")
+        if (nextPlayer.askedToFold) {
+            console.log("folding player that has ⚡Fold")
+            return this.validateAction(nextPlayer, nextPlayer.possibleActions[0])
+        }
         this.currentHand.timeLimitToAct = new Date().getTime() + this.timeBank //timestamp + 20sec
         // clearTimeout(this.timeLimitCounter)
-        const playerToTimeout = JSON.parse(JSON.stringify(nextPlayer))
         this.timeLimitCounter = setTimeout(()=> {
             console.log("time is over, folding player")
-            console.log(playerToTimeout.name)
-            playerToTimeout.isSitout = true;
-            if (playerToTimeout.possibleActions.length === 0) return console.log("playerToTimeout.possibleActions.length === 0")//server protection case for when something went wrong.
-            let timeoutAction = playerToTimeout.possibleActions[0]
-            if (playerToTimeout.possibleActions[1].type === "check") timeoutAction = playerToTimeout.possibleActions[1]
+            console.log(nextPlayer.name)
+            nextPlayer.isSitout = true;
+            if (nextPlayer.possibleActions.length === 0) return console.log("nextPlayer.possibleActions.length === 0")//server protection case for when something went wrong.
+            let timeoutAction = nextPlayer.possibleActions[0]
+            if (nextPlayer.possibleActions[1].type === "check") timeoutAction = nextPlayer.possibleActions[1]
             //send sitout
-            const socket = this.sockets[playerToTimeout.socketID]
-            if (socket) socket.emit("sitoutUpdate", {playerID: playerToTimeout.id, isSitout: true})
+            // const socket = this.sockets[nextPlayer.socketID]
+            // if (socket) socket.emit("sitoutUpdate", {playerID: nextPlayer.id, isSitout: true})
             //
-            this.validateAction(playerToTimeout, timeoutAction)
+            this.validateAction(nextPlayer, timeoutAction)
             console.log("time is over, folding player 2")
         }, this.currentHand.timeLimitToAct - new Date().getTime())
         
