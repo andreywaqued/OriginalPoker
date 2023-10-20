@@ -292,7 +292,7 @@ class Table {
         console.log(this.id)
         if (!action) return console.log("action is undefined")
         if (!action.type) return console.log("action.type is undefined")
-        if (!action.amount) return console.log("action.amount is undefined")
+        if (typeof(action.amount) != "number") return console.log("action.amount is not a number")
         action.amount = parseFloat(action.amount.toString().replaceAll(",", "."))
         action.amount = new Decimal(action.amount)
         if (action.amount.isNaN()) return console.log("action not allowed")
