@@ -109,8 +109,8 @@
         tableSize = gameState.tableSize
         boardCards = gameState.boardCards
         pots = gameState.pots
-        sbSize = gameState.sb
-        bbSize = gameState.bb
+        sbSize = parseFloat(gameState.sb)
+        bbSize = parseFloat(gameState.bb)
         biggestBet = parseFloat(gameState.biggestBet)
         currentGameState = gameState
         console.log(playersComponents)

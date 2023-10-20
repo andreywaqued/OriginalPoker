@@ -190,10 +190,10 @@ class Table {
                 name: player.name,
                 avatar: player.avatar,
                 tableID: player.tableID,
-                stackSize: player.stackSize,
+                stackSize: player.stackSize.toNumber(),
                 hasFolded: player.hasFolded,
                 isSitout: player.isSitout,
-                betSize: player.betSize,
+                betSize: player.betSize.toNumber(),
                 cards: [],
                 possibleActions: player.possibleActions,
                 isButton : player.isButton,
@@ -248,7 +248,7 @@ class Table {
             name: player.name,
             avatar: player.avatar,
             tableID: player.tableID,
-            stackSize: player.stackSize,
+            stackSize: player.stackSize.toNumber(),
             hasFolded: true,
             cards: [],
             isSitout: player.isSitout,
@@ -290,6 +290,9 @@ class Table {
         console.log(playerFromClient.name)
         console.log(action)
         console.log(this.id)
+        if (!action) return console.log("action is undefined")
+        if (!action.type) return console.log("action.type is undefined")
+        if (!action.amount) return console.log("action.amount is undefined")
         action.amount = parseFloat(action.amount.toString().replaceAll(",", "."))
         action.amount = new Decimal(action.amount)
         if (action.amount.isNaN()) return console.log("action not allowed")
