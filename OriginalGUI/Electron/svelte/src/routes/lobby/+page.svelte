@@ -138,6 +138,25 @@
         font-size: var(--root-font-size);
         font-family: 'Roboto', sans-serif;
     }
+    ::-webkit-scrollbar-track
+    {
+    	-webkit-box-shadow: inset 0 0 6px rgba(49,49,49,0.7);
+    	border-radius: 10px;
+    	background-color: rgb(18, 18, 18);
+    }
+
+    ::-webkit-scrollbar
+    {
+    	width: 0.5em;
+    	background-color: rgb(18, 18, 18);
+    }
+
+    ::-webkit-scrollbar-thumb
+    {
+    	border-radius: 10px;
+    	-webkit-box-shadow: inset 0 0 6px rgba(60, 60, 60, 0.7);
+    	background-color: rgba(49, 49, 49);
+    }
     main {
         background-color: black;
         width: 100%;
@@ -701,6 +720,7 @@
             .container {
                 height: 90%;
                 overflow: auto;
+                padding-right: 0.3em;
             }
             table {
                 margin-top: 0.5em;
@@ -1070,9 +1090,9 @@
                                         </tr>
                                     {/each}
                                 {:else}
-                                    {#each Array(4) as _}
+                                    {#each Array(8) as _}
                                     	  <tr class="pulse">
-                                            {#each Array(6) as _}
+                                            {#each Array(4) as _}
                                                 <td />
                                             {/each}
                                         </tr>

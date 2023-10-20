@@ -221,22 +221,21 @@ socketManager.on('connection', (socket) => {
   socket.on('reconnectPlayer', (data) => {
     const player = playerPoolManager.playersByPool[data.poolID][data.id];
     if (player && player.isDisconnected) {
-        // Reset the disconnected status
-        player.isDisconnected = false;
-        
-        // Inform the player about the current state of the hand
-        const table = tableManager.tables[data.poolID][player.tableID];
-        if (table) {
-          socket.emit('updateGameState', table.getCurrentGameState());
-        } else {
-            // Se a mesa não existe, coloca o jogador em outra mesa
-            tableManager.placePlayerIntoTable(player);
-        }
+      // Reset the disconnected status
+      player.isDisconnected = false;
+  
+      // Inform the player about the current state of the hand
+      const table = tableManager.tables[data.poolID][player.tableID];
+      if (table) {
+        table.broadcastHandState();  // Atualiza o estado do jogo para todos os jogadores
+      } else {
+        // Se a mesa não existe, coloca o jogador em outra mesa
+        tableManager.placePlayerIntoTable(player);
+      }
     }
+  });
 });
 
-
-});
 const port = process.env.PORT || 3000
 fastify.listen({
   host: "0.0.0.0",

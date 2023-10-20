@@ -187,7 +187,7 @@ socketManager.on('connection', (socket) => {
   })
   socket.on('getUserTx', async () => {
     // const client = await fastify.pg.connect();
-    const { rows } = await fastify.pg.query(`SELECT * FROM moneyTransactions WHERE userid = ${socket.user.id}`);
+    const { rows } = await fastify.pg.query(`SELECT * FROM moneyTransactions WHERE userid = ${socket.user.id} ORDER BY created_on DESC`);
     // client.release();
     console.log(`received request getUserTx: ${socket.user.id}`)
     // console.log(rows)
