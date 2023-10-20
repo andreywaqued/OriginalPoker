@@ -67,6 +67,7 @@
           if (betValue > hero.betSize + hero.stackSize) betValue = Math.round((hero.betSize + hero.stackSize)*100)/100
           minBet = betValue;
           maxBet = Math.round((player.betSize + player.stackSize)*100)/100;
+          api.send("focusOnWindow")
         }
         tableRotateAmount = hero.position
         playersTemp[player.id] = hero

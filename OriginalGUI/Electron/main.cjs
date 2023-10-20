@@ -40,7 +40,6 @@ const socket = io('https://originaltrial.onrender.com'); // Replace with your se
 // serverApp.use(express.static(path.join(__dirname, 'svelte/myapp/build/client')));
 // console.log(path.join(__dirname, 'svelte/myapp/.svelte-kit/output/server'))
 
-
 function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
   const primaryDisplay = screen.getPrimaryDisplay()
   // const { width, height } = primaryDisplay.workAreaSize
@@ -85,8 +84,10 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     // mainWindow2.loadFile(join('svelte\myapp\src\app.html'));
     newWindow.webContents.on('did-finish-load', () => {
       // Emit a message to the server
-      newWindow.show();
-      newWindow.focus();
+      newWindow.showAndFocus();
+      // newWindow.focus({
+      //   steal: true
+      // });
     });
     newWindow.readyToReceiveMessages = false;
     newWindow.messageBuffer = []
@@ -120,6 +121,13 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
       if (newWindow.messageBuffer.length === 0) return newWindow.webContents.send(event, data)
       if (newWindow.readyToReceiveMessages) return newWindow.webContents.send(event, data)
       if (!newWindow.readyToReceiveMessages) return newWindow.messageBuffer.push({event: event, data: data})
+    }
+    newWindow.showAndFocus = () => {
+      if (!newWindow) return
+      newWindow.show()
+      newWindow.setAlwaysOnTop(true)
+      newWindow.focus({steal:true})
+      newWindow.setAlwaysOnTop(false)
     }
     
     return newWindow
@@ -278,6 +286,12 @@ ipcMain.on('openExternalUrl', (event, url) => {
   console.log(url)
   shell.openExternal(url)
 });
+ipcMain.on('focusOnWindow', (event) => {
+  console.log('focusOnWindow')
+  win = BrowserWindow.fromWebContents(event.sender)
+  if (!win) return
+  win.showAndFocus()
+});
 ipcMain.on('sitoutUpdate', (event, data) => {
   console.log("sitoutUpdate")
   console.log(data)
@@ -361,7 +375,7 @@ ipcMain.on('organize-tables', (event) => {
     table.setSize(tableWidth, tableHeight)
     console.log(positions[`pos${tableIndex+1}`])
     table.setPosition(positions[`pos${tableIndex+1}`][0], positions[`pos${tableIndex+1}`][1])
-    table.focus()
+    table.showAndFocus()
   }
   // console.log(allWindows)
 });
