@@ -560,7 +560,12 @@ button:disabled {
       flex-direction: row;
       // background-color: blue;
       align-items: center;
-      gap: 1%
+      gap: 1%;
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+           -webkit-appearance: none;
+           margin: 0;
+      }
     }
     .presetButtons {
       width: 50%;
