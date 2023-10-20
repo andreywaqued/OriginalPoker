@@ -166,9 +166,9 @@ class Table {
             const playerID = this.playerIDByPositionIndex[i]
             const player = this.players[playerID]
             if (!player) continue
-            if (!player.tableID) continue
             if (player.askedToFold) continue
-            if (player.hasFolded) continue
+            // if (!player.tableID) continue
+            // if (player.hasFolded) continue
             console.log(`id: ${player.id}, name: ${player.name}, stack: ${player.stackSize}, cards: ${player.cards}, tableID: ${player.tableID}`)//this gave an error recently,
             if (this.currentHand.boardCards.length>=3 && !player.hasFolded && !player.askedToFold && player.cards.length>0) player.finalHandRank = rankHands(this.pokerVariant, this.currentHand.boardCards, [player.cards])[0]
             // trying to verify what it is sending to see if can filter to avoid sending too much information
@@ -318,15 +318,13 @@ class Table {
                 if (player.socketID in this.sockets) {
                     console.log("player fast folded with socket")
                     playerSocket.leave(`table:${this.id}`);
-                    this.sendEmptyTable(player)//send empty table
-                    delete this.sockets[player.socketID]
+                    // this.sendEmptyTable(player)//send empty table
+                    // delete this.sockets[player.socketID]
                 }
                 const playerCopy = JSON.parse(JSON.stringify(player))
-                this.players[player.id] = playerCopy
-                this.tableManager.playerPoolManager.reEnterPool(player)
-                player = playerCopy
-                player.stackSize = new Decimal(player.stackSize)
-                player.betSize = new Decimal(player.betSize)
+                playerCopy.stackSize = new Decimal(playerCopy.stackSize)
+                playerCopy.betSize = new Decimal(playerCopy.betSize)
+                this.tableManager.playerPoolManager.reEnterPool(playerCopy)
                 return console.log("player fast folded final")
             }
         } 
@@ -375,17 +373,15 @@ class Table {
             if (player.socketID in this.sockets) {
                 console.log("player folded 1")
                 playerSocket.leave(`table:${this.id}`);
-                this.sendEmptyTable(player)//send empty table
+                // this.sendEmptyTable(player)//send empty table
                 delete this.sockets[player.socketID]
             }
             if (!player.askedToFold) {
                 console.log(player.name + " reentering pool when not fast folded")
                 const playerCopy = JSON.parse(JSON.stringify(player))
-                this.players[player.id] = playerCopy
-                this.tableManager.playerPoolManager.reEnterPool(player)
-                player = playerCopy
-                player.stackSize = new Decimal(player.stackSize)
-                player.betSize = new Decimal(player.betSize)
+                playerCopy.stackSize = new Decimal(playerCopy.stackSize)
+                playerCopy.betSize = new Decimal(playerCopy.betSize)
+                this.tableManager.playerPoolManager.reEnterPool(playerCopy)
             }
             // const playerCopy = JSON.parse(JSON.stringify(player))
             // this.players[player.id] = playerCopy
@@ -750,7 +746,7 @@ class Table {
                 continue
             }
             if (player.isSitout && player.hasFolded) continue //player already reentered the pool
-            if (player.isSitout) this.sendEmptyTable(player)
+            // if (player.isSitout) this.sendEmptyTable(player)
             if (!player.hasFolded || player.isSitout) this.tableManager.playerPoolManager.reEnterPool(player) //if player folded, it had already reentered the pool
 
             // this.removePlayer(player)
@@ -769,7 +765,7 @@ class Table {
         console.log("removePlayer()")
         if (!player) return
         console.log(player.name)
-        this.sendEmptyTable(player)
+        // this.sendEmptyTable(player)
         player.tableID = undefined
         const playerIndex = this.playerIDByPositionIndex.indexOf(player.id)
         console.log("playerIndex " + playerIndex)

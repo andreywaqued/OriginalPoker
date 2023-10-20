@@ -100,6 +100,53 @@ class PlayerPoolManager {
         }
         if (socket) socket.emit("enterPoolResponse", { response: "stacksize not valid", status: 403 })
     }
+    sendEmptyTable(player) {
+        console.log("sendEmptyTable()")
+        if (!player) return console.log("player is undefined.")
+        const pool = this.pools[player.poolID]
+        let handState = {
+            tableSize : pool.tableSize,
+            sb : pool.sb,
+            bb : pool.bb,
+            handIsBeingPlayed : false,
+            isShowdown : false,
+            // players : this.players,
+            pots : [0],
+            actionSequence : [],
+            // playersActive : this.playerIDByPositionIndex,
+            boardCards : [],
+            boardRound : 0,
+            minBet : 0,
+            maxBet : 9999999999,
+            biggestBet : 0,
+            positionActing : -1,
+            timeLimitToAct: 0,
+            playersAllin : 0,
+            playersFolded : 0,
+            dealerPos: -1,
+            sbPos: 0,
+            bbPos: 0,
+        }
+        handState.players = {}
+        handState.players[player.id] = {
+            id : player.id,
+            name: player.name,
+            avatar: player.avatar,
+            tableID: player.tableID,
+            stackSize: player.stackSize,
+            hasFolded: true,
+            cards: [],
+            isSitout: player.isSitout,
+            betSize: 0,
+            possibleActions: [],
+            isButton : false,
+            position : player.position,
+            showCards : false,
+            lastAction: player.lastAction
+        }
+        const socket = this.sockets[player.socketID]
+        if (socket) socket.emit("updateGameState", handState);
+    }
     sitoutUpdate(playerID, poolID, isSitout) {
         console.log("sitoutUpdate")
         console.log(playerID)
@@ -142,12 +189,11 @@ class PlayerPoolManager {
         // console.log("sockets")
         // console.log(Object.keys(this.sockets))
         const socket = this.sockets[player.socketID]
-        let playerPool = this.playersByPool[poolID]
-        playerPool[player.id] = player
         player.tableID = undefined //reset player tableID
         // console.log("socket")
         // console.log(socket)
         if (!socket || player.tableClosed) return this.leavePool(socket, player)
+        this.sendEmptyTable(player)
         if (player.askingRebuy) {
             console.log("returning rebuy")
             return this.tableManager.playerPoolManager.rebuy(player.id, player.poolID, player.rebuyAmount)
@@ -172,6 +218,8 @@ class PlayerPoolManager {
             return
             //  this.leavePool(socket, player)
         }
+        let playerPool = this.playersByPool[poolID]
+        playerPool[player.id] = player
         console.log(`playerPool: ${playerPool}`)
         console.log(Object.keys(playerPool))
         this.tableManager.placePlayerIntoTable(player)
