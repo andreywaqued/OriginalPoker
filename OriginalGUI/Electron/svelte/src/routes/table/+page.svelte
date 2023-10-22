@@ -56,8 +56,6 @@
         hero.showCards = true
         hero.betSize = parseFloat(player.betSize)
         hero.stackSize = parseFloat(player.stackSize)
-        handHistories = player.handHistoryArray
-        console.log(handHistories)
         if (player.finalHandRank) handStrength = player.finalHandRank.combination
         possibleActions = player.possibleActions
         if (possibleActions.length > 1) {
@@ -111,8 +109,8 @@
         tableSize = gameState.tableSize
         boardCards = gameState.boardCards
         pots = gameState.pots
-        sbSize = gameState.sb
-        bbSize = gameState.bb
+        sbSize = parseFloat(gameState.sb)
+        bbSize = parseFloat(gameState.bb)
         biggestBet = parseFloat(gameState.biggestBet)
         currentGameState = gameState
         console.log(playersComponents)
@@ -136,6 +134,12 @@
         handStrength = ""
         transitionBackground()
         callChangeAds()
+      });
+      window.api.on('updateHandHistory', (handHistory) => {
+        console.log("updateHandHistory")
+        handHistories.push(handHistory)
+        handHistories = handHistories //forcing the update
+        if (hhIndex === -1) hhIndex = handHistories.length - 1
       });
       window.api.on('askRebuy', (data) => {
         toggleRebuy()
@@ -561,7 +565,12 @@ button:disabled {
       flex-direction: row;
       // background-color: blue;
       align-items: center;
-      gap: 1%
+      gap: 1%;
+      input::-webkit-outer-spin-button,
+      input::-webkit-inner-spin-button {
+           -webkit-appearance: none;
+           margin: 0;
+      }
     }
     .presetButtons {
       width: 50%;
@@ -915,7 +924,7 @@ button:disabled {
               <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
             </div>
             <label class="dolarSign">$</label>
-            <input class="betDisplay" bind:value={betValue} type="number" step=0.01/>
+            <input class="betDisplay" bind:value={betValue} type="number" step="0.01" on:keydown={() => betValue = Number(betValue.toFixed(1))}/>
           </div>
           <div class="betSlider">
             <button class="betSliderButton" on:click={minusBetSlider}><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"/></svg></button>
