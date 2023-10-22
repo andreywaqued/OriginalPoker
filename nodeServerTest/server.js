@@ -201,39 +201,77 @@ socketManager.on('connection', (socket) => {
     // console.log(`Received message: ${data}`);
   });
 
+  // Objeto para armazenar informações de jogadores desconectados
+  const disconnectedPlayers = {};
+
+  // Manipulador de eventos para desconexão
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
-    // console.log(socket)
-    console.log(socket.connected)
-    socket.leave("lobby")
-    if (!socket.user) return console.log("player didnt loggedin")
-    for (let i = 0; i< socket.user.playerIDs.length; i++) {
+    console.log(socket.connected);
+    socket.leave("lobby");
+    if (!socket.user) return console.log("player didnt loggedin");
+
+    const userId = socket.user.id;
+    
+    for (let i = 0; i < socket.user.playerIDs.length; i++) {
       const playerID = socket.user.playerIDs[i];
-      // Mark the player as disconnected
-      let player = playerPoolManager.playersByPool[socket.user.poolIDs[i]][playerID];
+      const poolID = socket.user.poolIDs[i];
+
+      // Marcar o jogador como desconectado
+      let player = playerPoolManager.playersByPool[poolID][playerID];
       if (player) {
-          player.isDisconnected = true;
+        player.isDisconnected = true;
+
+        // Armazenar informações do jogador desconectado
+        if (!disconnectedPlayers[userId]) {
+          disconnectedPlayers[userId] = [];
+        }
+        disconnectedPlayers[userId].push({
+          player,
+          poolID,
+        });
       }
     }
-    delete playerPoolManager.sockets[socket.id]
+
+    // Excluir o socket do objeto sockets
+    delete playerPoolManager.sockets[socket.id];
   });
 
+  // Manipulador de eventos para reconexão
   socket.on('reconnectPlayer', (data) => {
-    const player = playerPoolManager.playersByPool[data.poolID][data.id];
-    if (player && player.isDisconnected) {
-      // Reset the disconnected status
-      player.isDisconnected = false;
-  
-      // Inform the player about the current state of the hand
-      const table = tableManager.tables[data.poolID][player.tableID];
-      if (table) {
-        table.broadcastHandState();  // Atualiza o estado do jogo para todos os jogadores
-      } else {
-        // Se a mesa não existe, coloca o jogador em outra mesa
-        tableManager.placePlayerIntoTable(player);
+    console.log("################################## Aquiiiiiiiiiiiii: \n");
+    console.log(data);
+
+    const userId = data.userId;
+
+    // Recuperar os jogadores desconectados do usuário
+    const disconnectedPlayersOfUser = disconnectedPlayers[userId];
+    if (disconnectedPlayersOfUser) {
+      for (const disconnectedPlayer of disconnectedPlayersOfUser) {
+        const player = disconnectedPlayer.player;
+        const poolID = disconnectedPlayer.poolID;
+
+        if (player && player.isDisconnected) {
+          // Resetar o status de desconectado
+          player.isDisconnected = false;
+
+          // Informar o jogador sobre o estado atual da mão
+          const table = tableManager.tables[poolID][player.tableID];
+          if (table) {
+            table.broadcastHandState();  // Atualizar o estado do jogo para todos os jogadores
+          } else {
+            // Se a mesa não existe, colocar o jogador em sitout
+            player.isSitout = true;
+            console.log(player);
+            playerPoolManager.sitoutUpdate(player.id, poolID, player.isSitout);
+          }
+        }
       }
+      // Remover o usuário da lista de desconectados
+      delete disconnectedPlayers[userId];
     }
   });
+
 });
 
 const port = process.env.PORT || 3000

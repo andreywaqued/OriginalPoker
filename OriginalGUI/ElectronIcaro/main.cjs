@@ -22,16 +22,26 @@ const { shell } = require('electron');
 // console.log(moduleURL)
 // const serverApp = express();
 // import('./build/handler.js').then(module => {
-//   handler = module.handler;
-//   serverApp.use(handler);
-//   serverApp.listen(10000, () => {
-//     console.log('listening on port 10000');
-//   });
-// })
-
-// try {
-//   require('electron-reloader')(module)
-// } catch (_) {}
+  //   handler = module.handler;
+  //   serverApp.use(handler);
+  //   serverApp.listen(10000, () => {
+    //     console.log('listening on port 10000');
+    //   });
+    // })
+    
+    // try {
+      //   require('electron-reloader')(module)
+      // } catch (_) {}
+      
+let mainLobby
+let user
+let userTx
+// let playerByTableIndex = []
+let tables = []
+let players = []
+let playersID = []
+let reconnectTimer;
+let isDialogShowing = false;
 
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
 const socket = io('https://originaltesteicaro.onrender.com', {
@@ -39,9 +49,6 @@ const socket = io('https://originaltesteicaro.onrender.com', {
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,  // 1 segundo
 });
-
-let reconnectTimer;
-let isDialogShowing = false;
 
 function reconnectToServer() {
   if (!socket.connected) {
@@ -95,7 +102,11 @@ function showReconnectDialog() {
   }
 }
 
-
+ipcMain.on("disconnect-socket", (event, arg) => {
+  if (socket) {
+    socket.disconnect();
+  }
+});
 
 // Serve the static SvelteKit build files
 // serverApp.use(express.static(path.join(__dirname, 'svelte/myapp/build/client')));
@@ -186,17 +197,10 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     return newWindow
   }
 
-  
-let mainLobby
-let user
-let userTx
+
 app.whenReady().then( () => {
   mainLobby = createWindow("Main Lobby", "lobby")
 });
-// let playerByTableIndex = []
-let tables = []
-let players = []
-let playersID = []
 
 socket.on("signInResponse", response => {
     console.log("signInResponse")
