@@ -153,7 +153,6 @@
         transform: scale(0.95);
     }
     :global(.roundedButton) {
-        border: 0.2em solid black;
         border-radius: 9999px;
         width: 100%;
         text-align: center;
@@ -167,7 +166,9 @@
         color: white;
     }
     :global(.roundedButton.ringed) {
-        border-color: black;
+        border: 0.2em solid black;
+        background-color: white;
+        color: black;
     }
     ::-webkit-scrollbar-track
     {
@@ -212,7 +213,7 @@
         margin: auto;
         border-radius: 5px;
         background-color: white;
-        padding: 1em 3em;
+        padding: 1em 3em 3em 3em;
         font-size: 0.6em;
         color: gray;
         img {
@@ -221,7 +222,7 @@
         .txtButton {
             text-align: center;
             width: 100%;
-            padding: 0.2em 0;
+            padding: 0.2em 0 1em 0;
         }
     }
     .playerInfo {
@@ -715,7 +716,7 @@
             h3 {
                 font-weight: unset;
                 text-transform: uppercase;
-                color: gray;
+                color: #c2c2c2;
                 font-size: 0.6em;
             }
             .item {
@@ -725,9 +726,14 @@
                 button {
                     text-align: center;
                     border-radius: 4px;
-                    background-color: gray;
                     box-shadow: 0 25px 50px -12px rgb(49 49 49 / 0.25);
                     padding: 0.5em 1em;
+                }
+                button:nth-of-type(1) {
+                    background-color: #2bb839;
+                }
+                button:nth-of-type(2) {
+                    background-color: #282828;
                 }
             }
             .item > * {
@@ -741,7 +747,7 @@
                 padding-top: 0.5em;
                 border-top-width: 2px;
                 border-style: solid;
-                border-color: gray;
+                border-color: #c2c2c2;
                 grid-column: span 2 / span 2;
             }
             .item:nth-of-type(4) {
@@ -775,6 +781,12 @@
                 }
                 td {
                     height: 2.4em;
+                    .positive {
+                        color: #2bb839;
+                    }
+                    .negative {
+                        color: #b82b2b;
+                    }
                 }
                 .pulse {
                   $from: rgb(49, 49, 49);
@@ -821,7 +833,7 @@
                 .item {
                     h2 {
                         text-transform: uppercase;
-                        color: gray;
+                        color: #c2c2c2;
                         font-weight: unset;
                         font-size: 0.6em;
                     }
@@ -834,7 +846,7 @@
                     h3 {
                         text-transform: uppercase;
                         font-weight: unset;
-                        color: gray;
+                        color: #c2c2c2;
                         font-size: 0.6em;
                     }
                     p {
@@ -871,7 +883,7 @@
     <div class="mainDiv">
         {#if !userLoggedIn}
             <div class="authDiv">
-               <img height=50 src="https://assets-global.website-files.com/64b7f135f513eed80337b22a/64ec974e5aaf534554601817_OriginalLogoWhite-p-500.png" />
+               <img height=30 src="./originalLogo.png" />
                 {#if authIndexSelected === 0}
                     <Login tipo="signin">
                         <button class="txtButton">
@@ -1104,7 +1116,7 @@
                                   Available
                               </h3>
                               <p>
-                                EM BREVE
+                                soon
                               </p>
                             </div>
                             <div class="item">
@@ -1112,7 +1124,7 @@
                                   In-game
                               </h3>
                               <p>
-                                EM BREVE
+                                soon
                               </p>
                             </div>
                             <div class="item">
@@ -1182,7 +1194,7 @@
                                   Full Name
                               </h3>
                               <p>
-                                EM BREVE
+                                soon
                               </p>
                             </div>
                             <div class="item">
@@ -1190,7 +1202,7 @@
                                   Birthday
                               </h3>
                               <p>
-                                EM BREVE
+                                soon
                               </p>
                             </div>
                             <div class="item">
@@ -1198,7 +1210,7 @@
                                   E-mail
                               </h3>
                               <p>
-                                EM BREVE
+                                soon
                               </p>
                             </div>
                             <div class="item">
@@ -1206,7 +1218,7 @@
                                   Telephone
                               </h3>
                               <p>
-                                EM BREVE
+                                soon
                               </p>
                             </div>
                             <div class="item">
@@ -1214,7 +1226,7 @@
                                   Address
                               </h3>
                               <p>
-                                EM BREVE
+                                soon
                               </p>
                             </div>
                           </div>

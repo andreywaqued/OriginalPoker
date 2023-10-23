@@ -157,12 +157,12 @@ socketManager.on('connection', (socket) => {
       socket.user.playerIDs = []
       socket.user.poolIDs = []
       console.log("signIn 1")
-      socket.emit("signInResponse", {response : "user logged in", status: 200, user : user})
+      socket.emit("signInResponse", {response : "user logged in", status: 200, user})
       console.log("signIn 2")
       socket.emit("updatePools", playerPoolManager.pools)
     }).catch((err) => {
       console.log(err)
-      socket.emit("signInResponse", {response : "failed to log in", status: 403})
+      socket.emit("signInResponse", {response : "failed to log in", status: 403, error: err.message})
     })
   })
 
@@ -173,7 +173,7 @@ socketManager.on('connection', (socket) => {
       socket.emit("signUpResponse", {response : "user signed up", status: 200})
     }).catch((err) => {
       console.log(err)
-      socket.emit("signUpResponse", {response : "failed to sign up", status: 403})
+      socket.emit("signUpResponse", {response : "failed to sign up", status: 403, error: err.message})
     })
   })
 

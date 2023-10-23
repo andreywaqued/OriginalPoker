@@ -8,29 +8,33 @@
 
     let api
     let btnDisabled = false;
+    let formError = "";
 
     onMount(() => {
         if (window.api) {
             api = window.api
-            api.on("updateUser", () => {
-                btnDisabled = false;
-            })
-            api.on("signedUser", () => {
-                btnDisabled = false;
-            })
         }
     });
 
+    function waitForSignin() {
+        return new Promise((resolve, reject) => {
+            api.on("updateUser", (user) => {
+                resolve(0)
+            })
+            api.on("updateUserError", (error) => {
+                reject(error)
+            })
+        })
+    }
+
     function waitForSignup() {
         return new Promise((resolve, reject) => {
-          api.on('signedUser', () => {
-            resolve(1);
-          });
-
-          // In case of an error
-          // api.on('error', (error) => {
-          //   reject(error);
-          // });
+            api.on('signedUser', (user) => {
+              resolve(0)
+            });
+            api.on('signedUserError', (error) => {
+              reject(error)
+            });
         });
     }
 
@@ -43,14 +47,30 @@
         const password = data.get("password")
         if (tipo === "signup") {
             const confirmPassword = data.get("confirm_password")
-            if (password !== confirmPassword) return "TODO! Need to show error to the client (clientside verification)"
+            if (password !== confirmPassword) {
+                btnDisabled = false;
+                return formError = "Password not match"
+            }
             const email = data.get("email")
             api.send("signUp", {user, password, email})
-            waitForSignup().then(()=>{
+            waitForSignup().then(() => {
                 api.send("signIn", {user, password })
+            }).catch((err) => {
+                console.log(err)
+                formError = err
+            }).finally(() => {
+                btnDisabled = false;
             })
         }
-        if (tipo === "signin") api.send("signIn", {user, password})
+        if (tipo === "signin") {
+            api.send("signIn", {user, password})
+            waitForSignin().then().catch((err) => {
+                console.log(err)
+                formError = err
+            }).finally(() => {
+                btnDisabled = false;
+            })
+        }
     }
 
 
@@ -61,14 +81,14 @@
         input {
             display: block;
             border: unset;
-            border-bottom: 1px solid grey;
+            border-bottom: 1px solid #c2c2c2;
             padding-bottom: 0.4em;
-            margin: 1em auto;
+            margin: 1.5em auto;
             width: 100%;
             font-size: 1.2em;
         }
         input::-webkit-input-placeholder {
-            color: darkgray;
+            color: #c2c2c2;
         }
         input:focus {
             outline: none
@@ -77,7 +97,15 @@
             display: flex;
             flex-direction: column;
             gap: 0.5em;
+            // color: #1ea12b; deposit button
+            // color: #282828; gray
+            // color: #b82b2b; red
+            // color: #2bb839; green
+            // color: #c2c2c2; gray text
         }
+    }
+    .error {
+        color: #b82b2b;
     }
 </style>
 <form on:submit={handleLogin} use:enhance>
@@ -99,4 +127,5 @@
       </div>
     {/if}
 </form>
+<p class="error">{formError}</p>
 <slot/>

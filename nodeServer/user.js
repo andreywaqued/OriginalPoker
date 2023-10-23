@@ -18,19 +18,12 @@ class User {
 
     static async signUp(name, password, email, db) {
         console.log("signUp");
-        const nameAlreadyTaken = await checkNameAlreadyTaken(name, db)
+        const nameAlreadyTaken = await checkAlreadyTaken("username", name, db)
+        const emailAlreadyTaken = await checkAlreadyTaken("email", email, db)
         if (nameAlreadyTaken) throw new Error("User already exist")
+        if (emailAlreadyTaken) throw new Error("Email already exist")
         const avatar = Math.floor(Math.random() * 32)
-        await saveUserToDB(name, password, avatar, db);
-    }
-
-    async getUserFromDB(name, db) {
-        // Fetch user details from DB
-        const userData = await fetchUserFromDB(name, db);
-        this.id = userData.id;
-        this.name = userData.name;
-        this.avatar = userData.avatar;
-        this.balance = new Decimal(userData.balance);
+        await saveUserToDB(name, password,email, avatar, db);
     }
 
     async deposit(amount) {
@@ -59,21 +52,17 @@ class User {
 }
 
 // Mock database functions
-async function checkNameAlreadyTaken(name, db) {
-    console.log("checkNameAlreadyTaken")
-    // Simulate a database check
-    // const client = await db.connect();
-    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
-    // client.release();
+async function checkAlreadyTaken(where, value, db) {
+    console.log("checkAlreadyTaken")
+    const { rows } = await db.query(`SELECT * FROM users WHERE ${where} = '${value}'`);
     return rows.length > 0;
-    // return true;
 }
 
-async function saveUserToDB(name, password, avatar, db) {
+async function saveUserToDB(name, password, email, avatar, db) {
     // Simulate saving a new user to the database
     console.log("saveUserToDB")
     // const client = await db.connect();
-    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${name}@test.com.br', ${avatar}, 0) RETURNING *`);
+    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${email}', ${avatar}, 0) RETURNING *`);
     if (rows.length>0) {
         console.log("inserted user into db")
         console.log(rows[0])
