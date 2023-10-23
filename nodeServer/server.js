@@ -212,12 +212,12 @@ socketManager.on('connection', (socket) => {
     if (data.includes("1000")) console.log(`Received message: ${data}`)
     // console.log(`Received message: ${data}`);
   });
-  socket.on('reconnectPlayer', (user) => {
+  socket.on('reconnectPlayer', async (user) => {
     console.log("Socket reconnectPlayer \n");
     console.log(user);
 
     // Atualizar informações do usuário no socket
-    socket.user = User.getUserFromDB(user.name, fastify.pg);
+    socket.user = await User.getUserFromDB(user.name, fastify.pg);
     socket.emit("updateUserInfo", {user: socket.user, status: 200})
     socket.emit("updatePools", playerPoolManager.pools)
     // Atualizar o socket do usuário no playerPoolManager
