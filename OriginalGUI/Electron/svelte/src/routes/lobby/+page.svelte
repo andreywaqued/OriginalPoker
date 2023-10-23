@@ -152,6 +152,9 @@
     :global(button:active:enabled) {
         transform: scale(0.95);
     }
+    :global(button:disabled) {
+        opacity: 0.75;
+    }
     :global(.roundedButton) {
         border-radius: 9999px;
         width: 100%;
@@ -213,7 +216,7 @@
         margin: auto;
         border-radius: 5px;
         background-color: white;
-        padding: 1em 3em 3em 3em;
+        padding: 1em 3em 2em 3em;
         font-size: 0.6em;
         color: gray;
         img {
@@ -222,7 +225,7 @@
         .txtButton {
             text-align: center;
             width: 100%;
-            padding: 0.2em 0 1em 0;
+            padding: 0.2em 0 1.5em 0;
         }
     }
     .playerInfo {
@@ -886,7 +889,8 @@
                <img height=30 src="./originalLogo.png" />
                 {#if authIndexSelected === 0}
                     <Login tipo="signin">
-                        <button class="txtButton">
+                        <!-- TODO -->
+                        <button disabled class="txtButton">
                           Forgot my password
                         </button>
                         <!-- Button to change to signUP page -->

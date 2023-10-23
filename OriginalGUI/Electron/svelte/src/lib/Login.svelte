@@ -7,12 +7,13 @@
     export let tipo   /**@type {string} */
 
     let api
-    let btnDisabled = false;
+    let btnDisabled = true;
     let formError = "";
 
     onMount(() => {
         if (window.api) {
             api = window.api
+        btnDisabled = false;
         }
     });
 
@@ -42,6 +43,7 @@
     function handleLogin(event) {
         event.preventDefault()
         btnDisabled = true;
+        formError = "";
         const data = new FormData(event.target);
         const user = data.get("username")
         const password = data.get("password")
@@ -49,7 +51,8 @@
             const confirmPassword = data.get("confirm_password")
             if (password !== confirmPassword) {
                 btnDisabled = false;
-                return formError = "Password not match"
+                formError = "Password not match";
+                return
             }
             const email = data.get("email")
             api.send("signUp", {user, password, email})
@@ -105,12 +108,13 @@
         }
     }
     .error {
+        margin: 0.5em 0;
         color: #b82b2b;
     }
 </style>
 <form on:submit={handleLogin} use:enhance>
-    <input placeholder="Username" name="username" type="text"/>
-    <input placeholder="Password" name="password" type="password"/>
+    <input required placeholder="Username" name="username" type="text"/>
+    <input required placeholder="Password" name="password" type="password"/>
     {#if tipo === "signin"}
       <div>
           <button disabled={btnDisabled} class="roundedButton filled" type="submit">
@@ -118,8 +122,8 @@
           </button>
       </div>
     {:else if tipo === "signup"}
-      <input placeholder="Confirm Password" name="confirm_password" type="password"/>
-      <input placeholder="E-mail" name="email" type="email"/>
+      <input required placeholder="Confirm Password" name="confirm_password" type="password"/>
+      <input required placeholder="E-mail" name="email" type="email"/>
       <div>
           <button disabled={btnDisabled} class="roundedButton filled" type="submit">
               Signup
@@ -127,5 +131,7 @@
       </div>
     {/if}
 </form>
-<p class="error">{formError}</p>
+{#if formError}
+    <p class="error">{formError}</p>
+{/if}
 <slot/>
