@@ -130,7 +130,7 @@
 
     function disconnectSocket() {
         if (window.api) {
-        window.api.send("disconnect-socket");
+            window.api.send("disconnect-socket");
         }
     }
 </script>
