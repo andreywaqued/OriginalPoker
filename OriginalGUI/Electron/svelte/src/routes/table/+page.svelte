@@ -66,6 +66,7 @@
           minBet = betValue;
           maxBet = Math.round((player.betSize + player.stackSize)*100)/100;
           api.send("focusOnWindow")
+          api.send("playSound", "hora_de_jogar.wav")
         }
         tableRotateAmount = hero.position
         playersTemp[player.id] = hero
@@ -354,7 +355,8 @@
   }
   function tryRebuy(){
     console.log("toggleRebuy")
-    api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: Math.round(rebuyAmount * 100) / 100})
+    let rebuy = Math.round(rebuyAmount * 100) / 100
+    if (rebuy > 0) api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: rebuy})
     toggleRebuy()
   }
   let hhPopoverActive = false;

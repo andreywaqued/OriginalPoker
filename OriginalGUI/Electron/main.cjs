@@ -3,6 +3,7 @@ const {app, BrowserWindow, ipcMain, Notification, dialog, screen} = require('ele
 const io = require('socket.io-client');
 const path = require('path');
 const { shell } = require('electron');
+const sound = require('sound-play')
 // const express = require('express');
 // const { fileURLToPath } = require('url');
 // const {handler} = require("./build/handler")
@@ -302,6 +303,10 @@ ipcMain.on('focusOnWindow', (event) => {
   win = BrowserWindow.fromWebContents(event.sender)
   if (!win) return
   win.showAndFocus()
+});
+ipcMain.on('playSound', (event, soundFile) => {
+  console.log('playSound: ' + path.join(process.resourcesPath, soundFile))
+  sound.play(path.join(process.resourcesPath, soundFile), 1)
 });
 ipcMain.on('sitoutUpdate', (event, data) => {
   console.log("sitoutUpdate")

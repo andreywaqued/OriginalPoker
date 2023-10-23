@@ -246,6 +246,10 @@ class PlayerPoolManager {
         if (!pool) return console.log("pool invalid")
         if (!player) return console.log("player invalid")
         if (!socket) return console.log("socket invalid")
+        if (!player.askingRebuy) {
+            if (!typeof(rebuyAmount) === "number") return console.log("amount invalid")
+            if (rebuyAmount <= 0) return console.log("amount is less than or equal to 0")
+        }
         rebuyAmount = new Decimal(rebuyAmount)
         player.stackSize = new Decimal(player.stackSize)
         console.log(player.stackSize)

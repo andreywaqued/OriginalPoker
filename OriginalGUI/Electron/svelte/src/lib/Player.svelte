@@ -142,6 +142,7 @@
         endPlayerTurn()
         console.log(timeLimit)
         playerTurn = true;
+        let attentionSoundPlayed = false;
         let timeDiff = timeLimit - new Date().getTime()
         timeLeftPerc = (timeDiff/20000) * 100
         // if (timer) clearInterval(timer)
@@ -149,8 +150,13 @@
         timer = setInterval(()=>{
             // clearInterval(timer)
             if (playerTurn === false) return
+            if (timeLeftPerc <= 50 && !attentionSoundPlayed) {
+                api.send("playSound", "aviso_de_atencao.wav")
+                attentionSoundPlayed = true
+            }
             if (timeLeftPerc > 1) return timeLeftPerc -= 1
             if (timeLeftPerc > 0) return timeLeftPerc -= timeLeftPerc
+
             endPlayerTurn()
         }, timeDiff/100);
     }

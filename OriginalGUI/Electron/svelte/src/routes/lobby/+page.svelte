@@ -98,6 +98,7 @@
      */
     function openNewTable(poolID) {
         let stackSize = parseFloat(gamesAvaiable[poolID].buyInAmount)
+        stackSize = Math.round(stackSize * 100) / 100
         console.log(stackSize)
         console.log(userBalance)
         console.log(gamesAvaiable[poolID].minBuyIn)
@@ -105,7 +106,7 @@
         console.log(userBalance < gamesAvaiable[poolID].buyInAmount || gamesAvaiable[poolID].buyInAmount < gamesAvaiable[poolID].minBuyIn || gamesAvaiable[poolID].buyInAmount > gamesAvaiable[poolID].maxBuyIn)
         // if (stackSize < gamesAvaiable[poolID].minBuyIn ) stackSize = gamesAvaiable[poolID].minBuyIn
         // if (stackSize > gamesAvaiable[poolID].maxBuyIn ) stackSize = gamesAvaiable[poolID].maxBuyIn
-        api.send("open-new-table", {poolID: poolID, stackSize: Math.round(stackSize * 100) / 100})
+        if (stackSize > 0) api.send("open-new-table", {poolID: poolID, stackSize: stackSize})
     }
     
     let doordashClass = "doordashDiv hide"
