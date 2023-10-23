@@ -267,8 +267,8 @@ socketManager.on('connection', (socket) => {
     }
     delete disconnectedPlayers[userId];
   });
-  socket.on('disconnect', (reason) => {
-    console.log(`User disconnected: ${socket.id}`);
+  socket.on('disconnecting', (reason) => {
+    console.log(`User disconnecting: ${socket.id}`);
     console.log(reason)
     // console.log(socket)
     console.log(socket.connected)
