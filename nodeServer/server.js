@@ -148,9 +148,10 @@ socketManager.on('connection', (socket) => {
   socket.join("lobby")
   // console.log(socket)
   socket.on("signIn", (data) => {
-    console.log(`received signin: ${data.user} ${data.password}`)
-    User.createAndLogin(data.user, data.password, fastify.pg).then(user => {
-      console.log("created user")
+    const {user, password} = data
+    console.log(`received signin: ${user} ${password}`)
+    User.signIn(user, password, fastify.pg).then(user => {
+      console.log("signed user")
       console.log(user)
       socket.user = user
       socket.user.playerIDs = []
@@ -159,9 +160,20 @@ socketManager.on('connection', (socket) => {
       socket.emit("signInResponse", {response : "user logged in", status: 200, user : user})
       console.log("signIn 2")
       socket.emit("updatePools", playerPoolManager.pools)
-    }).catch(err => {
+    }).catch((err) => {
       console.log(err)
       socket.emit("signInResponse", {response : "failed to log in", status: 403})
+    })
+  })
+
+  socket.on("signUp", (data) => {
+    const {user, password, email} = data
+    console.log(`received signup: ${user} ${password} ${email}`)
+    User.signUp(user, password, email, fastify.pg).then(()=>{
+      socket.emit("signUpResponse", {response : "user signed up", status: 200})
+    }).catch((err) => {
+      console.log(err)
+      socket.emit("signUpResponse", {response : "failed to sign up", status: 403})
     })
   })
 
