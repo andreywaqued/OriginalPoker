@@ -230,7 +230,7 @@ class Table {
             this.broadCastIndividualPlayerInfo()
         }
         if (playerID) {
-            player = this.players[playerID]
+            const player = this.players[playerID]
             if (player) {
                 if (player.askedToFold) return false
                 const socket = this.tableManager.socketManager.sockets[player.socketID]
