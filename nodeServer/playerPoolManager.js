@@ -195,6 +195,8 @@ class PlayerPoolManager {
         player.tableID = undefined //reset player tableID
         // console.log("socket")
         // console.log(socket)
+        console.log("player.tableClosed: " + player.tableClosed)
+        console.log("player.isDisconnected: " + player.isDisconnected)
         if (!socket || player.tableClosed || player.isDisconnected) return this.leavePool(socket, player)
         this.sendEmptyTable(player)
         if (player.askingRebuy) {
@@ -326,6 +328,11 @@ class PlayerPoolManager {
         if (this.leavePoolTimeout[player.id]) clearTimeout(this.leavePoolTimeout[player.id])
         //player reentering pool after played a hand
         console.log("leavePool()1")
+        console.log(socket.id)
+        console.log(player.socketID)
+        console.log(player.isDisconnected)
+        console.log(player.tableClosed)
+        console.log(player.isSitout)
         if (!socket || socket.id === player.socketID) {
             console.log("leavePool()2")
             console.log(`player.tableID: ${player.tableID}`)

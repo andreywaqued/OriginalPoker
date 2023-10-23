@@ -233,6 +233,7 @@ class Table {
             const player = this.players[playerID]
             if (player) {
                 if (player.askedToFold) return false
+                if (player.hasFolded) return false
                 const socket = this.tableManager.playerPoolManager.sockets[player.socketID]
                 if (!socket) return false
                 this.sockets[player.socketID] = socket

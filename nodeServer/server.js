@@ -261,6 +261,7 @@ socketManager.on('connection', (socket) => {
         continue
       }
       if (!table.broadcastHandState(player.id)) {
+        playerPoolManager.leavePool(socket, player, true)
         socket.emit("closeTable", player.id)
         console.log("closing table, because player is not there anymore.")
         continue
