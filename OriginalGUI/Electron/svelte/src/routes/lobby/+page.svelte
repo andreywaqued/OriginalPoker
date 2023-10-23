@@ -23,6 +23,7 @@
     let menuItens = ["games", "profile", "settings"]
     let svgMenuColorSelected = "#0080ff"
     let svgMenuColor = "white"
+    // 0 signin; 1 signup; 2 recover;
     let authIndexSelected = 0
 
     onMount(() => {
@@ -216,7 +217,7 @@
         margin: auto;
         border-radius: 5px;
         background-color: white;
-        padding: 1em 3em 2em 3em;
+        padding: 1em 3em;
         font-size: 0.6em;
         color: gray;
         img {
@@ -889,20 +890,27 @@
                <img height=30 src="./originalLogo.png" />
                 {#if authIndexSelected === 0}
                     <Login tipo="signin">
-                        <!-- TODO -->
-                        <button disabled class="txtButton">
+                        <!-- Button to change to recover page -->
+                        <button class="txtButton" on:click={() => selectAuth(2)}>
                           Forgot my password
                         </button>
-                        <!-- Button to change to signUP page -->
+                        <!-- Button to change to signup page -->
                         <button class="roundedButton ringed" on:click={() => selectAuth(1)} >
                             Signup
                         </button>
                     </Login>
                 {:else if authIndexSelected === 1}
                     <Login tipo="signup">
-                        <!-- Button to change to signIN page -->
+                        <!-- Button to change to signin page -->
                         <button class="txtButton" on:click={() => selectAuth(0)}>
-                            Already have a account? Login here
+                            Already have a account? <u>Login here</u>
+                        </button>
+                    </Login>
+                {:else if authIndexSelected === 2}
+                    <Login tipo="recover">
+                        <!-- Button to change to signin page -->
+                        <button class="txtButton" on:click={() => selectAuth(0)}>
+                            Remembered? <u>try to login</u>
                         </button>
                     </Login>
                 {/if}
