@@ -260,11 +260,13 @@ socketManager.on('connection', (socket) => {
       if (!table) {
         console.log("table is undefined, sending empty table");
         playerPoolManager.sendEmptyTable(player)
+        playerPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
         continue
       }
       if (!table.broadcastHandState(player.id)) {
         console.log("failed to broadcast hand state, sending empty table.")
         playerPoolManager.sendEmptyTable(player)
+        playerPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
         // playerPoolManager.leavePool(socket, player, true)
         // socket.emit("closeTable", player.id)
         // console.log("closing table, because player is not there anymore.")

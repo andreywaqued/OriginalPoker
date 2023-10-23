@@ -12,6 +12,10 @@
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
     let userName, userBalance, userAvatar, userTx
     let userLoggedIn = false
+    let displayClock = ""
+    let clockUpdateInterval = setInterval(()=>{
+        displayClock = `${new Date().getUTCHours()}: ${new Date().getUTCMinutes()}`
+    }, 60000)
    
     let gamesAvaiable = {
         "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 125, minBuyIn: 2, maxBuyIn: 10, buyInAmount: -1},
@@ -927,7 +931,7 @@
                     </div>
                 </div>
                 <div class="clock">
-                    <span>{new Date().getUTCHours()}:{new Date().getUTCMinutes()}</span>
+                    <span>{displayClock}</span>
                     <span class="timezone">GMT</span>
                 </div>
             </div>
