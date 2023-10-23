@@ -242,6 +242,7 @@ socketManager.on('connection', (socket) => {
     if (!disconnectedPlayersOfUser || disconnectedPlayersOfUser.length === 0) return console.log("players disconnected array is undefined or empty.")
     for (const playerInfo of disconnectedPlayersOfUser) {
       const player = playerPoolManager.playersByPool[playerInfo.poolID][playerInfo.playerID]
+      console.log("reconnecting playerName: " + player.name + " at table: " + player.tableID)
       player.socketID = socket.id;
       console.log("########################################### Pool Id: ", player.poolID);
       if (!player) {
@@ -257,13 +258,16 @@ socketManager.on('connection', (socket) => {
       player.isSitout = false;
       const table = playerPoolManager.tableManager.tables[player.poolID][player.tableID];
       if (!table) {
-        console.log("table is undefined");
+        console.log("table is undefined, sending empty table");
+        playerPoolManager.sendEmptyTable(player)
         continue
       }
       if (!table.broadcastHandState(player.id)) {
-        playerPoolManager.leavePool(socket, player, true)
-        socket.emit("closeTable", player.id)
-        console.log("closing table, because player is not there anymore.")
+        console.log("failed to broadcast hand state, sending empty table.")
+        playerPoolManager.sendEmptyTable(player)
+        // playerPoolManager.leavePool(socket, player, true)
+        // socket.emit("closeTable", player.id)
+        // console.log("closing table, because player is not there anymore.")
         continue
       }
     }

@@ -210,7 +210,14 @@ socket.on("updateGameState", gameState => {
       const player = players[i]
       const table = tables[i]
       if (player.id in gameState.players) {
-        if (table) table.addMessage("updateGameState", gameState)
+        if (table) return table.addMessage("updateGameState", gameState)
+      } 
+    }
+    //find player in gamestate
+    for (let i = 0; i < gameState.players.length; i++) {
+      const player = gameState.players[i]
+      if (user.name === player.name) {
+        socket.emit("leavePool", player)
       } 
     }
 })
