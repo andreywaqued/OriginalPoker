@@ -233,7 +233,7 @@ class Table {
             const player = this.players[playerID]
             if (player) {
                 if (player.askedToFold) return false
-                const socket = this.tableManager.socketManager.sockets[player.socketID]
+                const socket = this.tableManager.playerPoolManager.sockets[player.socketID]
                 if (!socket) return false
                 this.sockets[player.socketID] = socket
                 socket.join(`table:${this.id}`)
