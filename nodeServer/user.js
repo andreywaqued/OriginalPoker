@@ -1,39 +1,27 @@
 const Decimal = require('decimal.js');
 //the user class, responsible for handling the object associated with a login
 class User {
-    static async createAndLogin(name, password, db) {
-        console.log("createAndLogin")
-        // console.log(db)
+    static async signIn(name, password, db) {
+        console.log("signIn");
         const user = new User();
-        await user.tryLogin(name, password, db);
-        return user;
-    }
-
-    async tryLogin(name, password, db) {
-        console.log("tryLogin")
-        // Perform DB check
-        const loginSuccessful = await checkLogin(name, password, db);
-        if (loginSuccessful) {
-            await this.getUserFromDB(name, db);
+        const userData = await fetchUserWithPasswordFromDB(name, password, db);
+        if (userData) {
+            user.id = userData.id;
+            user.name = userData.name;
+            user.avatar = userData.avatar;
+            user.balance = new Decimal(userData.balance);
+            return user;
         } else {
-            console.log("invalid login credentials")
-            const avatar = Math.floor(Math.random() * 32)
-            await this.createNewUser(name, password, avatar, db)
+            throw new Error("Invalid credentials")            
         }
     }
 
-    async createNewUser(name, password, avatar, db) {
-        console.log("createNewUser")
-        // Save user to DB and get the user's id
-        const createdUser = await saveUserToDB(name, password, avatar, db);
-        if (createdUser) {
-            this.id = createdUser.userid;
-            this.name = createdUser.username;
-            this.avatar = createdUser.avatar;
-            this.balance = new Decimal(createdUser.balance);
-        }
-        console.log(this)
-        // await this.getUserFromDB(userId);
+    static async signUp(name, password, email, db) {
+        console.log("signUp");
+        const nameAlreadyTaken = await checkNameAlreadyTaken(name, db)
+        if (nameAlreadyTaken) throw new Error("User already exist")
+        const avatar = Math.floor(Math.random() * 32)
+        await saveUserToDB(name, password, avatar, db);
     }
 
     async getUserFromDB(name, db) {
@@ -71,14 +59,13 @@ class User {
 }
 
 // Mock database functions
-async function checkLogin(name, password, db) {
-    console.log("checkLogin")
+async function checkNameAlreadyTaken(name, db) {
+    console.log("checkNameAlreadyTaken")
     // Simulate a database check
     // const client = await db.connect();
-    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}' AND password = '${password}'`);
-    console.log(rows)
+    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
     // client.release();
-    return rows.length>0;
+    return rows.length > 0;
     // return true;
 }
 
@@ -125,7 +112,28 @@ async function fetchUserFromDB(name, db) {
     // Simulate fetching a user from the database
 }
 
-async function updateBalanceInDB(name, newBalance) {
+async function fetchUserWithPasswordFromDB(name, password, db) {
+    console.log("fetchUserWithPasswordFromDB")
+    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}' AND password = '${password}'`);
+    if (rows.length > 0) {
+        console.log("fetchUserFromDB 1")
+        const user = rows[0] ; // Return user id
+        console.log(user)
+        // const client = await db.connect();
+        await db.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = '${name}'`);
+        // client.release();
+        return {
+            id: user.userid,
+            name: user.username,
+            email: user.email,
+            avatar: user.avatar,
+            balance: new Decimal(user.balance) //it looks like numeric type saves as string
+        };
+    }
+    return false;
+}
+
+async function updatebalanceInDB(name, newBalance) {
     // Simulate updating the user's balance in the database
 }
 

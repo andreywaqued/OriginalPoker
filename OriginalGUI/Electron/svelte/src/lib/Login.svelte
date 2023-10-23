@@ -1,31 +1,58 @@
 <script>
-	import { enhance } from "$app/forms";
+    import { enhance } from "$app/forms";
+    import { onMount } from 'svelte';
     /**
      *@type {("signin"|"signup")}
      */
     export let tipo   /**@type {string} */
-    import { onMount } from 'svelte';
+
     let api
+    let btnDisabled = false;
 
     onMount(() => {
         if (window.api) {
             api = window.api
+            api.on("updateUser", () => {
+                btnDisabled = false;
+            })
+            api.on("signedUser", () => {
+                btnDisabled = false;
+            })
         }
     });
+
+    function waitForSignup() {
+        return new Promise((resolve, reject) => {
+          api.on('signedUser', () => {
+            resolve(1);
+          });
+
+          // In case of an error
+          // api.on('error', (error) => {
+          //   reject(error);
+          // });
+        });
+    }
 
     /** @param {SubmitEvent} event */
     function handleLogin(event) {
         event.preventDefault()
+        btnDisabled = true;
         const data = new FormData(event.target);
         const user = data.get("username")
         const password = data.get("password")
-        if (tipo === "signin") return api.send("signIn", {user, password})
-        const confirmPassword = data.get("confirm_password")
-        if (password !== confirmPassword) return "TODO! Need to show error to the client (clientside verification)"
-        const email = data.get("email")
-        // if (tipo === "signup") api.send("signUp", {user: username, password: password})
+        if (tipo === "signup") {
+            const confirmPassword = data.get("confirm_password")
+            if (password !== confirmPassword) return "TODO! Need to show error to the client (clientside verification)"
+            const email = data.get("email")
+            api.send("signUp", {user, password, email})
+            waitForSignup().then(()=>{
+                api.send("signIn", {user, password })
+            })
+        }
+        if (tipo === "signin") api.send("signIn", {user, password})
     }
-;
+
 
 </script>
 
@@ -58,7 +85,7 @@
     <input placeholder="Password" name="password" type="password"/>
     {#if tipo === "signin"}
       <div>
-          <button class="roundedButton filled" type="submit">
+          <button disabled={btnDisabled} class="roundedButton filled" type="submit">
               Login
           </button>
       </div>
@@ -66,7 +93,7 @@
       <input placeholder="Confirm Password" name="confirm_password" type="password"/>
       <input placeholder="E-mail" name="email" type="email"/>
       <div>
-          <button class="roundedButton filled" type="submit">
+          <button disabled={btnDisabled} class="roundedButton filled" type="submit">
               Signup
           </button>
       </div>
