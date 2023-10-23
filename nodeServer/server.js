@@ -142,7 +142,7 @@ fastify.get('/tables', async (request, reply) => {
 //   })  
 //   return { response: response }
 // });
-
+disconnectedPlayers = {}
 socketManager.on('connection', (socket) => {
   console.log('New connection:', socket.id);
   socket.join("lobby")
@@ -212,19 +212,75 @@ socketManager.on('connection', (socket) => {
     if (data.includes("1000")) console.log(`Received message: ${data}`)
     // console.log(`Received message: ${data}`);
   });
+  socket.on('reconnectPlayer', (user) => {
+    console.log("Socket reconnectPlayer \n");
+    console.log(user);
 
+    // Atualizar informações do usuário no socket
+    socket.user = User.getUserFromDB(user.name, fastify.pg);
+    socket.emit("updateUserInfo", {user: socket.user, status: 200})
+    socket.emit("updatePools", playerPoolManager.pools)
+    // Atualizar o socket do usuário no playerPoolManager
+    playerPoolManager.sockets[socket.id] = socket;
+    
+    // Recuperar o ID do usuário
+    const userId = user.id;
+    
+    // Recuperar os jogadores desconectados do usuário
+    const disconnectedPlayersOfUser = disconnectedPlayers[userId];
+    if (disconnectedPlayersOfUser.length === 0) return console.log("players disconnected array is empty.")
+    for (const player of disconnectedPlayersOfUser) {
+      player.socketID = socket.id;
+      console.log("########################################### Pool Id: ", player.poolID);
+      if (!player) {
+        console.log("player is null/undefined")
+        continue
+      }
+      if (!player.isDisconnected) {
+        console.log("player is not disconnected")
+        continue
+      }
+      player.tableClosed = false;
+      player.isDisconnected = false;
+      player.isSitout = false;
+      const table = playerPoolManager.tableManager.tables[player.poolID][player.tableID];
+      if (!table) {
+        console.log("table is undefined");
+        continue
+      }
+      if (!table.broadcastHandState(player.id)) {
+        socket.emit("closeTable", player.id)
+        console.log("closing table, because player is not there anymore.")
+        continue
+      }
+    }
+    delete disconnectedPlayers[userId];
+  });
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
     // console.log(socket)
     console.log(socket.connected)
     socket.leave("lobby")
     if (!socket.user) return console.log("player didnt loggedin")
+    const userID = socket.user.id
+    disconnectedPlayers[userID] = []
     for (let i = 0; i< socket.user.playerIDs.length; i++) {
       const playerID = socket.user.playerIDs[i]
       const poolID = socket.user.poolIDs[i]
-      playerPoolManager.leavePool(socket, {id:playerID, poolID: poolID}, true)
+      console.log("player disconnected: " + playerID + " - " + poolID)
+      let player = playerPoolManager.playersByPool[poolID][playerID];
+      if (!player) return console.log("player is undefined")
+      player.tableClosed = true;
+      player.isDisconnected = true;
+      disconnectedPlayers[userID].push(player)
+      
+
+      console.log("player disconnected: " + playerID + " - " + poolID)
+
+      // playerPoolManager.leavePool(socket, {id:playerID, poolID: poolID}, true)
     }
     delete playerPoolManager.sockets[socket.id]
+    socket.leave("lobby")
   });
 });
 const port = process.env.PORT || 3000

@@ -159,9 +159,21 @@ class Table {
         //send hand transition when player folds or the hand is over
         if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("handTransition", player)
     }
-    broadCastIndividualPlayerInfo() {
+    broadCastIndividualPlayerInfo(playerID = undefined) {
         console.log(`broadCastIndividualPlayerInfo()`)
         //send cardback to all players except the player holding its cards
+        if (playerID) {
+            const player = this.players[playerID]
+            if (!player) return console.log("player is undefined")
+            if (player.askedToFold) return console.log("player asked to fold")
+            // if (!player.tableID) continue
+            // if (player.hasFolded) continue
+            console.log(`id: ${player.id}, name: ${player.name}, stack: ${player.stackSize}, cards: ${player.cards}, tableID: ${player.tableID}`)//this gave an error recently,
+            if (this.currentHand.boardCards.length>=3 && !player.hasFolded && !player.askedToFold && player.cards.length>0) player.finalHandRank = rankHands(this.pokerVariant, this.currentHand.boardCards, [player.cards])[0]
+            // trying to verify what it is sending to see if can filter to avoid sending too much information
+            if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("updatePlayerInfo", player)
+            return
+        }
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             const playerID = this.playerIDByPositionIndex[i]
             const player = this.players[playerID]
@@ -175,7 +187,7 @@ class Table {
             if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("updatePlayerInfo", player)
         }
     }
-    broadcastHandState() {
+    broadcastHandState(playerID = undefined) {
         console.log("broadcasting handState for table: " + this.id)
         let handState = JSON.parse(JSON.stringify(this.currentHand)) // copies the current hand
         handState.players = {}
@@ -213,9 +225,26 @@ class Table {
         // console.log("asd")
         console.log(handState)
 
-        this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
+        if (!playerID) {
+            this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
+            this.broadCastIndividualPlayerInfo()
+        }
+        if (playerID) {
+            player = this.players[playerID]
+            if (player) {
+                if (player.askedToFold) return false
+                const socket = this.tableManager.socketManager.sockets[player.socketID]
+                if (!socket) return false
+                this.sockets[player.socketID] = socket
+                socket.join(`table:${this.id}`)
+                socket.emit("updateGameState", handState)
+                this.broadCastIndividualPlayerInfo(playerID)
+                return true
+            }
+            return false
+        }
+        // if (playerID) this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
         // if (this.currentHand.handIsBeingPlayed) this.broadCastIndividualPlayerInfo()
-        this.broadCastIndividualPlayerInfo()
     }
     sendEmptyTable(player) {
         console.log("sendEmptyTable")

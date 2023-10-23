@@ -24,7 +24,8 @@ class Player {
         this.askingRebuy = false,
         this.rebuyAmount = new Decimal(0),
         this.tableID = undefined,
-        this.tableClosed = false
+        this.tableClosed = false,
+        this.isDisconnected = false
     }
 }
 module.exports = Player;

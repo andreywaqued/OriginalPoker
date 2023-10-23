@@ -27,10 +27,7 @@ class User {
     async getUserFromDB(name, db) {
         // Fetch user details from DB
         const userData = await fetchUserFromDB(name, db);
-        this.id = userData.id;
-        this.name = userData.name;
-        this.avatar = userData.avatar;
-        this.balance = new Decimal(userData.balance);
+        return userData
     }
 
     async deposit(amount) {

@@ -34,8 +34,12 @@ const sound = require('sound-play')
 // } catch (_) {}
 
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
-
+const socket = io('https://originaltrial.onrender.com', {
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,  // 1 segundo
+  timeout: 20000,
+}); // Replace with your server's address
 
 // Serve the static SvelteKit build files
 // serverApp.use(express.static(path.join(__dirname, 'svelte/myapp/build/client')));
@@ -289,9 +293,30 @@ socket.on("updatePools", (pools) => {
     console.log("chamando send message 2")
     if (mainLobby) mainLobby.addMessage("updatePools", pools)
 })
-socket.on("disconnect", () => {
-  app.quit()
-})
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+  // reconnectToServer();
+});
+socket.io.on("reconnect_attempt", (attempt) => {
+  console.log("reconnect_attempt")
+  //TODO
+  //colocar janela de tentativa de reconexao (aviso ao usuario e animacao de loading)
+  // ...
+});
+socket.io.on("reconnect", (attempt) => {
+  console.log("reconnect")
+  //TODO
+  //tirar janela de tentativa de reconexao e deixar tudo atualizado para o usuario
+  // ...
+});
+socket.io.on("reconnect_failed", () => {
+  //TODO 
+  //colocar janela de falha de conexao e abrir a chamada de conexao manual.
+  console.log("reconnect_failed")
+  // ...
+});
+
+
 
 // socket.send("SIGN_IN;ALEXANDER;123456")
 

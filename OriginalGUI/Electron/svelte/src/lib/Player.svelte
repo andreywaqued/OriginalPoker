@@ -150,7 +150,7 @@
         timer = setInterval(()=>{
             // clearInterval(timer)
             if (playerTurn === false) return
-            if (timeLeftPerc <= 50 && !attentionSoundPlayed) {
+            if (timeLeftPerc <= 50 && !attentionSoundPlayed && isHero) {
                 api.send("playSound", "aviso_de_atencao.wav")
                 attentionSoundPlayed = true
             }
