@@ -127,6 +127,12 @@
     $: if (menuIndexSelected == 1) {
         getUserTx()
     }
+
+    function disconnectSocket() {
+        if (window.api) {
+            window.api.send("disconnect-socket");
+        }
+    }
 </script>
 
 <style lang="scss">
@@ -825,6 +831,7 @@
                             </span>
                         {/if}
                     </div>
+                    <button on:click={disconnectSocket}>Disconnect Socket</button>
                 </div>
                 <div class="clock">
                     <span>{new Date().getUTCHours()}:{new Date().getUTCMinutes()}</span>

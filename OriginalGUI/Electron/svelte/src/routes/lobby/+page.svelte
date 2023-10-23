@@ -23,6 +23,7 @@
     let menuItens = ["games", "profile", "settings"]
     let svgMenuColorSelected = "#0080ff"
     let svgMenuColor = "white"
+    let authIndexSelected = 0
 
     onMount(() => {
         const setHeight = () => {
@@ -94,6 +95,13 @@
     }
     /**
      * 
+     * @param {number} index
+     */
+    function selectAuth(index) {
+        authIndexSelected = index
+    }
+    /**
+     * 
      * @param {String} tableName
      */
     function openNewTable(poolID) {
@@ -139,6 +147,29 @@
         font-size: var(--root-font-size);
         font-family: 'Roboto', sans-serif;
     }
+    :global(button) {
+        all: unset;
+    }
+    :global(button:active:enabled) {
+        transform: scale(0.95);
+    }
+    :global(.roundedButton) {
+        border: 0.2em solid black;
+        border-radius: 9999px;
+        width: 100%;
+        text-align: center;
+        text-transform: uppercase;
+        font-size: 1.2em; 
+        padding: 0.8em 0;
+        font-weight: bold;
+    }
+    :global(.roundedButton.filled) {
+        background-color: black;
+        color: white;
+    }
+    :global(.roundedButton.ringed) {
+        border-color: black;
+    }
     ::-webkit-scrollbar-track
     {
     	-webkit-box-shadow: inset 0 0 6px rgba(49,49,49,0.7);
@@ -177,6 +208,22 @@
         display: flex;
         flex-direction: column;
         // border: 1px solid blue;
+    }
+    .authDiv {
+        margin: auto;
+        border-radius: 5px;
+        background-color: white;
+        padding: 1em 3em;
+        font-size: 0.6em;
+        color: gray;
+        img {
+            padding-top: 2em;  
+        }
+        .txtButton {
+            text-align: center;
+            width: 100%;
+            padding: 0.2em 0;
+        }
     }
     .playerInfo {
         width: 100%;
@@ -581,12 +628,6 @@
         width: 100%;
         height: 25%;
     }
-    button {
-        all:unset;
-    }
-    button:active:enabled {
-        transform: scale(0.95);
-    }
     .avaiableSoonDiv {
         display: flex;
         width: 100%;
@@ -830,7 +871,27 @@
     
     <div class="mainDiv">
         {#if !userLoggedIn}
-            <Login/>
+            <div class="authDiv">
+               <img height=50 src="https://assets-global.website-files.com/64b7f135f513eed80337b22a/64ec974e5aaf534554601817_OriginalLogoWhite-p-500.png" />
+                {#if authIndexSelected === 0}
+                    <Login tipo="signin">
+                        <button class="txtButton">
+                          Forgot my password
+                        </button>
+                        <!-- Button to change to signUP page -->
+                        <button class="roundedButton ringed" on:click={() => selectAuth(1)} >
+                            Signup
+                        </button>
+                    </Login>
+                {:else if authIndexSelected === 1}
+                    <Login tipo="signup">
+                        <!-- Button to change to signIN page -->
+                        <button class="txtButton" on:click={() => selectAuth(0)}>
+                            Already have a account? Login here
+                        </button>
+                    </Login>
+                {/if}
+            </div>
         {:else}
             <div class="playerInfo">
                 <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" height="70%" viewBox="0 0 809.523 128.965">

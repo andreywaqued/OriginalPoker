@@ -163,6 +163,18 @@ socket.on("signInResponse", response => {
     // socket.emit("enterPool", {poolID : "lightning4", stackSize: 100})
     }
 })
+socket.on("signUpResponse", response => {
+  console.log("signUpReponse")
+  console.log(response)
+    if (response.status === 200) {
+        // console.log("entrou aqui")
+        user = response.user
+        mainLobby.user = user
+        // console.log(mainLobby)
+        console.log("chamando send message")
+        mainLobby.addMessage("signedUser", user)
+    }
+})
 socket.on("enterPoolResponse", response => {
     console.log("enterPoolResponse")
     // console.log(response)
@@ -330,6 +342,13 @@ ipcMain.on('signIn', (event, user) => {
   // console.log(user)
   if (win) {
     socket.emit("signIn", user)
+  }
+});
+ipcMain.on('signUp', (event, user) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  // console.log(user)
+  if (win) {
+    socket.emit("signUp", user)
   }
 });
 ipcMain.on('window-ready', (event) => {

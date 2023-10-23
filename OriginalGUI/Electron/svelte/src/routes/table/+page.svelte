@@ -1001,7 +1001,7 @@ button:disabled {
       </div>
       <div class="popoverMain">
         <label for="rebuyAmount">Amount to Rebuy</label>
-        <input placeholder="Amount to Rebuy" id="rebuyAmount" bind:value={rebuyAmount} step=0.01 type="number"/>
+        <input placeholder="Amount to Rebuy" id="rebuyAmount" bind:value={rebuyAmount} step=0.01 type="number" on:keydown={() => rebuyAmount = Number(rebuyAmount.toFixed(1))}/>
         <button on:click={tryRebuy}>Rebuy</button>
       </div>
     </div>

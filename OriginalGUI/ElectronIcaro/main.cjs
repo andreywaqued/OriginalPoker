@@ -22,26 +22,33 @@ const { shell } = require('electron');
 // console.log(moduleURL)
 // const serverApp = express();
 // import('./build/handler.js').then(module => {
-//   handler = module.handler;
-//   serverApp.use(handler);
-//   serverApp.listen(10000, () => {
-//     console.log('listening on port 10000');
-//   });
-// })
-
-// try {
-//   require('electron-reloader')(module)
-// } catch (_) {}
+  //   handler = module.handler;
+  //   serverApp.use(handler);
+  //   serverApp.listen(10000, () => {
+    //     console.log('listening on port 10000');
+    //   });
+    // })
+    
+    // try {
+      //   require('electron-reloader')(module)
+      // } catch (_) {}
+      
+let mainLobby
+let user
+let userTx
+// let playerByTableIndex = []
+let tables = []
+let players = []
+let playersID = []
+let reconnectTimer;
+let isDialogShowing = false;
 
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('https://originaltesteicaro.onrender.com', {
+const socket = io('http://localhost:3000', {
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,  // 1 segundo
 });
-
-let reconnectTimer;
-let isDialogShowing = false;
 
 function reconnectToServer() {
   if (!socket.connected) {
@@ -71,7 +78,7 @@ socket.on('connect', () => {
   isDialogShowing = false;
   // Se o usuário estiver definido, tentamos reconectar
   if (user) {
-    socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
+    socket.emit('reconnectPlayer', user);
     console.log("Tentando reconectar");
   }
 });
@@ -95,7 +102,12 @@ function showReconnectDialog() {
   }
 }
 
-
+ipcMain.on("disconnect-socket", (event, arg) => {
+  if (socket) {
+    console.log("Socket id before disconnect: ", socket.id);
+    socket.disconnect();
+  }
+});
 
 // Serve the static SvelteKit build files
 // serverApp.use(express.static(path.join(__dirname, 'svelte/myapp/build/client')));
@@ -186,17 +198,10 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     return newWindow
   }
 
-  
-let mainLobby
-let user
-let userTx
+
 app.whenReady().then( () => {
   mainLobby = createWindow("Main Lobby", "lobby")
 });
-// let playerByTableIndex = []
-let tables = []
-let players = []
-let playersID = []
 
 socket.on("signInResponse", response => {
     console.log("signInResponse")
