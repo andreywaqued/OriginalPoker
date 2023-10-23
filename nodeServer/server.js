@@ -146,6 +146,15 @@ disconnectedPlayers = {}
 socketManager.on('connection', (socket) => {
   console.log('New connection:', socket.id);
   socket.join("lobby")
+  if (socket.recovered) {
+    // recovery was successful: socket.id, socket.rooms and socket.data were restored
+    console.log("socket recovered: " + socket.id)
+    console.log(socket.user)
+  } else {
+    console.log('brand new connection: ' + socket.id);
+    // new or unrecoverable session
+  }
+
   // console.log(socket)
   socket.on("signIn", (data) => {
     const {user, password} = data
@@ -218,6 +227,8 @@ socketManager.on('connection', (socket) => {
 
     // Atualizar informações do usuário no socket
     socket.user = await User.getUserFromDB(user.name, fastify.pg);
+    socket.user.playerIDs = []
+    socket.user.poolIDs = []
     socket.emit("updateUserInfo", {user: socket.user, status: 200})
     socket.emit("updatePools", playerPoolManager.pools)
     // Atualizar o socket do usuário no playerPoolManager
@@ -228,7 +239,7 @@ socketManager.on('connection', (socket) => {
     
     // Recuperar os jogadores desconectados do usuário
     const disconnectedPlayersOfUser = disconnectedPlayers[userId];
-    if (disconnectedPlayersOfUser.length === 0) return console.log("players disconnected array is empty.")
+    if (!disconnectedPlayersOfUser || disconnectedPlayersOfUser.length === 0) return console.log("players disconnected array is undefined or empty.")
     for (const player of disconnectedPlayersOfUser) {
       player.socketID = socket.id;
       console.log("########################################### Pool Id: ", player.poolID);
@@ -256,8 +267,9 @@ socketManager.on('connection', (socket) => {
     }
     delete disconnectedPlayers[userId];
   });
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     console.log(`User disconnected: ${socket.id}`);
+    console.log(reason)
     // console.log(socket)
     console.log(socket.connected)
     socket.leave("lobby")
