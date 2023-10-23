@@ -255,7 +255,7 @@ socketManager.on('connection', (socket) => {
       }
       player.tableClosed = false;
       player.isDisconnected = false;
-      player.isSitout = false;
+      // player.isSitout = false;
       const table = playerPoolManager.tableManager.tables[player.poolID][player.tableID];
       if (!table) {
         console.log("table is undefined, sending empty table");
