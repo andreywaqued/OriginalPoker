@@ -36,7 +36,7 @@ const sound = require('sound-play')
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
 const socket = io('https://originaltrial.onrender.com', {
   reconnection: true,
-  reconnectionAttempts: 5,
+  reconnectionAttempts: 30,
   reconnectionDelay: 1000,  // 1 segundo
   timeout: 20000,
 }); // Replace with your server's address

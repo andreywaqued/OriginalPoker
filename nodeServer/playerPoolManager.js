@@ -195,7 +195,7 @@ class PlayerPoolManager {
         player.tableID = undefined //reset player tableID
         // console.log("socket")
         // console.log(socket)
-        if (!socket || player.tableClosed) return this.leavePool(socket, player)
+        if (!socket || player.tableClosed || player.isDisconnected) return this.leavePool(socket, player)
         this.sendEmptyTable(player)
         if (player.askingRebuy) {
             console.log("returning rebuy")
@@ -208,7 +208,6 @@ class PlayerPoolManager {
         }
         if (player.isSitout) {
             console.log(`player.isSitout: ${player.isSitout}`)
-            console.log(player.isSitout)
             if (socket) socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
             // const playerFromID = JSON.parse(JSON.stringify(this.playersByPool[poolID][player.id])) //need to create a copy of this user instead of using a reference, because the user may have already leaved.
             // if (!playerFromID) return console.log("something went wrong on player from id")

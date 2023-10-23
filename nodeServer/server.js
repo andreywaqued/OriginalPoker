@@ -240,7 +240,8 @@ socketManager.on('connection', (socket) => {
     // Recuperar os jogadores desconectados do usuário
     const disconnectedPlayersOfUser = disconnectedPlayers[userId];
     if (!disconnectedPlayersOfUser || disconnectedPlayersOfUser.length === 0) return console.log("players disconnected array is undefined or empty.")
-    for (const player of disconnectedPlayersOfUser) {
+    for (const playerInfo of disconnectedPlayersOfUser) {
+      const player = playerPoolManager.playersByPool[playerInfo.poolID][playerInfo.playerID]
       player.socketID = socket.id;
       console.log("########################################### Pool Id: ", player.poolID);
       if (!player) {
@@ -285,7 +286,7 @@ socketManager.on('connection', (socket) => {
       if (!player) return console.log("player is undefined")
       player.tableClosed = true;
       player.isDisconnected = true;
-      disconnectedPlayers[userID].push(player)
+      disconnectedPlayers[userID].push({playerID, poolID})
       
 
       console.log("player disconnected: " + playerID + " - " + poolID)
