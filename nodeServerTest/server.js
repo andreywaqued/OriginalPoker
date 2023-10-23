@@ -14,6 +14,7 @@ fastify.register(require('@fastify/postgres'), {
 //   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
 // })
 const PlayerPoolManager = require('./playerPoolManager');
+
 // const TableManager = require('./tableManager');
 const User = require('./user');
 // const TableManager = require('./tableManager')
@@ -143,6 +144,10 @@ fastify.get('/tables', async (request, reply) => {
 //   return { response: response }
 // });
 
+// Objeto para armazenar informações de jogadores desconectados
+const disconnectedPlayers = {};
+const reconnectPools = {};
+
 socketManager.on('connection', (socket) => {
   console.log('New connection:', socket.id);
   socket.join("lobby")
@@ -194,82 +199,111 @@ socketManager.on('connection', (socket) => {
     return socket.emit('updateUserTx', rows)
   })
   
-
-
   socket.on('message', (data) => {
     if (data.includes("1000")) console.log(`Received message: ${data}`)
     // console.log(`Received message: ${data}`);
   });
 
-  // Objeto para armazenar informações de jogadores desconectados
-  const disconnectedPlayers = {};
-
   // Manipulador de eventos para desconexão
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
-    console.log(socket.connected);
-    socket.leave("lobby");
-    if (!socket.user) return console.log("player didnt loggedin");
+    if (!socket.user) return console.log("player didn't log in");
 
     const userId = socket.user.id;
-    
+    console.log(userId);
+
+    // Armazenar informações para reconectar o usuário à pool
+    const poolsToReconnect = [];
     for (let i = 0; i < socket.user.playerIDs.length; i++) {
-      const playerID = socket.user.playerIDs[i];
-      const poolID = socket.user.poolIDs[i];
+        const playerID = socket.user.playerIDs[i];
+        const poolID = socket.user.poolIDs[i];
 
-      // Marcar o jogador como desconectado
-      let player = playerPoolManager.playersByPool[poolID][playerID];
-      if (player) {
-        player.isDisconnected = true;
+        console.log(playerID, poolID);
 
-        // Armazenar informações do jogador desconectado
-        if (!disconnectedPlayers[userId]) {
-          disconnectedPlayers[userId] = [];
+        // Marcar o jogador como desconectado
+        let player = playerPoolManager.playersByPool[poolID][playerID];
+        if (player) {
+            player.isDisconnected = true;
+
+            // Armazenar informações do jogador desconectado
+            if (!disconnectedPlayers[userId]) {
+                disconnectedPlayers[userId] = [];
+            }
+            disconnectedPlayers[userId].push({
+                player,
+                poolID,
+            });
         }
-        disconnectedPlayers[userId].push({
-          player,
-          poolID,
-        });
-      }
     }
 
     // Excluir o socket do objeto sockets
     delete playerPoolManager.sockets[socket.id];
+    socket.leave("lobby");
   });
 
-  // Manipulador de eventos para reconexão
-  socket.on('reconnectPlayer', (data) => {
-    console.log("################################## Aquiiiiiiiiiiiii: \n");
-    console.log(data);
+  socket.on('reconnectPlayer', (user) => {
+    console.log("Socket reconnectPlayer \n");
+    console.log(user);
 
-    const userId = data.userId;
+    // Atualizar informações do usuário no socket
+    socket.user = user;
 
+    // Garantir que o saldo do usuário é uma instância de Decimal
+    if (typeof socket.user.balance !== 'object' || !(socket.user.balance instanceof Decimal)) {
+      socket.user.balance = new Decimal(socket.user.balance);
+    }
+
+    // Atualizar o socket do usuário no playerPoolManager
+    playerPoolManager.sockets[socket.id] = socket;
+    
+    // Recuperar o ID do usuário
+    const userId = user.id;
+    
     // Recuperar os jogadores desconectados do usuário
     const disconnectedPlayersOfUser = disconnectedPlayers[userId];
     if (disconnectedPlayersOfUser) {
-      for (const disconnectedPlayer of disconnectedPlayersOfUser) {
-        const player = disconnectedPlayer.player;
-        const poolID = disconnectedPlayer.poolID;
-
-        if (player && player.isDisconnected) {
-          // Resetar o status de desconectado
-          player.isDisconnected = false;
-
-          // Informar o jogador sobre o estado atual da mão
-          const table = tableManager.tables[poolID][player.tableID];
-          if (table) {
-            table.broadcastHandState();  // Atualizar o estado do jogo para todos os jogadores
-          } else {
-            // Se a mesa não existe, colocar o jogador em sitout
-            player.isSitout = true;
-            console.log(player);
-            playerPoolManager.sitoutUpdate(player.id, poolID, player.isSitout);
+        for (const disconnectedPlayer of disconnectedPlayersOfUser) {
+          const player = disconnectedPlayer.player;
+          const poolID = disconnectedPlayer.poolID;
+          
+          player.socketID = socket.id;
+          
+          console.log("########################################### Pool Id: ", poolID);
+          
+          if (player && player.isDisconnected) {
+            // Resetar o status de desconectado
+            player.isDisconnected = false;
+            
+            // Obter a mesa correspondente para o jogador
+            const table = playerPoolManager.tableManager.tables[poolID];
+            if (table) {
+              console.log("##############################################", table);
+            }
+            
+            // Verifique se a mesa e a mão estão definidas
+            if (table && table.currentHand) {
+              // Verifique se a mão está sendo jogada
+              if (table.currentHand.handIsBeingPlayed) {
+                table.broadcastHandState();
+                console.log("Entrou no table.currentHand.handIsBeingPlayed");
+              } else {
+                if (table.isValidState()) {
+                  table.broadcastHandState();
+                  console.log("Entrou no table.isValidState()");
+                } 
+              }                
+            } else {
+              console.log("Entrou no else");
+              socket.emit("sitoutUpdate", {playerID: player.id, isSitout: true});
+            }
           }
         }
-      }
-      // Remover o usuário da lista de desconectados
-      delete disconnectedPlayers[userId];
+        // Remover o usuário da lista de desconectados
+        delete disconnectedPlayers[userId];
     }
+    
+    // Atualizar as pools para todos os usuários na sala "lobby"
+    playerPoolManager.socketManager.to("lobby").emit("updatePools", playerPoolManager.pools);
   });
 
 });

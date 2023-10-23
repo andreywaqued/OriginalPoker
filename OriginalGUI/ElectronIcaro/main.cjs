@@ -78,7 +78,7 @@ socket.on('connect', () => {
   isDialogShowing = false;
   // Se o usuário estiver definido, tentamos reconectar
   if (user) {
-    socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
+    socket.emit('reconnectPlayer', user);
     console.log("Tentando reconectar");
   }
 });
@@ -104,6 +104,7 @@ function showReconnectDialog() {
 
 ipcMain.on("disconnect-socket", (event, arg) => {
   if (socket) {
+    console.log("Socket id before disconnect: ", socket.id);
     socket.disconnect();
   }
 });
