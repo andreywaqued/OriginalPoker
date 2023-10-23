@@ -262,6 +262,7 @@ socketManager.on('connection', (socket) => {
     console.log(socket.connected)
     socket.leave("lobby")
     if (!socket.user) return console.log("player didnt loggedin")
+    console.log(JSON.stringify(socket.user))
     const userID = socket.user.id
     disconnectedPlayers[userID] = []
     for (let i = 0; i< socket.user.playerIDs.length; i++) {

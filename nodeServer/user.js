@@ -24,7 +24,7 @@ class User {
         await saveUserToDB(name, password, avatar, db);
     }
 
-    async getUserFromDB(name, db) {
+    static async getUserFromDB(name, db) {
         // Fetch user details from DB
         const userData = await fetchUserFromDB(name, db);
         return userData

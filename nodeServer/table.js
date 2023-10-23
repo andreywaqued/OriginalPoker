@@ -346,12 +346,12 @@ class Table {
             if (player.possibleActions[0].type === action.type && action.type === "⚡Fold") {
                 console.log("player fast folded")
                 player.askedToFold = true;
-                if (player.socketID in this.sockets) {
-                    console.log("player fast folded with socket")
-                    playerSocket.leave(`table:${this.id}`);
-                    // this.sendEmptyTable(player)//send empty table
-                    // delete this.sockets[player.socketID]
-                }
+                playerSocket.leave(`table:${this.id}`);
+                // if (player.socketID in this.sockets) {
+                //     console.log("player fast folded with socket")
+                //     // this.sendEmptyTable(player)//send empty table
+                //     // delete this.sockets[player.socketID]
+                // }
                 const playerCopy = JSON.parse(JSON.stringify(player))
                 playerCopy.stackSize = new Decimal(playerCopy.stackSize)
                 playerCopy.betSize = new Decimal(playerCopy.betSize)
@@ -401,12 +401,8 @@ class Table {
             console.log(`player.isSitout: ${player.isSitout}`)
             // player.cards = [];
             this.currentHand.playersFolded++
-            if (player.socketID in this.sockets) {
-                console.log("player folded 1")
-                playerSocket.leave(`table:${this.id}`);
-                // this.sendEmptyTable(player)//send empty table
-                delete this.sockets[player.socketID]
-            }
+            playerSocket.leave(`table:${this.id}`);
+            if (player.socketID in this.sockets) delete this.sockets[player.socketID]
             if (!player.askedToFold) {
                 console.log(player.name + " reentering pool when not fast folded")
                 const playerCopy = JSON.parse(JSON.stringify(player))

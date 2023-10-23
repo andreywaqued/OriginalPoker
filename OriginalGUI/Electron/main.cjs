@@ -152,6 +152,10 @@ let playersID = []
 socket.on('connect', () => {
     console.log(`Connected to the server with id: ${socket.id}`);
     // socket.emit("signIn", {user: "asd", password: "asd"})
+    if (user) {
+      socket.emit('reconnectPlayer', user);
+      console.log("Tentando reconectar");
+    }
 });
 socket.on("signInResponse", response => {
     console.log("signInResponse")
