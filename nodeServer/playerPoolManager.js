@@ -133,9 +133,11 @@ class PlayerPoolManager {
         handState.players = {}
         handState.players[player.id] = {
             id : player.id,
+            userID : player.userID,
             name: player.name,
             avatar: player.avatar,
             tableID: player.tableID,
+            poolID: player.poolID,
             stackSize: player.stackSize,
             hasFolded: true,
             cards: [],

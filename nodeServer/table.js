@@ -201,8 +201,10 @@ class Table {
             handState.players[playerID] = {
                 id : player.id,
                 name: player.name,
+                userID: player.userID,
                 avatar: player.avatar,
                 tableID: player.tableID,
+                poolID: player.poolID,
                 stackSize: player.stackSize.toNumber(),
                 hasFolded: player.hasFolded,
                 isSitout: player.isSitout,
