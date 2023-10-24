@@ -21,10 +21,12 @@ const User = require('./user');
 fastify.addHook('onReady', async () => {
   console.log("connected")
   // const client = await fastify.pg.connect()
-  // fastify.pg.query("DROP TABLE users")
-  // fastify.pg.query("DROP TABLE hands")
-  // fastify.pg.query("DROP TABLE moneyTransactions")
-  fastify.pg.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 20 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  // await fastify.pg.query("DROP TABLE users")
+  // await fastify.pg.query("DROP TABLE hands")
+  // await fastify.pg.query("DROP TABLE moneyTransactions")
+  /* CHECK IF EXTENSION pgcrypto IS ENABLED ON THIS DB */
+  fastify.pg.query("CREATE EXTENSION IF NOT EXISTS pgcrypto")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username VARCHAR ( 20 ) UNIQUE NOT NULL,password VARCHAR ( 256 ) NOT NULL,email VARCHAR ( 255 ) UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS moneyTransactions(id serial PRIMARY KEY, userid serial NOT NULL, amount NUMERIC NOT NULL, source VARCHAR(50) NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   // client.release()
@@ -149,7 +151,7 @@ socketManager.on('connection', (socket) => {
   // console.log(socket)
   socket.on("signIn", (data) => {
     const {user, password} = data
-    console.log(`received signin: ${user} ${password}`)
+    console.log(`received signin: ${user}`)
     User.signIn(user, password, fastify.pg).then(user => {
       console.log("signed user")
       console.log(user)
@@ -168,7 +170,7 @@ socketManager.on('connection', (socket) => {
 
   socket.on("signUp", (data) => {
     const {user, password, email} = data
-    console.log(`received signup: ${user} ${password} ${email}`)
+    console.log(`received signup: ${user} ${email}`)
     User.signUp(user, password, email, fastify.pg).then(()=>{
       socket.emit("signUpResponse", {response : "user signed up", status: 200})
     }).catch((err) => {

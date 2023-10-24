@@ -1,4 +1,4 @@
-const Decimal = require('decimal.js');
+const Decimal = require("decimal.js");
 //the user class, responsible for handling the object associated with a login
 class User {
     static async signIn(name, password, db) {
@@ -53,9 +53,15 @@ class User {
 }
 
 // Mock database functions
+/**
+ *
+ * @param {("username"|"email")} where 
+ * @param {string} value 
+ *
+ */
 async function checkAlreadyTaken(where, value, db) {
     console.log("checkAlreadyTaken")
-    const { rows } = await db.query(`SELECT * FROM users WHERE ${where} = '${value}'`);
+    const { rows } = await db.query(`SELECT * FROM users WHERE '${where}' = '${value}'`);
     return rows.length > 0;
 }
 
@@ -63,7 +69,14 @@ async function saveUserToDB(name, password, email, avatar, db) {
     // Simulate saving a new user to the database
     console.log("saveUserToDB")
     // const client = await db.connect();
-    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${email}', ${avatar}, 0) RETURNING *`);
+    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES(
+                                    '${name}',
+                                    crypt('${password}', gen_salt('bf')),
+                                    '${email}',
+                                    '${avatar}',
+                                    0)
+                                    RETURNING *`
+                                    );
     if (rows.length>0) {
         console.log("inserted user into db")
         console.log(rows[0])
@@ -106,8 +119,9 @@ async function fetchUserWithPasswordFromDB(name, password, db) {
     console.log("fetchUserWithPasswordFromDB")
     const { rows } = await db.query(`UPDATE users
                                     SET last_login = CURRENT_TIMESTAMP
-                                    WHERE username = '${name}' AND password = '${password}'
-                                    RETURNING *;`);
+                                    WHERE username = '${name}' AND password = crypt('${password}', password)
+                                    RETURNING *;
+                                    `);
     if (rows.length > 0) {
         console.log("fetchUserWithPasswordFromDB 1")
         const user = rows[0] ; // Return user id
