@@ -518,12 +518,14 @@ ipcMain.on('close-window', (event) => {
         if (response.response === 0) {
           // Destroy the window to ensure that it is closed
           for (let i = tables.length - 1; i >= 0 ; i--) {
+            console.log("leavePool player: " + players[i].id)
+            console.log(players[i])
             socket.emit("leavePool", players[i])
             tables.splice(i,1)
             players.splice(i,1)
             playersID.splice(i,1)
           }
-          socket.disconnect()
+          // socket.disconnect()
           app.quit()
       // mainWindow.destroy();
         }
