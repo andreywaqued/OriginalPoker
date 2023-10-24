@@ -587,6 +587,8 @@ class Table {
                 return process.exit()
             }
             nextPlayer.isSitout = true;
+            const socket = this.socketsByUserID[nextPlayer.userID]
+            if (socket) socket.emit("sitoutUpdate", {playerID : nextPlayer.id, isSitout: nextPlayer.isSitout})
             if (this.id != nextPlayer.tableID) {
                 console.log("exiting application because tableID from player is not matching with this tableID")
                 return process.exit()

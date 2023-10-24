@@ -345,6 +345,8 @@ class PlayerPoolManager {
             console.log("leavePool() hand is being played")
             player.isSitout = true
             player.tableClosed = tableClosed
+            const socket = this.socketsByUserID[player.userID]
+            if (socket) socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
             if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) return table.validateAction(player, {type: "fold", amount: 0})
         }
         if (table && table.waitingForPlayers) table.removePlayer(player)
