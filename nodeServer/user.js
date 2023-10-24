@@ -9,6 +9,7 @@ class User {
             user.id = userData.id;
             user.name = userData.name;
             user.avatar = userData.avatar;
+            user.email = userData.email;
             user.balance = new Decimal(userData.balance);
             return user;
         } else {
@@ -103,13 +104,15 @@ async function fetchUserFromDB(name, db) {
 
 async function fetchUserWithPasswordFromDB(name, password, db) {
     console.log("fetchUserWithPasswordFromDB")
-    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}' AND password = '${password}'`);
+    const { rows } = await db.query(`UPDATE users
+                                    SET last_login = CURRENT_TIMESTAMP
+                                    WHERE username = '${name}' AND password = '${password}'
+                                    RETURNING *;`);
     if (rows.length > 0) {
-        console.log("fetchUserFromDB 1")
+        console.log("fetchUserWithPasswordFromDB 1")
         const user = rows[0] ; // Return user id
         console.log(user)
         // const client = await db.connect();
-        await db.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = '${name}'`);
         // client.release();
         return {
             id: user.userid,
