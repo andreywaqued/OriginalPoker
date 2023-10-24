@@ -213,11 +213,21 @@ socket.on("updateGameState", gameState => {
         if (table) return table.addMessage("updateGameState", gameState)
       } 
     }
-    //didnt find the table opened, will try to find the player on the gamestate and send leavePool
-    for (let i = 0; i < gameState.players.length; i++) {
-      const player = gameState.players[i]
+    console.log("didnt find the table opened, will try to find the player on the gamestate and open a new table")
+    for (const player of Object.values(gameState.players)) {
       if (user.name === player.name) {
-        socket.emit("leavePool", player)
+        console.log("found the player on the gamestate, opening new table.")
+        if (tables.length < 4) {
+          const lastIndex = tables.push(createWindow(gameState.title + " Table 1", "table")) - 1
+          const table = tables[lastIndex]
+          console.log(table)
+          players.push(player)
+          playersID.push(player.id)
+          table.player = player
+          console.log("chamando send message 1")
+          if (table) table.addMessage("updatePlayer", table.player)
+        }
+        // socket.emit("leavePool", player)
       } 
     }
 })

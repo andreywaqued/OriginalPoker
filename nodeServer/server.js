@@ -218,10 +218,11 @@ socketManager.on('connection', (socket) => {
   socket.on("signIn", (data) => {
     const {user, password} = data
     console.log(`received signin: ${user} ${password}`)
-    User.signIn(user, password, fastify.pg).then(user => {
+    User.signIn(user, password, fastify.pg).then(async user => {
       console.log("signed user")
       console.log(user)
-      tryReconnect(socket, user)
+      usersConnected[user.id] = user
+      await tryReconnect(socket, user)
       // socket.userID = user.id
       // user.socketID = socket.id
       // usersConnected[user.id] = user
@@ -286,9 +287,9 @@ socketManager.on('connection', (socket) => {
     if (data.includes("1000")) console.log(`Received message: ${data}`)
     // console.log(`Received message: ${data}`);
   });
-  socket.on('reconnectPlayer', (user) => {
+  socket.on('reconnectPlayer', async (user) => {
     console.log("reconnectPlayer")
-    tryReconnect(socket, user)
+    await tryReconnect(socket, user)
   });
   // socket.on('disconnecting', (reason) => {
   //   console.log(`User disconnecting: ${socket.id}`);
