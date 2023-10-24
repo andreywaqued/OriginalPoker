@@ -573,6 +573,10 @@ class Table {
             console.log("folding player that has ⚡Fold")
             return this.validateAction(nextPlayer, nextPlayer.possibleActions[0])
         }
+        if (nextPlayer.tableClosed) {
+            console.log("folding player that has closed the table on the client")
+            return this.validateAction(nextPlayer, nextPlayer.possibleActions[0])
+        }
         this.currentHand.timeLimitToAct = new Date().getTime() + this.timeBank //timestamp + 20sec
         clearTimeout(this.timeLimitCounter)
         console.log("setting timeout for player " + nextPlayer.name + " at table " + this.id)

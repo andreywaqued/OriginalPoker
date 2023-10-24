@@ -70,8 +70,13 @@ async function tryReconnect(socket, user) {
         console.log("player is null/undefined")
         continue
       }
+      if (player.tableClosed) {
+        console.log("player.tableClosed is true, doesnt need to send info anymore")
+        continue
+      }
       console.log("reconnecting playerName: " + player.name + " at table: " + player.tableID)
       player.socketID = socket.id;
+
       // if (!player.isDisconnected) {
       //   console.log("player is not disconnected")
       //   continue
