@@ -10,7 +10,7 @@
     let balanceHidden = false;
     let tabSelected = 0
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
-    let userName, userBalance, userAvatar, userTx
+    let userName, userBalance, userAvatar, userEmail, userTx
     let userLoggedIn = false
    
     let gamesAvaiable = {
@@ -48,6 +48,7 @@
                 userName = user.name
                 userBalance = Math.round(user.balance * 100)/100
                 userAvatar = user.avatar
+                userEmail = user.email
                 userLoggedIn = true
             });
             api.on("updatePools", (pools) => {
@@ -749,7 +750,7 @@
             .item:nth-of-type(3) {
                 border: 0;
                 padding-top: 0.5em;
-                border-top-width: 2px;
+                border-top-width: 1px;
                 border-style: solid;
                 border-color: #c2c2c2;
                 grid-column: span 2 / span 2;
@@ -1128,7 +1129,7 @@
                                   Available
                               </h3>
                               <p>
-                                soon
+                                SOON
                               </p>
                             </div>
                             <div class="item">
@@ -1136,7 +1137,7 @@
                                   In-game
                               </h3>
                               <p>
-                                soon
+                                SOON
                               </p>
                             </div>
                             <div class="item">
@@ -1206,7 +1207,7 @@
                                   Full Name
                               </h3>
                               <p>
-                                soon
+                                SUBMIT A VERIFICATION
                               </p>
                             </div>
                             <div class="item">
@@ -1214,7 +1215,7 @@
                                   Birthday
                               </h3>
                               <p>
-                                soon
+                                SUBMIT A VERIFICATION
                               </p>
                             </div>
                             <div class="item">
@@ -1222,7 +1223,7 @@
                                   E-mail
                               </h3>
                               <p>
-                                soon
+                                {userEmail}
                               </p>
                             </div>
                             <div class="item">
@@ -1230,7 +1231,7 @@
                                   Telephone
                               </h3>
                               <p>
-                                soon
+                                SUBMIT A VERIFICATION
                               </p>
                             </div>
                             <div class="item">
@@ -1238,7 +1239,7 @@
                                   Address
                               </h3>
                               <p>
-                                soon
+                                SUBMIT A VERIFICATION
                               </p>
                             </div>
                           </div>
