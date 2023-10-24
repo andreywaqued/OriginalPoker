@@ -233,8 +233,10 @@ class Table {
             this.broadCastIndividualPlayerInfo()
         }
         if (playerID) {
+            console.log("individual player broadcast")
             const player = this.players[playerID]
             if (player) {
+                console.log("sending gameState to player: " + player.name)
                 if (player.askedToFold) return false
                 if (player.hasFolded) return false
                 const socket = this.socketsByUserID[player.userID]

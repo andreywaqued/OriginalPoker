@@ -225,6 +225,7 @@ socket.on("updateGameState", gameState => {
           playersID.push(player.id)
           table.player = player
           console.log("chamando send message 1")
+          if (table) table.addMessage("updateGameState", gameState)
           if (table) table.addMessage("updatePlayer", table.player)
         }
         // socket.emit("leavePool", player)

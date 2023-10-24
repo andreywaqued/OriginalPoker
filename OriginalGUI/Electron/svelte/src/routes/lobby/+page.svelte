@@ -12,9 +12,9 @@
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
     let userName, userBalance, userAvatar, userTx
     let userLoggedIn = false
-    let displayClock = ""
+    let displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
     let clockUpdateInterval = setInterval(()=>{
-        displayClock = `${new Date().getUTCHours()}: ${new Date().getUTCMinutes()}`
+        displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
     }, 60000)
    
     let gamesAvaiable = {
