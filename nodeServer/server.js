@@ -49,7 +49,6 @@ fastify.setErrorHandler((error, request, reply) => {
 // fastify.register(require('@fastify/redis'), { host: 'redis', port: 6379 })
 disconnectedPlayers = {}
 usersConnected = {}
-socketsByID = {}
 playerPoolManager = new PlayerPoolManager(socketManager, fastify, usersConnected)
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
 // tableManager.test()
@@ -88,7 +87,7 @@ fastify.get('/addchips', async (request, reply) => {
   const user = usersConnected[userid]
   if (!user) return console.log("user undefined")
   user.balance = user.balance.plus(chips)
-  const socket = socketsByID[user.socketID]
+  const socket = playerPoolManager.socketsByUserID[userid]
   if (!socket) return console.log("socket undefined")
   socket.emit("updateUserInfo", { user : user, status: 200})
   // console.log("socketManager.sockets.sockets")
@@ -177,7 +176,7 @@ socketManager.on('connection', (socket) => {
       socket.userID = user.id
       user.socketID = socket.id
       usersConnected[user.id] = user
-      socketsByID[socket.id] = socket
+      playerPoolManager.socketsByUserID[user.id] = socket
       console.log("signIn 1")
       socket.emit("signInResponse", {response : "user logged in", status: 200, user : user})
       console.log("signIn 2")
@@ -249,7 +248,7 @@ socketManager.on('connection', (socket) => {
     socket.userID = userRecovered.id
     userRecovered.socketID = socket.id
     usersConnected[userRecovered.id] = userRecovered
-    socketsByID[socket.id] = socket
+    playerPoolManager.socketsByUserID[userRecovered.id] = socket
     socket.emit("updateUserInfo", {user: userRecovered, status: 200})
     socket.emit("updatePools", playerPoolManager.pools)
     // Recuperar os jogadores desconectados do usuário
@@ -259,7 +258,6 @@ socketManager.on('connection', (socket) => {
         continue
       }
       console.log("reconnecting playerName: " + player.name + " at table: " + player.tableID)
-      console.log("########################################### Pool Id: ", player.poolID);
       player.socketID = socket.id;
       // if (!player.isDisconnected) {
       //   console.log("player is not disconnected")
