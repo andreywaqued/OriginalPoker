@@ -56,6 +56,8 @@
         hero.showCards = true
         hero.betSize = parseFloat(player.betSize)
         hero.stackSize = parseFloat(player.stackSize)
+        playerSitout = player.isSitout
+        if (player.isSitout) sitoutPopover(player.isSitout)
         if (player.finalHandRank) handStrength = player.finalHandRank.combination
         possibleActions = player.possibleActions
         if (possibleActions.length > 1) {
@@ -102,6 +104,8 @@
             player.isHero = true
             player.showCards = true
             player.cards = hero.cards
+            playerSitout = player.isSitout
+            if (player.isSitout) sitoutPopover(player.isSitout)
             // if (!player.hasFolded) 
           }
         })

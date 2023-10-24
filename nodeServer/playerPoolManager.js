@@ -139,6 +139,7 @@ class PlayerPoolManager {
             tableID: player.tableID,
             poolID: player.poolID,
             stackSize: player.stackSize,
+            tableClosed: player.tableClosed,
             hasFolded: true,
             cards: [],
             isSitout: player.isSitout,
@@ -347,7 +348,8 @@ class PlayerPoolManager {
             player.tableClosed = tableClosed
             const socket = this.socketsByUserID[player.userID]
             if (socket) socket.emit("sitoutUpdate", {playerID : player.id, isSitout: player.isSitout})
-            if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) return table.validateAction(player, {type: "fold", amount: 0})
+            if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) table.validateAction(player, {type: "fold", amount: 0})
+            return console.log("leavePool() returning after set player to sitout and table closed")
         }
         if (table && table.waitingForPlayers) table.removePlayer(player)
         if (!table || player.tableClosed || !player.tableID) {

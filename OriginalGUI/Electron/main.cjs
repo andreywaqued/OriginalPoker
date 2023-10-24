@@ -217,6 +217,10 @@ socket.on("updateGameState", gameState => {
     for (const player of Object.values(gameState.players)) {
       if (user.name === player.name) {
         console.log("found the player on the gamestate, opening new table.")
+        if (player.tableClosed) {
+          console.log("player.tableClosed is true")
+          continue
+        }
         if (tables.length < 4) {
           const lastIndex = tables.push(createWindow(gameState.title + " Table 1", "table")) - 1
           const table = tables[lastIndex]
