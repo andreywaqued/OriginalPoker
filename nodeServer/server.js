@@ -50,7 +50,7 @@ fastify.setErrorHandler((error, request, reply) => {
 disconnectedPlayers = {}
 usersConnected = {}
 playerPoolManager = new PlayerPoolManager(socketManager, fastify, usersConnected)
-async function tryReconnect(user) {
+async function tryReconnect(socket, user) {
   console.log("tryReconnect");
     console.log(user);
     let userRecovered = usersConnected[user.id]
@@ -221,7 +221,7 @@ socketManager.on('connection', (socket) => {
     User.signIn(user, password, fastify.pg).then(user => {
       console.log("signed user")
       console.log(user)
-      tryReconnect(user)
+      tryReconnect(socket, user)
       // socket.userID = user.id
       // user.socketID = socket.id
       // usersConnected[user.id] = user
@@ -288,7 +288,7 @@ socketManager.on('connection', (socket) => {
   });
   socket.on('reconnectPlayer', (user) => {
     console.log("reconnectPlayer")
-    tryReconnect(user)
+    tryReconnect(socket, user)
   });
   // socket.on('disconnecting', (reason) => {
   //   console.log(`User disconnecting: ${socket.id}`);
