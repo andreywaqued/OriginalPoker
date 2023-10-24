@@ -213,7 +213,7 @@ socket.on("updateGameState", gameState => {
         if (table) return table.addMessage("updateGameState", gameState)
       } 
     }
-    //find player in gamestate
+    //didnt find the table opened, will try to find the player on the gamestate and send leavePool
     for (let i = 0; i < gameState.players.length; i++) {
       const player = gameState.players[i]
       if (user.name === player.name) {

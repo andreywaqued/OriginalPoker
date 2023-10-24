@@ -10,6 +10,7 @@ class User {
             user.name = userData.name;
             user.avatar = userData.avatar;
             user.balance = new Decimal(userData.balance);
+            user.players = {}
             return user;
         } else {
             throw new Error("Invalid credentials")            
@@ -103,7 +104,8 @@ async function fetchUserFromDB(name, db) {
             name: user.username,
             email: user.email,
             avatar: user.avatar,
-            balance: new Decimal(user.balance) //it looks like numeric type saves as string
+            balance: new Decimal(user.balance), //it looks like numeric type saves as string
+            players: {}
         };
     }
     // Simulate fetching a user from the database

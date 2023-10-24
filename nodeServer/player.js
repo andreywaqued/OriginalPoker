@@ -4,17 +4,17 @@
 const Decimal = require('decimal.js');
 const { v4: uuidv4 } = require('uuid');
 class Player {
-    constructor(socket, stackSize) {
+    constructor(user, stackSize) {
         this.id = uuidv4();
-        this.userid = socket.user.id
-        this.name = socket.user.name;
-        this.avatar = socket.user.avatar;
+        this.userID = user.id
+        this.name = user.name;
+        this.avatar = user.avatar;
         this.stackSize = stackSize;
         this.hasFolded = false;
         this.isSitout = false;
         this.cards = [];
         this.betSize = new Decimal(0);
-        this.socketID = socket.id;
+        // this.socketID = socket.id;
         this.possibleActions = [];
         this.actedSinceLastRaise = false;
         this.contestingPots = [0];
