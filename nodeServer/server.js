@@ -50,6 +50,54 @@ fastify.setErrorHandler((error, request, reply) => {
 disconnectedPlayers = {}
 usersConnected = {}
 playerPoolManager = new PlayerPoolManager(socketManager, fastify, usersConnected)
+async function tryReconnect(user) {
+  console.log("tryReconnect");
+    console.log(user);
+    let userRecovered = usersConnected[user.id]
+    if (!userRecovered) {
+      userRecovered = await User.getUserFromDB(user.name, fastify.pg);
+    }
+    if (!userRecovered) return console.log("user is undefined")
+    socket.userID = userRecovered.id
+    userRecovered.socketID = socket.id
+    usersConnected[userRecovered.id] = userRecovered
+    playerPoolManager.socketsByUserID[userRecovered.id] = socket
+    socket.emit("updateUserInfo", {user: userRecovered, status: 200})
+    socket.emit("updatePools", playerPoolManager.pools)
+    // Recuperar os jogadores desconectados do usuário
+    for (const player of Object.values(userRecovered.players)) {
+      if (!player) {
+        console.log("player is null/undefined")
+        continue
+      }
+      console.log("reconnecting playerName: " + player.name + " at table: " + player.tableID)
+      player.socketID = socket.id;
+      // if (!player.isDisconnected) {
+      //   console.log("player is not disconnected")
+      //   continue
+      // }
+      player.tableClosed = false;
+      player.isDisconnected = false;
+      // player.isSitout = false;
+      const table = playerPoolManager.tableManager.tables[player.poolID][player.tableID];
+      if (!table) {
+        console.log("table is undefined, sending empty table");
+        playerPoolManager.sendEmptyTable(player)
+        playerPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
+        continue
+      }
+      if (table.socketsByUserID[player.userID]) table.socketsByUserID[player.userID] = socket //check if is not undefined, and then change it on the table
+      if (!table.broadcastHandState(player.id)) {
+        console.log("failed to broadcast hand state, sending empty table.")
+        playerPoolManager.sendEmptyTable(player)
+        playerPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
+        // playerPoolManager.leavePool(socket, player, true)
+        // socket.emit("closeTable", player.id)
+        // console.log("closing table, because player is not there anymore.")
+        continue
+      }
+    }
+}
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
 // tableManager.test()
 console.log("starting")
@@ -173,10 +221,11 @@ socketManager.on('connection', (socket) => {
     User.signIn(user, password, fastify.pg).then(user => {
       console.log("signed user")
       console.log(user)
-      socket.userID = user.id
-      user.socketID = socket.id
-      usersConnected[user.id] = user
-      playerPoolManager.socketsByUserID[user.id] = socket
+      tryReconnect(user)
+      // socket.userID = user.id
+      // user.socketID = socket.id
+      // usersConnected[user.id] = user
+      // playerPoolManager.socketsByUserID[user.id] = socket
       console.log("signIn 1")
       socket.emit("signInResponse", {response : "user logged in", status: 200, user : user})
       console.log("signIn 2")
@@ -237,53 +286,9 @@ socketManager.on('connection', (socket) => {
     if (data.includes("1000")) console.log(`Received message: ${data}`)
     // console.log(`Received message: ${data}`);
   });
-  socket.on('reconnectPlayer', async (user) => {
-    console.log("Socket reconnectPlayer \n");
-    console.log(user);
-    let userRecovered = usersConnected[user.id]
-    if (!userRecovered) {
-      userRecovered = await User.getUserFromDB(user.name, fastify.pg);
-    }
-    if (!userRecovered) return console.log("user is undefined")
-    socket.userID = userRecovered.id
-    userRecovered.socketID = socket.id
-    usersConnected[userRecovered.id] = userRecovered
-    playerPoolManager.socketsByUserID[userRecovered.id] = socket
-    socket.emit("updateUserInfo", {user: userRecovered, status: 200})
-    socket.emit("updatePools", playerPoolManager.pools)
-    // Recuperar os jogadores desconectados do usuário
-    for (const player of Object.values(userRecovered.players)) {
-      if (!player) {
-        console.log("player is null/undefined")
-        continue
-      }
-      console.log("reconnecting playerName: " + player.name + " at table: " + player.tableID)
-      player.socketID = socket.id;
-      // if (!player.isDisconnected) {
-      //   console.log("player is not disconnected")
-      //   continue
-      // }
-      player.tableClosed = false;
-      player.isDisconnected = false;
-      // player.isSitout = false;
-      const table = playerPoolManager.tableManager.tables[player.poolID][player.tableID];
-      if (!table) {
-        console.log("table is undefined, sending empty table");
-        playerPoolManager.sendEmptyTable(player)
-        playerPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
-        continue
-      }
-      if (table.socketsByUserID[player.userID]) table.socketsByUserID[player.userID] = socket //check if is not undefined, and then change it on the table
-      if (!table.broadcastHandState(player.id)) {
-        console.log("failed to broadcast hand state, sending empty table.")
-        playerPoolManager.sendEmptyTable(player)
-        playerPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
-        // playerPoolManager.leavePool(socket, player, true)
-        // socket.emit("closeTable", player.id)
-        // console.log("closing table, because player is not there anymore.")
-        continue
-      }
-    }
+  socket.on('reconnectPlayer', (user) => {
+    console.log("reconnectPlayer")
+    tryReconnect(user)
   });
   // socket.on('disconnecting', (reason) => {
   //   console.log(`User disconnecting: ${socket.id}`);
