@@ -221,8 +221,7 @@ socketManager.on('connection', (socket) => {
     User.signIn(user, password, fastify.pg).then(async user => {
       console.log("signed user")
       console.log(user)
-      if (!usersConnected[user.id]) usersConnected[user.id] = user
-      await tryReconnect(socket, user)
+      user = await tryReconnect(socket, user)
       // socket.userID = user.id
       // user.socketID = socket.id
       // usersConnected[user.id] = user
