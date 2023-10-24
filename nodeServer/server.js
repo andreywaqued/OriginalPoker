@@ -97,6 +97,7 @@ async function tryReconnect(socket, user) {
         continue
       }
     }
+    return userRecovered
 }
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
 // tableManager.test()
