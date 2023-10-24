@@ -107,6 +107,7 @@ class PlayerPoolManager {
         if (!player) return console.log("player is undefined.")
         const pool = this.pools[player.poolID]
         let handState = {
+            title : pool.title,
             tableSize : pool.tableSize,
             sb : pool.sb,
             bb : pool.bb,
