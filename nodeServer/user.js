@@ -17,8 +17,16 @@ class User {
         }
     }
 
+    /**
+     *
+     * @param {string} name 
+     * @param {string} password 
+     * @param {string} email
+     *
+     */
     static async signUp(name, password, email, db) {
         console.log("signUp");
+        email = email.toLowerCase()
         const nameAlreadyTaken = await checkAlreadyTaken("username", name, db)
         const emailAlreadyTaken = await checkAlreadyTaken("email", email, db)
         if (nameAlreadyTaken) throw new Error("User already exist")
