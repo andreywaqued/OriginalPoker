@@ -59,6 +59,7 @@ class Table {
         this.waitingForPlayers = true;
         this.startHandTimer = undefined
         this.currentHand = {
+            title: this.title,
             tableSize : this.tableSize,
             sb : this.sb,
             bb : this.bb,
