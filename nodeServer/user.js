@@ -1,4 +1,4 @@
-const Decimal = require('decimal.js');
+const Decimal = require("decimal.js");
 //the user class, responsible for handling the object associated with a login
 class User {
     static async signIn(name, password, db) {
@@ -9,6 +9,7 @@ class User {
             user.id = userData.id;
             user.name = userData.name;
             user.avatar = userData.avatar;
+            user.email = userData.email;
             user.balance = new Decimal(userData.balance);
             user.players = {}
             return user;
@@ -17,12 +18,19 @@ class User {
         }
     }
 
+    /**
+     *
+     * @param {string} name 
+     * @param {string} password 
+     * @param {string} email
+     *
+     */
     static async signUp(name, password, email, db) {
         console.log("signUp");
-        const nameAlreadyTaken = await checkNameAlreadyTaken(name, db)
-        if (nameAlreadyTaken) throw new Error("User already exist")
+        const err = await hasInvalidInputs(name, password, email, db)
+        if (err) throw new Error(err)
         const avatar = Math.floor(Math.random() * 32)
-        await saveUserToDB(name, password, avatar, db);
+        await saveUserToDB(name, password, email, avatar, db);
     }
 
     static async getUserFromDB(name, db) {
@@ -57,21 +65,38 @@ class User {
 }
 
 // Mock database functions
-async function checkNameAlreadyTaken(name, db) {
-    console.log("checkNameAlreadyTaken")
-    // Simulate a database check
-    // const client = await db.connect();
-    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
-    // client.release();
-    return rows.length > 0;
-    // return true;
+
+/**
+ *
+ * @param {string} username 
+ * @param {string} password
+ * @param {string} email
+ * @param {any} db
+ * @returns {Promise<string | null>}
+ *
+ */
+async function hasInvalidInputs(username, password, email, db) {
+    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${username}' OR email = '${email}'`);
+    if (rows.length > 0 ) return "Username or E-mail already exists";
+    if (username.length < 3) return "Username too short, minimum of 3 characters";
+    if (username.length > 20) return "Username too long, maximum of 20 characters";
+    if (!/^[A-Za-z0-9]+$/.test(username)) return "Username with invalid characters"
+    if (password.length < 8) return "Password too short, minimum of 8 characters"
+    return null
 }
 
-async function saveUserToDB(name, password, avatar, db) {
+async function saveUserToDB(name, password, email, avatar, db) {
     // Simulate saving a new user to the database
     console.log("saveUserToDB")
     // const client = await db.connect();
-    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES('${name}', '${password}', '${name}@test.com.br', ${avatar}, 0) RETURNING *`);
+    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES(
+                                    '${name}',
+                                    crypt('${password}', gen_salt('bf')),
+                                    '${email}',
+                                    '${avatar}',
+                                    0)
+                                    RETURNING *`
+                                    );
     if (rows.length>0) {
         console.log("inserted user into db")
         console.log(rows[0])
@@ -113,13 +138,16 @@ async function fetchUserFromDB(name, db) {
 
 async function fetchUserWithPasswordFromDB(name, password, db) {
     console.log("fetchUserWithPasswordFromDB")
-    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}' AND password = '${password}'`);
+    const { rows } = await db.query(`UPDATE users
+                                    SET last_login = CURRENT_TIMESTAMP
+                                    WHERE username = '${name}' AND password = crypt('${password}', password)
+                                    RETURNING *;
+                                    `);
     if (rows.length > 0) {
-        console.log("fetchUserFromDB 1")
+        console.log("fetchUserWithPasswordFromDB 1")
         const user = rows[0] ; // Return user id
         console.log(user)
         // const client = await db.connect();
-        await db.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = '${name}'`);
         // client.release();
         return {
             id: user.userid,

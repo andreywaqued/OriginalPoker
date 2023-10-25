@@ -169,6 +169,10 @@ socket.on("signInResponse", response => {
         if (mainLobby) mainLobby.addMessage("updateUser", user)
         // ipcMain.emit("updateUser", user)
     // socket.emit("enterPool", {poolID : "lightning4", stackSize: 100})
+    } else if (response.status === 403) {
+        // show error
+        const error = response.error
+        if (mainLobby) mainLobby.addMessage("updateUserError", error)
     }
 })
 socket.on("signUpResponse", response => {
@@ -181,6 +185,9 @@ socket.on("signUpResponse", response => {
         // console.log(mainLobby)
         console.log("chamando send message")
         mainLobby.addMessage("signedUser", user)
+    } else if (response.status === 403) {
+        const error = response.error
+        if (mainLobby) mainLobby.addMessage("signedUserError", error)
     }
 })
 socket.on("enterPoolResponse", response => {

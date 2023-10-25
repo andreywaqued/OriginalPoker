@@ -10,7 +10,7 @@
     let balanceHidden = false;
     let tabSelected = 0
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
-    let userName, userBalance, userAvatar, userTx
+    let userName, userBalance, userAvatar, userEmail, userTx
     let userLoggedIn = false
     let displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
     let clockUpdateInterval = setInterval(()=>{
@@ -27,6 +27,7 @@
     let menuItens = ["games", "profile", "settings"]
     let svgMenuColorSelected = "#0080ff"
     let svgMenuColor = "white"
+    // 0 signin; 1 signup; 2 recover;
     let authIndexSelected = 0
 
     onMount(() => {
@@ -51,6 +52,7 @@
                 userName = user.name
                 userBalance = Math.round(user.balance * 100)/100
                 userAvatar = user.avatar
+                userEmail = user.email
                 userLoggedIn = true
             });
             api.on("updatePools", (pools) => {
@@ -157,8 +159,10 @@
     :global(button:active:enabled) {
         transform: scale(0.95);
     }
+    :global(button:disabled) {
+        opacity: 0.75;
+    }
     :global(.roundedButton) {
-        border: 0.2em solid black;
         border-radius: 9999px;
         width: 100%;
         text-align: center;
@@ -172,7 +176,9 @@
         color: white;
     }
     :global(.roundedButton.ringed) {
-        border-color: black;
+        border: 0.2em solid black;
+        background-color: white;
+        color: black;
     }
     ::-webkit-scrollbar-track
     {
@@ -226,7 +232,7 @@
         .txtButton {
             text-align: center;
             width: 100%;
-            padding: 0.2em 0;
+            padding: 0.2em 0 1.5em 0;
         }
     }
     .playerInfo {
@@ -720,7 +726,7 @@
             h3 {
                 font-weight: unset;
                 text-transform: uppercase;
-                color: gray;
+                color: #c2c2c2;
                 font-size: 0.6em;
             }
             .item {
@@ -730,9 +736,14 @@
                 button {
                     text-align: center;
                     border-radius: 4px;
-                    background-color: gray;
                     box-shadow: 0 25px 50px -12px rgb(49 49 49 / 0.25);
                     padding: 0.5em 1em;
+                }
+                button:nth-of-type(1) {
+                    background-color: #2bb839;
+                }
+                button:nth-of-type(2) {
+                    background-color: #282828;
                 }
             }
             .item > * {
@@ -744,9 +755,9 @@
             .item:nth-of-type(3) {
                 border: 0;
                 padding-top: 0.5em;
-                border-top-width: 2px;
+                border-top-width: 1px;
                 border-style: solid;
-                border-color: gray;
+                border-color: #c2c2c2;
                 grid-column: span 2 / span 2;
             }
             .item:nth-of-type(4) {
@@ -780,6 +791,12 @@
                 }
                 td {
                     height: 2.4em;
+                    .positive {
+                        color: #2bb839;
+                    }
+                    .negative {
+                        color: #b82b2b;
+                    }
                 }
                 .pulse {
                   $from: rgb(49, 49, 49);
@@ -826,7 +843,7 @@
                 .item {
                     h2 {
                         text-transform: uppercase;
-                        color: gray;
+                        color: #c2c2c2;
                         font-weight: unset;
                         font-size: 0.6em;
                     }
@@ -839,7 +856,7 @@
                     h3 {
                         text-transform: uppercase;
                         font-weight: unset;
-                        color: gray;
+                        color: #c2c2c2;
                         font-size: 0.6em;
                     }
                     p {
@@ -876,22 +893,30 @@
     <div class="mainDiv">
         {#if !userLoggedIn}
             <div class="authDiv">
-               <img height=50 src="https://assets-global.website-files.com/64b7f135f513eed80337b22a/64ec974e5aaf534554601817_OriginalLogoWhite-p-500.png" />
+               <img height=30 src="./originalLogo.png" />
                 {#if authIndexSelected === 0}
                     <Login tipo="signin">
-                        <button class="txtButton">
+                        <!-- Button to change to recover page -->
+                        <button class="txtButton" on:click={() => selectAuth(2)}>
                           Forgot my password
                         </button>
-                        <!-- Button to change to signUP page -->
+                        <!-- Button to change to signup page -->
                         <button class="roundedButton ringed" on:click={() => selectAuth(1)} >
                             Signup
                         </button>
                     </Login>
                 {:else if authIndexSelected === 1}
                     <Login tipo="signup">
-                        <!-- Button to change to signIN page -->
+                        <!-- Button to change to signin page -->
                         <button class="txtButton" on:click={() => selectAuth(0)}>
-                            Already have a account? Login here
+                            Already have a account? <u>Login here</u>
+                        </button>
+                    </Login>
+                {:else if authIndexSelected === 2}
+                    <Login tipo="recover">
+                        <!-- Button to change to signin page -->
+                        <button class="txtButton" on:click={() => selectAuth(0)}>
+                            Remembered? <u>try to login</u>
                         </button>
                     </Login>
                 {/if}
@@ -1109,7 +1134,7 @@
                                   Available
                               </h3>
                               <p>
-                                EM BREVE
+                                SOON
                               </p>
                             </div>
                             <div class="item">
@@ -1117,7 +1142,7 @@
                                   In-game
                               </h3>
                               <p>
-                                EM BREVE
+                                SOON
                               </p>
                             </div>
                             <div class="item">
@@ -1187,7 +1212,7 @@
                                   Full Name
                               </h3>
                               <p>
-                                EM BREVE
+                                SUBMIT A VERIFICATION
                               </p>
                             </div>
                             <div class="item">
@@ -1195,7 +1220,7 @@
                                   Birthday
                               </h3>
                               <p>
-                                EM BREVE
+                                SUBMIT A VERIFICATION
                               </p>
                             </div>
                             <div class="item">
@@ -1203,7 +1228,7 @@
                                   E-mail
                               </h3>
                               <p>
-                                EM BREVE
+                                {userEmail}
                               </p>
                             </div>
                             <div class="item">
@@ -1211,7 +1236,7 @@
                                   Telephone
                               </h3>
                               <p>
-                                EM BREVE
+                                SUBMIT A VERIFICATION
                               </p>
                             </div>
                             <div class="item">
@@ -1219,7 +1244,7 @@
                                   Address
                               </h3>
                               <p>
-                                EM BREVE
+                                SUBMIT A VERIFICATION
                               </p>
                             </div>
                           </div>
