@@ -78,6 +78,7 @@ class TableManager {
         console.log("deleteTable(id)")
         this.socketManager.socketsLeave(`table:${tableID}`)
         delete this.tables[poolID][tableID]
+        this.fastify.redis.del(`table:${tableID}`)
     }
     test() {
         console.log("TableManager working")

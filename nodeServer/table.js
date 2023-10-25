@@ -39,7 +39,6 @@ roundStr = ["Preflop", "Flop", "Turn", "River"]
 
 class Table {
     constructor(TableManager, pool, poolID) {
-        this.tableManager = TableManager;
         this.id = uuidv4();
         this.title = pool.title || "Table X";
         this.betType = pool.betType || "NL";
@@ -52,12 +51,14 @@ class Table {
         this.poolID = poolID || "";
         this.timeBank = 20000
         this.timeLimitCounter = undefined
-        this.socketManager = TableManager.socketManager;
-        this.playerIDByPositionIndex = new Array(this.tableSize).fill(null);
-        this.players = {};
-        this.socketsByUserID = {};
         this.waitingForPlayers = true;
         this.startHandTimer = undefined
+        TableManager.fastify.redis.hset(`table:${this.id}`, "tableInfo", JSON.stringify(this))
+        this.players = {};
+        this.socketsByUserID = {};
+        this.playerIDByPositionIndex = new Array(this.tableSize).fill(null);
+        this.tableManager = TableManager;
+        this.socketManager = TableManager.socketManager;
         this.currentHand = {
             title: this.title,
             tableSize : this.tableSize,
@@ -227,7 +228,8 @@ class Table {
         }
         // console.log("asd")
         console.log(handState)
-
+        this.tableManager.fastify.redis.hset(`table:${this.id}`, "players", JSON.stringify(this.players))
+        this.tableManager.fastify.redis.hset(`table:${this.id}`, "gameState", JSON.stringify(this.currentHand))
         if (!playerID) {
             this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
             this.broadCastIndividualPlayerInfo()
@@ -813,8 +815,8 @@ class Table {
         delete this.players[playerKey]
         delete this.socketsByUserID[player.userID]
         this.playerIDByPositionIndex[playerIndex] = null
-        this.startHandRoutine()
         this.broadcastHandState()
+        this.startHandRoutine()
     }
     startNewHand() {
         console.log("startNewHand()")
