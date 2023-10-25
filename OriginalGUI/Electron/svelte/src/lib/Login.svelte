@@ -39,33 +39,23 @@
         });
     }
 
-    /** 
-    * @param {boolean} disabled
-    * @param {string} msg 
-    */
-    function handleError(disabled, msg) {
-        btnDisabled = disabled;
-        formError = msg;
-    }
-
     /** @param {SubmitEvent} event */
     function handleLogin(event) {
-        event.preventDefault()
-        handleError(true, "")
+        setError("", true)
         // !!! TODO !!!
         if (tipo === "recover") return console.log("TODO !!!!")
         const data = new FormData(event.target);
-        const user = data.get("username")
+        const username = data.get("username")
         if (tipo === "signup") {
-            const password = data.get("password")
-            const confirmPassword = data.get("confirm_password")
-            const email = data.get("email")
-            const confirmEmail = data.get("confirm_email")
-            if (password !== confirmPassword) return handleError(false, "Password not match")
-            if (email !== confirmEmail) return handleError(false, "Email not match")
-            api.send("signUp", {user, password, email})
+            const password = data.get("password"),
+                confirmPassword = data.get("confirm_password"),
+                email = data.get("email"),
+                confirmEmail = data.get("confirm_email")
+            const hasErrors = handleInputErrors(password, confirmPassword, email, confirmEmail)
+            if (hasErrors) return;
+            api.send("signUp", {username, password, email})
             waitForSignup().then(() => {
-                api.send("signIn", {user, password })
+                api.send("signIn", {username, password })
             }).catch((err) => {
                 console.log(err)
                 formError = err
@@ -75,7 +65,7 @@
         }
         if (tipo === "signin") {
             const password = data.get("password")
-            api.send("signIn", {user, password})
+            api.send("signIn", {username, password})
             waitForSignin().then().catch((err) => {
                 console.log(err)
                 formError = err
@@ -85,6 +75,32 @@
         }
     }
 
+
+    /**
+     *
+     * @returns {boolean}
+     *
+     */
+    function handleInputErrors(password, confirmPassword, email, confirmEmail) {
+            if (password !== confirmPassword) {
+                setError("Password not match", false);
+                return true;
+            }
+            if (email !== confirmEmail) {
+                setError("Email not match", false);
+                return true;
+            }
+            return false;
+        
+    }
+    /** 
+    * @param {string} msg 
+    * @param {boolean} btnDisabled
+    */
+    function setError(msg, btnDisabled) {
+        btnDisabled = btnDisabled;
+        formError = msg;
+    }
 
 </script>
 
@@ -121,7 +137,7 @@
         color: #b82b2b;
     }
 </style>
-<form on:submit={handleLogin} use:enhance>
+<form on:submit|preventDefault={handleLogin} use:enhance>
     <input required placeholder="Username" name="username" type="text"/>
     {#if tipo === "signin"}
         <input required placeholder="Password" name="password" type="password"/>

@@ -26,11 +26,8 @@ class User {
      */
     static async signUp(name, password, email, db) {
         console.log("signUp");
-        email = email.toLowerCase()
-        const nameAlreadyTaken = await checkAlreadyTaken("username", name, db)
-        const emailAlreadyTaken = await checkAlreadyTaken("email", email, db)
-        if (nameAlreadyTaken) throw new Error("User already exist")
-        if (emailAlreadyTaken) throw new Error("Email already exist")
+        const err = await hasInvalidInputs(name, email, password, db)
+        if (err) throw new Error(err)
         const avatar = Math.floor(Math.random() * 32)
         await saveUserToDB(name, password,email, avatar, db);
     }
@@ -61,16 +58,24 @@ class User {
 }
 
 // Mock database functions
+
 /**
  *
- * @param {("username"|"email")} where 
- * @param {string} value 
+ * @param {string} username 
+ * @param {string} email
+ * @param {string} password
+ * @param {any} db
+ * @returns {Promise<string | null>}
  *
  */
-async function checkAlreadyTaken(where, value, db) {
-    console.log("checkAlreadyTaken")
-    const { rows } = await db.query(`SELECT * FROM users WHERE '${where}' = '${value}'`);
-    return rows.length > 0;
+async function hasInvalidInputs(username, email, password, db) {
+    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${username}' OR email = '${email}'`);
+    if (rows.length > 0 ) return "Username or E-mail already exists";
+    if (username.length < 3) return "Username too short, minimum of 3 characters";
+    if (username.length > 20) return "Username too long, maximum of 20 characters";
+    if (!/^[A-Za-z0-9]+$/.test(username)) return "Username with invalid characters"
+    if (password.length < 8) return "Password too short, minimum of 8 characters"
+    return null
 }
 
 async function saveUserToDB(name, password, email, avatar, db) {
