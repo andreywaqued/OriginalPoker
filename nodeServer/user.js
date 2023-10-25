@@ -26,7 +26,7 @@ class User {
      */
     static async signUp(name, password, email, db) {
         console.log("signUp");
-        const err = await hasInvalidInputs(name, email, password, db)
+        const err = await hasInvalidInputs(name, password, email, db)
         if (err) throw new Error(err)
         const avatar = Math.floor(Math.random() * 32)
         await saveUserToDB(name, password,email, avatar, db);
@@ -62,13 +62,13 @@ class User {
 /**
  *
  * @param {string} username 
- * @param {string} email
  * @param {string} password
+ * @param {string} email
  * @param {any} db
  * @returns {Promise<string | null>}
  *
  */
-async function hasInvalidInputs(username, email, password, db) {
+async function hasInvalidInputs(username, password, email, db) {
     const { rows } = await db.query(`SELECT * FROM users WHERE username = '${username}' OR email = '${email}'`);
     if (rows.length > 0 ) return "Username or E-mail already exists";
     if (username.length < 3) return "Username too short, minimum of 3 characters";

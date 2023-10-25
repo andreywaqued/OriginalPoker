@@ -45,7 +45,7 @@
         // !!! TODO !!!
         if (tipo === "recover") return console.log("TODO !!!!")
         const data = new FormData(event.target);
-        const username = data.get("username")
+        const user = data.get("username")
         if (tipo === "signup") {
             const password = data.get("password"),
                 confirmPassword = data.get("confirm_password"),
@@ -53,9 +53,9 @@
                 confirmEmail = data.get("confirm_email")
             const hasErrors = handleInputErrors(password, confirmPassword, email, confirmEmail)
             if (hasErrors) return;
-            api.send("signUp", {username, password, email})
+            api.send("signUp", {user, password, email})
             waitForSignup().then(() => {
-                api.send("signIn", {username, password })
+                api.send("signIn", {user, password })
             }).catch((err) => {
                 console.log(err)
                 formError = err
@@ -65,7 +65,7 @@
         }
         if (tipo === "signin") {
             const password = data.get("password")
-            api.send("signIn", {username, password})
+            api.send("signIn", {user, password})
             waitForSignin().then().catch((err) => {
                 console.log(err)
                 formError = err
@@ -95,10 +95,10 @@
     }
     /** 
     * @param {string} msg 
-    * @param {boolean} btnDisabled
+    * @param {boolean} btnDisable
     */
-    function setError(msg, btnDisabled) {
-        btnDisabled = btnDisabled;
+    function setError(msg, btnDisable) {
+        btnDisabled = btnDisable;
         formError = msg;
     }
 
