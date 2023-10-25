@@ -61,6 +61,9 @@ class PlayerPoolManager {
         // console.log(pool)
         // console.log(`${stackSize} >= ${pool.minBuyIn} : ${stackSize >= pool.minBuyIn}`)
         // console.log(`${stackSize} <= ${pool.maxBuyIn} : ${stackSize <= pool.maxBuyIn}`)
+        if (!(socket.user.balance instanceof Decimal)) {
+            socket.user.balance = new Decimal(socket.user.balance);
+        }
         console.log(`${socket.user.balance} >= ${stackSize} : ${socket.user.balance.greaterThanOrEqualTo(stackSize)}`)
         if (stackSize.greaterThanOrEqualTo(pool.minBuyIn) && stackSize.lessThanOrEqualTo(pool.maxBuyIn) && socket.user.balance.greaterThanOrEqualTo(stackSize)) {
             console.log("log1")

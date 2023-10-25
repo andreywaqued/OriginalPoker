@@ -56,6 +56,8 @@
         hero.showCards = true
         hero.betSize = parseFloat(player.betSize)
         hero.stackSize = parseFloat(player.stackSize)
+        playerSitout = player.isSitout
+        if (player.isSitout) sitoutPopover(player.isSitout)
         if (player.finalHandRank) handStrength = player.finalHandRank.combination
         possibleActions = player.possibleActions
         if (possibleActions.length > 1) {
@@ -66,6 +68,7 @@
           minBet = betValue;
           maxBet = Math.round((player.betSize + player.stackSize)*100)/100;
           api.send("focusOnWindow")
+          api.send("playSound", "hora_de_jogar.wav")
         }
         tableRotateAmount = hero.position
         playersTemp[player.id] = hero
@@ -101,6 +104,8 @@
             player.isHero = true
             player.showCards = true
             player.cards = hero.cards
+            playerSitout = player.isSitout
+            if (player.isSitout) sitoutPopover(player.isSitout)
             // if (!player.hasFolded) 
           }
         })
@@ -354,7 +359,8 @@
   }
   function tryRebuy(){
     console.log("toggleRebuy")
-    api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: Math.round(rebuyAmount * 100) / 100})
+    let rebuy = Math.round(rebuyAmount * 100) / 100
+    if (rebuy > 0) api.send("tryRebuy", {playerID: hero.id, poolID: hero.poolID, stackSize: rebuy})
     toggleRebuy()
   }
   let hhPopoverActive = false;

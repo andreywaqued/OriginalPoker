@@ -11,6 +11,7 @@ class User {
             user.avatar = userData.avatar;
             user.email = userData.email;
             user.balance = new Decimal(userData.balance);
+            user.players = {}
             return user;
         } else {
             throw new Error("Invalid credentials")            
@@ -29,7 +30,13 @@ class User {
         const err = await hasInvalidInputs(name, password, email, db)
         if (err) throw new Error(err)
         const avatar = Math.floor(Math.random() * 32)
-        await saveUserToDB(name, password,email, avatar, db);
+        await saveUserToDB(name, password, email, avatar, db);
+    }
+
+    static async getUserFromDB(name, db) {
+        // Fetch user details from DB
+        const userData = await fetchUserFromDB(name, db);
+        return userData
     }
 
     async deposit(amount) {
@@ -122,7 +129,8 @@ async function fetchUserFromDB(name, db) {
             name: user.username,
             email: user.email,
             avatar: user.avatar,
-            balance: new Decimal(user.balance) //it looks like numeric type saves as string
+            balance: new Decimal(user.balance), //it looks like numeric type saves as string
+            players: {}
         };
     }
     // Simulate fetching a user from the database

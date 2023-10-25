@@ -12,6 +12,10 @@
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
     let userName, userBalance, userAvatar, userEmail, userTx
     let userLoggedIn = false
+    let displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
+    let clockUpdateInterval = setInterval(()=>{
+        displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
+    }, 60000)
    
     let gamesAvaiable = {
         "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 125, minBuyIn: 2, maxBuyIn: 10, buyInAmount: -1},
@@ -108,6 +112,7 @@
      */
     function openNewTable(poolID) {
         let stackSize = parseFloat(gamesAvaiable[poolID].buyInAmount)
+        stackSize = Math.round(stackSize * 100) / 100
         console.log(stackSize)
         console.log(userBalance)
         console.log(gamesAvaiable[poolID].minBuyIn)
@@ -115,7 +120,7 @@
         console.log(userBalance < gamesAvaiable[poolID].buyInAmount || gamesAvaiable[poolID].buyInAmount < gamesAvaiable[poolID].minBuyIn || gamesAvaiable[poolID].buyInAmount > gamesAvaiable[poolID].maxBuyIn)
         // if (stackSize < gamesAvaiable[poolID].minBuyIn ) stackSize = gamesAvaiable[poolID].minBuyIn
         // if (stackSize > gamesAvaiable[poolID].maxBuyIn ) stackSize = gamesAvaiable[poolID].maxBuyIn
-        api.send("open-new-table", {poolID: poolID, stackSize: Math.round(stackSize * 100) / 100})
+        if (stackSize > 0) api.send("open-new-table", {poolID: poolID, stackSize: stackSize})
     }
     
     let doordashClass = "doordashDiv hide"
@@ -951,7 +956,7 @@
                     </div>
                 </div>
                 <div class="clock">
-                    <span>{new Date().getUTCHours()}:{new Date().getUTCMinutes()}</span>
+                    <span>{displayClock}</span>
                     <span class="timezone">GMT</span>
                 </div>
             </div>

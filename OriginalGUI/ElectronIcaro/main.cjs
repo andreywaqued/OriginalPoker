@@ -44,7 +44,7 @@ let reconnectTimer;
 let isDialogShowing = false;
 
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('http://127.0.0.1:3000', {
+const socket = io('http://localhost:3000', {
   reconnection: true,
   reconnectionAttempts: Infinity,
   reconnectionDelay: 1000,  // 1 segundo
@@ -78,7 +78,7 @@ socket.on('connect', () => {
   isDialogShowing = false;
   // Se o usuário estiver definido, tentamos reconectar
   if (user) {
-    socket.emit('reconnectPlayer', { id: user.id, poolID: user.poolID });
+    socket.emit('reconnectPlayer', user);
     console.log("Tentando reconectar");
   }
 });
@@ -104,6 +104,7 @@ function showReconnectDialog() {
 
 ipcMain.on("disconnect-socket", (event, arg) => {
   if (socket) {
+    console.log("Socket id before disconnect: ", socket.id);
     socket.disconnect();
   }
 });

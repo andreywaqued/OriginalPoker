@@ -55,10 +55,11 @@ class Table {
         this.socketManager = TableManager.socketManager;
         this.playerIDByPositionIndex = new Array(this.tableSize).fill(null);
         this.players = {};
-        this.sockets = {};
+        this.socketsByUserID = {};
         this.waitingForPlayers = true;
         this.startHandTimer = undefined
         this.currentHand = {
+            title: this.title,
             tableSize : this.tableSize,
             sb : this.sb,
             bb : this.bb,
@@ -88,10 +89,10 @@ class Table {
         console.log(`sitPlayer(player)`)
         console.log(player.name)
         // if (this.playerIDByPositionIndex.length === 0) player.stackSize = 50 //so pra testar a criacao dos pots
-        if (!this.tableManager.playerPoolManager.sockets[player.socketID]) {
+        if (!this.tableManager.playerPoolManager.socketsByUserID[player.userID]) {
             console.log("socket nao encontrado")
             console.log(player.socketID)
-            console.log(Object.keys(this.tableManager.playerPoolManager.sockets))
+            console.log(Object.keys(this.tableManager.playerPoolManager.socketsByUserID))
             return
         } 
         player.position = -1;
@@ -125,12 +126,12 @@ class Table {
         this.players[player.id] = player;
         // this.playerIDByPositionIndex.push(player.id);
         player.tableID = this.id;
-        this.sockets[player.socketID] = this.tableManager.playerPoolManager.sockets[player.socketID];
+        this.socketsByUserID[player.userID] = this.tableManager.playerPoolManager.socketsByUserID[player.userID];
         this.sendHandTrasition(player)
-        this.sockets[player.socketID].join(`table:${this.id}`);
+        this.socketsByUserID[player.userID].join(`table:${this.id}`);
         // console.log(this.players)
         // console.log(this.playerIDByPositionIndex)
-        // console.log(this.sockets)
+        // console.log(this.socketsByPlayerID)
         this.startHandRoutine()
         
         if (!this.currentHand.handIsBeingPlayed) this.broadcastHandState()
@@ -157,11 +158,23 @@ class Table {
     sendHandTrasition(player) {
         console.log(`sendHandTrasition()`)
         //send hand transition when player folds or the hand is over
-        if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("handTransition", player)
+        if (this.socketsByUserID[player.userID]) this.socketsByUserID[player.userID].emit("handTransition", player)
     }
-    broadCastIndividualPlayerInfo() {
+    broadCastIndividualPlayerInfo(playerID = undefined) {
         console.log(`broadCastIndividualPlayerInfo()`)
         //send cardback to all players except the player holding its cards
+        if (playerID) {
+            const player = this.players[playerID]
+            if (!player) return console.log("player is undefined")
+            if (player.askedToFold) return console.log("player asked to fold")
+            // if (!player.tableID) continue
+            // if (player.hasFolded) continue
+            console.log(`id: ${player.id}, name: ${player.name}, stack: ${player.stackSize}, cards: ${player.cards}, tableID: ${player.tableID}`)//this gave an error recently,
+            if (this.currentHand.boardCards.length>=3 && !player.hasFolded && !player.askedToFold && player.cards.length>0) player.finalHandRank = rankHands(this.pokerVariant, this.currentHand.boardCards, [player.cards])[0]
+            // trying to verify what it is sending to see if can filter to avoid sending too much information
+            if (this.socketsByUserID[player.userID]) this.socketsByUserID[player.userID].emit("updatePlayerInfo", player)
+            return
+        }
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             const playerID = this.playerIDByPositionIndex[i]
             const player = this.players[playerID]
@@ -172,10 +185,10 @@ class Table {
             console.log(`id: ${player.id}, name: ${player.name}, stack: ${player.stackSize}, cards: ${player.cards}, tableID: ${player.tableID}`)//this gave an error recently,
             if (this.currentHand.boardCards.length>=3 && !player.hasFolded && !player.askedToFold && player.cards.length>0) player.finalHandRank = rankHands(this.pokerVariant, this.currentHand.boardCards, [player.cards])[0]
             // trying to verify what it is sending to see if can filter to avoid sending too much information
-            if (player.socketID in this.sockets && this.sockets[player.socketID]) this.sockets[player.socketID].emit("updatePlayerInfo", player)
+            if (this.socketsByUserID[player.userID]) this.socketsByUserID[player.userID].emit("updatePlayerInfo", player)
         }
     }
-    broadcastHandState() {
+    broadcastHandState(playerID = undefined) {
         console.log("broadcasting handState for table: " + this.id)
         let handState = JSON.parse(JSON.stringify(this.currentHand)) // copies the current hand
         handState.players = {}
@@ -188,8 +201,10 @@ class Table {
             handState.players[playerID] = {
                 id : player.id,
                 name: player.name,
+                userID: player.userID,
                 avatar: player.avatar,
                 tableID: player.tableID,
+                poolID: player.poolID,
                 stackSize: player.stackSize.toNumber(),
                 hasFolded: player.hasFolded,
                 isSitout: player.isSitout,
@@ -207,15 +222,34 @@ class Table {
             if (handState.isShowdown && player.showCards) handState.players[playerID].cards = player.cards
             // if (handState.handIsBeingPlayed && handState.isShowdown) handState.players[playerID].cards = ["cb", "cb"]
 
-            // console.log(this.sockets[player.socketID])
-            // this.sockets[player.socketID].emit("updateGameState", handState)
+            // console.log(this.socketsByPlayerID[player.socketID])
+            // this.socketsByPlayerID[player.socketID].emit("updateGameState", handState)
         }
         // console.log("asd")
         console.log(handState)
 
-        this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
+        if (!playerID) {
+            this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
+            this.broadCastIndividualPlayerInfo()
+        }
+        if (playerID) {
+            console.log("individual player broadcast")
+            const player = this.players[playerID]
+            if (player) {
+                console.log("sending gameState to player: " + player.name)
+                if (player.askedToFold) return false
+                if (player.hasFolded) return false
+                const socket = this.socketsByUserID[player.userID]
+                if (!socket) return false
+                socket.join(`table:${this.id}`)
+                socket.emit("updateGameState", handState)
+                this.broadCastIndividualPlayerInfo(playerID)
+                return true
+            }
+            return false
+        }
+        // if (playerID) this.socketManager.to(`table:${this.id}`).emit("updateGameState", handState);
         // if (this.currentHand.handIsBeingPlayed) this.broadCastIndividualPlayerInfo()
-        this.broadCastIndividualPlayerInfo()
     }
     sendEmptyTable(player) {
         console.log("sendEmptyTable")
@@ -259,7 +293,7 @@ class Table {
             showCards : false,
             lastAction: player.lastAction
         }
-        const socket = this.sockets[player.socketID]
+        const socket = this.socketsByUserID[player.userID]
         if (socket) socket.emit("updateGameState", handState);
     }
     countPlayers(){
@@ -303,7 +337,7 @@ class Table {
         // console.log(action)
         // console.log(player.possibleActions)
         console.log("validateAction 1")
-        const playerSocket = this.sockets[playerFromClient.socketID]
+        const playerSocket = this.socketsByUserID[playerFromClient.userID]
         let player = this.players[playerFromClient.id]
         if (!player) return console.log("player undefined, something went wrong!")
         if (!playerSocket) return console.log("player socket undefined, something went wrong!")
@@ -317,12 +351,12 @@ class Table {
             if (player.possibleActions[0].type === action.type && action.type === "⚡Fold") {
                 console.log("player fast folded")
                 player.askedToFold = true;
-                if (player.socketID in this.sockets) {
-                    console.log("player fast folded with socket")
-                    playerSocket.leave(`table:${this.id}`);
-                    // this.sendEmptyTable(player)//send empty table
-                    // delete this.sockets[player.socketID]
-                }
+                playerSocket.leave(`table:${this.id}`);
+                // if (player.socketID in this.socketsByPlayerID) {
+                //     console.log("player fast folded with socket")
+                //     // this.sendEmptyTable(player)//send empty table
+                //     // delete this.socketsByPlayerID[player.socketID]
+                // }
                 const playerCopy = JSON.parse(JSON.stringify(player))
                 playerCopy.stackSize = new Decimal(playerCopy.stackSize)
                 playerCopy.betSize = new Decimal(playerCopy.betSize)
@@ -372,12 +406,8 @@ class Table {
             console.log(`player.isSitout: ${player.isSitout}`)
             // player.cards = [];
             this.currentHand.playersFolded++
-            if (player.socketID in this.sockets) {
-                console.log("player folded 1")
-                playerSocket.leave(`table:${this.id}`);
-                // this.sendEmptyTable(player)//send empty table
-                delete this.sockets[player.socketID]
-            }
+            playerSocket.leave(`table:${this.id}`);
+            delete this.socketsByUserID[player.userID]
             if (!player.askedToFold) {
                 console.log(player.name + " reentering pool when not fast folded")
                 const playerCopy = JSON.parse(JSON.stringify(player))
@@ -543,6 +573,10 @@ class Table {
             console.log("folding player that has ⚡Fold")
             return this.validateAction(nextPlayer, nextPlayer.possibleActions[0])
         }
+        if (nextPlayer.tableClosed) {
+            console.log("folding player that has closed the table on the client")
+            return this.validateAction(nextPlayer, nextPlayer.possibleActions[0])
+        }
         this.currentHand.timeLimitToAct = new Date().getTime() + this.timeBank //timestamp + 20sec
         clearTimeout(this.timeLimitCounter)
         console.log("setting timeout for player " + nextPlayer.name + " at table " + this.id)
@@ -557,6 +591,8 @@ class Table {
                 return process.exit()
             }
             nextPlayer.isSitout = true;
+            const socket = this.socketsByUserID[nextPlayer.userID]
+            if (socket) socket.emit("sitoutUpdate", {playerID : nextPlayer.id, isSitout: nextPlayer.isSitout})
             if (this.id != nextPlayer.tableID) {
                 console.log("exiting application because tableID from player is not matching with this tableID")
                 return process.exit()
@@ -569,7 +605,7 @@ class Table {
             let timeoutAction = nextPlayer.possibleActions[0]
             if (nextPlayer.possibleActions[1].type === "check") timeoutAction = nextPlayer.possibleActions[1]
             //send sitout
-            // const socket = this.sockets[nextPlayer.socketID]
+            // const socket = this.socketsByPlayerID[nextPlayer.socketID]
             // if (socket) socket.emit("sitoutUpdate", {playerID: nextPlayer.id, isSitout: true})
             //
             this.validateAction(nextPlayer, timeoutAction)
@@ -742,7 +778,6 @@ class Table {
             console.log(player.tableID)
             console.log(player.hasFolded)
             console.log(player.isSitout)
-            const socket = this.sockets[player.socketID]
             if(this.id != player.tableID) {
                 console.log("tableID is not matching, player is already in another table.")
                 continue
@@ -773,10 +808,10 @@ class Table {
         console.log("playerIndex " + playerIndex)
         const playerKey = this.playerIDByPositionIndex[playerIndex]
         console.log("playerKey " + playerKey)
-        const playerSocket = this.sockets[player.socketID]
+        const playerSocket = this.socketsByUserID[player.userID]
         if (playerSocket) playerSocket.leave(`table:${this.id}`)
         delete this.players[playerKey]
-        delete this.sockets[player.socketID]
+        delete this.socketsByUserID[player.userID]
         this.playerIDByPositionIndex[playerIndex] = null
         this.startHandRoutine()
         this.broadcastHandState()
@@ -806,7 +841,7 @@ class Table {
             const player = this.players[this.playerIDByPositionIndex[i]]
             if (!player) continue
             // if (player.stackSize === 0 || player.isSitout) {
-            //     const socket = this.sockets[player.socketID]
+            //     const socket = this.socketsByPlayerID[player.socketID]
             //     if (socket) this.tableManager.playerPoolManager.reEnterPool(player) //create a copy of player
             //     const playerKey = this.playerIDByPositionIndex.splice(i, 1)
             //     delete this.players[playerKey]
@@ -855,7 +890,7 @@ class Table {
             const player = this.tableManager.playerPoolManager.playersByPool[this.poolID][this.playerIDByPositionIndex[i]]
             if (!player) continue
             console.log(`sending hand history to ${player.name}`)
-            const socket = this.tableManager.playerPoolManager.sockets[player.socketID]
+            const socket = this.tableManager.playerPoolManager.socketsByUserID[player.userID]
             if (!socket) {
                 console.log("socket is undefined")
                 continue
