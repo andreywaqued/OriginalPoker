@@ -52,7 +52,7 @@ class TableManager {
             const table = this.tables[player.poolID][key]
             if (!table) continue
             if (!table.waitingForPlayers) continue
-            if (player.socketID in table.sockets) continue
+            if (player.userID in table.socketsByUserID) continue
             if (table.countPlayers() === table.tableSize) continue
             table.sitPlayer(player)
             return
@@ -68,16 +68,17 @@ class TableManager {
         console.log(socket.id)
         console.log(player.name)
         console.log(action)
-        if (socket.id != player.socketID && socket) return socket.emit("parseActionResponse", {response: "socketid is wrong", status: 403, action: action})
         const table = this.tables[player.poolID][player.tableID]
-        if (!table.validateAction(player, action) && socket) return socket.emit("parseActionResponse", {response: "failed to make action", status: 401, tableID : table.id, action: action})
+        if (!table.validateAction(player, action)) return console.log("failed to make action")
         // this.socketManager.to(`table:${table.id}`).emit("updateGameState", {tableID : table.id, gameState : table.currentHand})
         if (socket) socket.emit("parseActionResponse", {response: "action received", status: 200, action: action, player: player})
+        console.log("action parsed.")
     }
     deleteTable(poolID, tableID) {
         console.log("deleteTable(id)")
         this.socketManager.socketsLeave(`table:${tableID}`)
         delete this.tables[poolID][tableID]
+        this.fastify.redis.del(`table:${tableID}`)
     }
     test() {
         console.log("TableManager working")

@@ -1,7 +1,11 @@
 module.exports = {
   packagerConfig: {
     asar: true,
-    icon: "images/icon"
+    icon: "images/icon",
+    extraResource: [
+      "build/sounds/hora_de_jogar.wav",
+      "build/sounds/aviso_de_atencao.wav",
+    ]
   },
   rebuildConfig: {},
   makers: [

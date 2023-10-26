@@ -3,6 +3,7 @@ const {app, BrowserWindow, ipcMain, Notification, dialog, screen} = require('ele
 const io = require('socket.io-client');
 const path = require('path');
 const { shell } = require('electron');
+const sound = require('sound-play')
 // const express = require('express');
 // const { fileURLToPath } = require('url');
 // const {handler} = require("./build/handler")
@@ -33,8 +34,12 @@ const { shell } = require('electron');
 // } catch (_) {}
 
 // const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
-const socket = io('https://originaltrial.onrender.com'); // Replace with your server's address
-
+const socket = io('https://originaltrial.onrender.com', {
+  reconnection: true,
+  reconnectionAttempts: 30,
+  reconnectionDelay: 1000,  // 1 segundo
+  timeout: 20000,
+}); // Replace with your server's address
 
 // Serve the static SvelteKit build files
 // serverApp.use(express.static(path.join(__dirname, 'svelte/myapp/build/client')));
@@ -147,6 +152,10 @@ let playersID = []
 socket.on('connect', () => {
     console.log(`Connected to the server with id: ${socket.id}`);
     // socket.emit("signIn", {user: "asd", password: "asd"})
+    if (user) {
+      socket.emit('reconnectPlayer', user);
+      console.log("Tentando reconectar");
+    }
 });
 socket.on("signInResponse", response => {
     console.log("signInResponse")
@@ -160,6 +169,10 @@ socket.on("signInResponse", response => {
         if (mainLobby) mainLobby.addMessage("updateUser", user)
         // ipcMain.emit("updateUser", user)
     // socket.emit("enterPool", {poolID : "lightning4", stackSize: 100})
+    } else if (response.status === 403) {
+        // show error
+        const error = response.error
+        if (mainLobby) mainLobby.addMessage("updateUserError", error)
     }
 })
 socket.on("signUpResponse", response => {
@@ -172,6 +185,9 @@ socket.on("signUpResponse", response => {
         // console.log(mainLobby)
         console.log("chamando send message")
         mainLobby.addMessage("signedUser", user)
+    } else if (response.status === 403) {
+        const error = response.error
+        if (mainLobby) mainLobby.addMessage("signedUserError", error)
     }
 })
 socket.on("enterPoolResponse", response => {
@@ -201,7 +217,29 @@ socket.on("updateGameState", gameState => {
       const player = players[i]
       const table = tables[i]
       if (player.id in gameState.players) {
-        if (table) table.addMessage("updateGameState", gameState)
+        if (table) return table.addMessage("updateGameState", gameState)
+      } 
+    }
+    console.log("didnt find the table opened, will try to find the player on the gamestate and open a new table")
+    for (const player of Object.values(gameState.players)) {
+      if (user.name === player.name) {
+        console.log("found the player on the gamestate, opening new table.")
+        if (player.tableClosed) {
+          console.log("player.tableClosed is true")
+          continue
+        }
+        if (tables.length < 4) {
+          const lastIndex = tables.push(createWindow(gameState.title + " Table 1", "table")) - 1
+          const table = tables[lastIndex]
+          console.log(table)
+          players.push(player)
+          playersID.push(player.id)
+          table.player = player
+          console.log("chamando send message 1")
+          if (table) table.addMessage("updateGameState", gameState)
+          if (table) table.addMessage("updatePlayer", table.player)
+        }
+        // socket.emit("leavePool", player)
       } 
     }
 })
@@ -288,9 +326,30 @@ socket.on("updatePools", (pools) => {
     console.log("chamando send message 2")
     if (mainLobby) mainLobby.addMessage("updatePools", pools)
 })
-socket.on("disconnect", () => {
-  app.quit()
-})
+socket.on('disconnect', () => {
+  console.log('Disconnected from server');
+  // reconnectToServer();
+});
+socket.io.on("reconnect_attempt", (attempt) => {
+  console.log("reconnect_attempt")
+  //TODO
+  //colocar janela de tentativa de reconexao (aviso ao usuario e animacao de loading)
+  // ...
+});
+socket.io.on("reconnect", (attempt) => {
+  console.log("reconnect")
+  //TODO
+  //tirar janela de tentativa de reconexao e deixar tudo atualizado para o usuario
+  // ...
+});
+socket.io.on("reconnect_failed", () => {
+  //TODO 
+  //colocar janela de falha de conexao e abrir a chamada de conexao manual.
+  console.log("reconnect_failed")
+  // ...
+});
+
+
 
 // socket.send("SIGN_IN;ALEXANDER;123456")
 
@@ -314,6 +373,10 @@ ipcMain.on('focusOnWindow', (event) => {
   win = BrowserWindow.fromWebContents(event.sender)
   if (!win) return
   win.showAndFocus()
+});
+ipcMain.on('playSound', (event, soundFile) => {
+  console.log('playSound: ' + path.join(process.resourcesPath, soundFile))
+  sound.play(path.join(process.resourcesPath, soundFile), 1)
 });
 ipcMain.on('sitoutUpdate', (event, data) => {
   console.log("sitoutUpdate")
@@ -467,12 +530,14 @@ ipcMain.on('close-window', (event) => {
         if (response.response === 0) {
           // Destroy the window to ensure that it is closed
           for (let i = tables.length - 1; i >= 0 ; i--) {
+            console.log("leavePool player: " + players[i].id)
+            console.log(players[i])
             socket.emit("leavePool", players[i])
             tables.splice(i,1)
             players.splice(i,1)
             playersID.splice(i,1)
           }
-          socket.disconnect()
+          // socket.disconnect()
           app.quit()
       // mainWindow.destroy();
         }

@@ -8,7 +8,7 @@
     "fastify-postgres": "^3.7.0",
     "fastify-socket.io": "^4.0.0",
     "pg": "^8.11.3",
-    "redis": "^4.6.8",
+    "redis": "^4.6.10",
     "socket.io": "^4.7.2",
     "socket.io-client": "^4.7.2",
     "uuid": "^9.0.1",
