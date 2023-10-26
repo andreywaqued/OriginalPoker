@@ -14,7 +14,7 @@ class Logger {
         if (typeof text === "object") text = JSON.stringify(text)
         let logString = `${new Date().toISOString()} - ${this.ownerFile} - ${type} - ${local}: ${text}\n`
         console.log(logString)
-        fs.appendFile(`${this.folder}/log${new Date().getUTCMonth()+1}-${new Date().getUTCDate()}-${new Date().getUTCFullYear()}.txt`, logString, (err) => {
+        fs.appendFile(`${this.folder}/log${new Date().getUTCMonth()+1}-${new Date().getUTCDate()}-${new Date().getUTCFullYear()}.log`, logString, (err) => {
             if (err) {
                 console.error('Error appending to log file:', err);
             }
