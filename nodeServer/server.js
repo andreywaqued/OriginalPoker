@@ -271,12 +271,24 @@ socketManager.on('connection', (socket) => {
   socket.on("leavePool", (player) => {
     logger.log(`received leavePool: ${player.name} ${player.poolID}`)
     const user = usersConnected[player.userID]
+    if (!user) {
+      logger.log("user not find, something went wrong")
+      logger.log(player)
+      logger.log(usersConnected)
+      return
+    }
     if (socket.id != user.socketID) return logger.log("socket mismatch on leavepool")
     return playerPoolManager.leavePool(player, true)
   })
   socket.on("parseAction", (data) => {
     logger.log(`received parseAction: ${data.player.name} ${data.action}`)
     const user = usersConnected[data.player.userID]
+    if (!user) {
+      logger.log("user not find, something went wrong")
+      logger.log(data.player)
+      logger.log(usersConnected)
+      return
+    }
     if (socket.id != user.socketID) return logger.log("socket mismatch on parseAction")
     return playerPoolManager.tableManager.parseAction(socket, data.player, data.action)
   })
