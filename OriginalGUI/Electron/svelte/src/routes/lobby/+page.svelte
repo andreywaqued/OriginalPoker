@@ -791,12 +791,12 @@
                 }
                 td {
                     height: 2.4em;
-                    .positive {
-                        color: #2bb839;
-                    }
-                    .negative {
-                        color: #b82b2b;
-                    }
+                }
+                .ispositive {
+                    color: #2bb839;
+                }
+                .isnegative {
+                    color: #b82b2b;
                 }
                 .pulse {
                   $from: rgb(49, 49, 49);
@@ -1177,7 +1177,7 @@
                                             <td>{created_on.split('T')[0]}</td>
                                             <td>{created_on.split('T')[1]}</td>
                                             <td>{source}</td>
-                                            <td style={amount > 0 ? "color: green;" : "color: red;"}>{amount > 0 ? `+${amount}` : amount}</td>
+                                            <td class:ispositive={amount >= 0} class:isnegative={amount < 0}>{amount > 0 ? "+" : ""}{amount}</td>
                                         </tr>
                                     {/each}
                                 {:else}
