@@ -213,7 +213,6 @@ socketManager.on('connection', (socket) => {
     console.log(userId);
 
     // Armazenar informações para reconectar o usuário à pool
-    const poolsToReconnect = [];
     for (let i = 0; i < socket.user.playerIDs.length; i++) {
         const playerID = socket.user.playerIDs[i];
         const poolID = socket.user.poolIDs[i];

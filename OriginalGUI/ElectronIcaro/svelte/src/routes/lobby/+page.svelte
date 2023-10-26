@@ -1,4 +1,5 @@
 <script >
+    import { goto } from '$app/navigation';
     export const ssr = false;
 	import Ads from "$lib/Ads.svelte";
 	import Login from "$lib/Login.svelte";
@@ -133,6 +134,11 @@
             window.api.send("disconnect-socket");
         }
     }
+
+    function navigateToChooseAvatar() {
+        goto('/choose-avatar');
+    }
+
 </script>
 
 <style lang="scss">
@@ -808,7 +814,7 @@
                     </g>
                 </svg></div>
                 <div class="player">
-                    <div class="playerAvatar" style={cssVarStyles}></div>
+                    <div class="playerAvatar" style={cssVarStyles} on:click={navigateToChooseAvatar}></div>
                     <div class="playerName"><span>{userName}</span></div>
                 </div>
                 <div class="cashier">
