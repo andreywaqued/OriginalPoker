@@ -274,6 +274,7 @@ class PlayerPoolManager {
         // logger.log(`${rebuyAmount} <= ${pool.maxBuyIn} : ${rebuyAmount <= pool.maxBuyIn}`)
         if (player.stackSize.plus(rebuyAmount).greaterThan(pool.maxBuyIn)) rebuyAmount = new Decimal(pool.maxBuyIn).minus(player.stackSize)
         logger.log("updated rebuy Amount :" + rebuyAmount)
+        if (player.askingRebuy) player.askingRebuy = false //try only once per request
         // if (rebuyAmount <= 0) {
         //     //send him back into the pool as he cant make any rebuy
         //     logger.log("rebuy <= 0")
