@@ -10,9 +10,9 @@ class Logger {
             }
         });
     }
-    log(text, type="info", local="undefined") {
+    log(text, type="INFO", local=undefined) {
         if (typeof text === "object") text = JSON.stringify(text)
-        let logString = `${new Date().toISOString()} - ${this.ownerFile} - ${type} - ${local}: ${text}\n`
+        let logString = `${new Date().toISOString()} - ${type} - ${this.ownerFile}${local? " - " + local : ""}: ${text}\n`
         console.log(logString)
         fs.appendFile(`${this.folder}/log${new Date().getUTCMonth()+1}-${new Date().getUTCDate()}-${new Date().getUTCFullYear()}.log`, logString, (err) => {
             if (err) {
