@@ -306,7 +306,6 @@ class PlayerPoolManager {
                 //     logger.log(result)
                 //     client.release();
                 // });
-                player.askingRebuy = false
                 player.rebuyAmount = new Decimal(0)
                 player.isSitout = false
                 socket.emit("updateUserInfo", { user : user, status: 200})
@@ -316,7 +315,6 @@ class PlayerPoolManager {
                 return this.reEnterPool(player)
             }
             logger.log("rebuy amount <= 0")
-            player.askingRebuy = false
             player.rebuyAmount = new Decimal(0)
             player.isSitout = false
         }

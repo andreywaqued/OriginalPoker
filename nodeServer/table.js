@@ -450,6 +450,7 @@ class Table {
         logger.log("validateAction 8")
         this.prepareNextPlayerTurn()
         if (playerSocket) playerSocket.emit("actionResponse", {message: `action : {action.type:${action.type}, action.amount:${action.amount}} accepted`, status:200})
+        return true
     }
     evaluateHand() {
         logger.log("evaluateHand()")
@@ -884,7 +885,8 @@ class Table {
                 if (action.amount.greaterThan(0)) this.currentHand.handHistory += `${action.playerName}: ${action.type} ${action.amount}\n`   
             }
             else if (action.pot != undefined) {
-                this.currentHand.handHistory += `\nPotIndex ${action.pot} - PotSize: ${action.potSize} WINNERS: ${action.winners}\n`
+                if (action.winners.length > 1) this.currentHand.handHistory += `\nPot ${action.pot} - Amount: ${action.potSize} Winners: ${action.winners}\n`
+                this.currentHand.handHistory += `\nPot ${action.pot} - Amount: ${action.potSize} Winner: ${action.winners}\n`
             }
         })
         logger.log("updating player hand history arrays")
