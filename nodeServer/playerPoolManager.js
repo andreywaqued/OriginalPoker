@@ -323,7 +323,7 @@ class PlayerPoolManager {
         // logger.log(pool)
         logger.log(player.stackSize)
         logger.log(user.balance)
-        return this.reEnterPool(player)
+        if (!player.tableID) return this.reEnterPool(player)
     }
     leavePool(playerFromClient, tableClosed = false) {
         logger.log("leavePool()")
