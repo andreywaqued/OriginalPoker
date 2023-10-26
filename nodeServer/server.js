@@ -1,6 +1,8 @@
 const fastify = require('fastify')({ logger: true });
 const socketManager = require('socket.io')(fastify.server);
 const Decimal = require('decimal.js');
+const Logger = require("./logger")
+const logger = new Logger("Server")
 //docker acess
 // fastify.register(require('@fastify/postgres'), {
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
@@ -25,7 +27,7 @@ const User = require('./user');
 // const TableManager = require('./tableManager')
 // const { Worker } = require('worker_threads');
 fastify.addHook('onReady', async () => {
-  console.log("connected")
+  logger.log("connected")
   // const client = await fastify.pg.connect()
   // await fastify.pg.query("DROP TABLE users")
   // await fastify.pg.query("DROP TABLE hands")
@@ -40,7 +42,7 @@ fastify.addHook('onReady', async () => {
 })
 //COMENTEI PQ NAO TA FUNCIONANDO
 // fastify.addHook('onClose', async () => {
-//   console.log("onClose")
+//   logger.log("onClose")
 //   //return the money to the players that were waiting to leave the pool
 //   Object.keys(PlayerPoolManager.sockets).forEach((socketID)=>{
 //     PlayerPoolManager.sockets[socketID].disconnect()
@@ -60,13 +62,13 @@ disconnectedPlayers = {}
 usersConnected = {}
 playerPoolManager = new PlayerPoolManager(socketManager, fastify, usersConnected)
 async function tryReconnect(socket, user) {
-  console.log("tryReconnect");
-    console.log(user);
+  logger.log("tryReconnect");
+    logger.log(user);
     let userRecovered = usersConnected[user.id]
     if (!userRecovered) {
       userRecovered = await User.getUserFromDB(user.name, fastify.pg);
     }
-    if (!userRecovered) return console.log("user is undefined")
+    if (!userRecovered) return logger.log("user is undefined")
     socket.userID = userRecovered.id
     userRecovered.socketID = socket.id
     usersConnected[userRecovered.id] = userRecovered
@@ -76,18 +78,18 @@ async function tryReconnect(socket, user) {
     // Recuperar os jogadores desconectados do usuário
     for (const player of Object.values(userRecovered.players)) {
       if (!player) {
-        console.log("player is null/undefined")
+        logger.log("player is null/undefined")
         continue
       }
       if (player.tableClosed) {
-        console.log("player.tableClosed is true, doesnt need to send info anymore")
+        logger.log("player.tableClosed is true, doesnt need to send info anymore")
         continue
       }
-      console.log("reconnecting playerName: " + player.name + " at table: " + player.tableID)
+      logger.log("reconnecting playerName: " + player.name + " at table: " + player.tableID)
       player.socketID = socket.id;
 
       // if (!player.isDisconnected) {
-      //   console.log("player is not disconnected")
+      //   logger.log("player is not disconnected")
       //   continue
       // }
       player.tableClosed = false;
@@ -95,19 +97,19 @@ async function tryReconnect(socket, user) {
       // player.isSitout = false;
       const table = playerPoolManager.tableManager.tables[player.poolID][player.tableID];
       if (!table) {
-        console.log("table is undefined, sending empty table");
+        logger.log("table is undefined, sending empty table");
         playerPoolManager.sendEmptyTable(player)
         playerPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
         continue
       }
       if (table.socketsByUserID[player.userID]) table.socketsByUserID[player.userID] = socket //check if is not undefined, and then change it on the table
       if (!table.broadcastHandState(player.id)) {
-        console.log("failed to broadcast hand state, sending empty table.")
+        logger.log("failed to broadcast hand state, sending empty table.")
         playerPoolManager.sendEmptyTable(player)
         playerPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
         // playerPoolManager.leavePool(socket, player, true)
         // socket.emit("closeTable", player.id)
-        // console.log("closing table, because player is not there anymore.")
+        // logger.log("closing table, because player is not there anymore.")
         continue
       }
     }
@@ -115,12 +117,12 @@ async function tryReconnect(socket, user) {
 }
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
 // tableManager.test()
-console.log("starting")
+logger.log("starting")
 fastify.get('/users', async (request, reply) => {
   // const client = await fastify.pg.connect();
   const { rows } = await fastify.pg.query('SELECT * FROM users');
   // client.release();
-  console.log(rows)
+  logger.log(rows)
   return rows;
 });
 fastify.get('/usersConnected', async (request, reply) => {
@@ -130,41 +132,41 @@ fastify.get('/hands', async (request, reply) => {
   // const client = await fastify.pg.connect();
   const { rows } = await fastify.pg.query('SELECT * FROM hands');
   // client.release();
-  console.log(rows)
+  logger.log(rows)
   return rows;
 });
 fastify.get('/transactions', async (request, reply) => {
   // const client = await fastify.pg.connect();
   const { rows } = await fastify.pg.query('SELECT * FROM moneyTransactions');
   // client.release();
-  console.log(rows)
+  logger.log(rows)
   return rows;
 });
 fastify.get('/addchips', async (request, reply) => {
-  console.log(request.query)
+  logger.log(request.query)
   const userid = parseInt(request.query.user)
   const chips = new Decimal(request.query.chips)
   // const client = await fastify.pg.connect();
   const result = await fastify.pg.query(`UPDATE users SET balance = balance + ${chips} WHERE userid = ${userid}; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${userid}, ${chips}, 'ORIGINAL CASHIER')`);
   // client.release();
   const user = usersConnected[userid]
-  if (!user) return console.log("user undefined")
+  if (!user) return logger.log("user undefined")
   user.balance = user.balance.plus(chips)
   const socket = playerPoolManager.socketsByUserID[userid]
-  if (!socket) return console.log("socket undefined")
+  if (!socket) return logger.log("socket undefined")
   socket.emit("updateUserInfo", { user : user, status: 200})
-  // console.log("socketManager.sockets.sockets")
-  // console.log(socketManager.sockets.sockets)
+  // logger.log("socketManager.sockets.sockets")
+  // logger.log(socketManager.sockets.sockets)
   // socketManager.sockets.sockets.forEach((socket, socketID) => {
-  //   console.log(socketID)
-  //   console.log(socket)
+  //   logger.log(socketID)
+  //   logger.log(socket)
   //   if (socket.user) {
-  //     console.log("updating chips on player " + socket.user.name)
+  //     logger.log("updating chips on player " + socket.user.name)
   //     if (socket.user.id === userid) socket.user.balance = socket.user.balance.plus(chips)
   //     socket.emit("updateUserInfo", { user : socket.user, status: 200})
   //   }
   // })
-  console.log(result)
+  logger.log(result)
   return result;
 });
 fastify.get('/pools', async (request, reply) => {
@@ -172,7 +174,7 @@ fastify.get('/pools', async (request, reply) => {
 });
 fastify.get('/tables', async (request, reply) => {
   let tablesMap = {}
-  console.log(playerPoolManager.tableManager.tables)
+  logger.log(playerPoolManager.tableManager.tables)
   Object.values(playerPoolManager.tableManager.tables).forEach((pool) => {
     Object.values(pool).forEach((table) => {
       tablesMap[table.id] = {
@@ -191,7 +193,7 @@ fastify.get('/tables', async (request, reply) => {
 //   const { redis } = fastify
 //   let response = ""
 //   redis.set(`user${user}`, name, (err) => {
-//     console.log(err || "ok")
+//     logger.log(err || "ok")
 //     response = err || "ok"
 //   })
 //   return { response: response}
@@ -203,7 +205,7 @@ fastify.get('/tables', async (request, reply) => {
 //   User.createAndLogin(username, password).then(newUser => {
 //     user = newUser
 //   }).catch (error => {
-//     console.log(error)
+//     logger.log(error)
 //   })
 // });
 // fastify.get('/get', async (request, reply) => {
@@ -211,122 +213,122 @@ fastify.get('/tables', async (request, reply) => {
 //   const { redis } = fastify
 //   let response = ""
 //   redis.get(`user${user}`, (err, val) => {
-//     console.log(err || JSON.stringify(val))
+//     logger.log(err || JSON.stringify(val))
 //     response = err || JSON.stringify(val)
 //   })  
 //   return { response: response }
 // });
 
 socketManager.on('connection', (socket) => {
-  console.log('New connection:', socket.id);
+  logger.log('New connection:', socket.id);
   socket.join("lobby")
   if (socket.recovered) {
     // recovery was successful: socket.id, socket.rooms and socket.data were restored
-    console.log("socket recovered: " + socket.id)
-    console.log(socket.userID)
+    logger.log("socket recovered: " + socket.id)
+    logger.log(socket.userID)
   } else {
-    console.log('brand new connection: ' + socket.id);
+    logger.log('brand new connection: ' + socket.id);
     // new or unrecoverable session
   }
 
-  // console.log(socket)
+  // logger.log(socket)
   socket.on("signIn", (data) => {
     const {user, password} = data
-    console.log(`received signin: ${user}`)
+    logger.log(`received signin: ${user}`)
     User.signIn(user, password, fastify.pg).then(async user => {
-      console.log("signed user")
-      console.log(user)
+      logger.log("signed user")
+      logger.log(user)
       user = await tryReconnect(socket, user)
       // socket.userID = user.id
       // user.socketID = socket.id
       // usersConnected[user.id] = user
       // playerPoolManager.socketsByUserID[user.id] = socket
-      console.log("signIn 1")
+      logger.log("signIn 1")
       socket.emit("signInResponse", {response : "user logged in", status: 200, user})
-      console.log("signIn 2")
+      logger.log("signIn 2")
       socket.emit("updatePools", playerPoolManager.pools)
     }).catch((err) => {
-      console.log(err)
+      logger.log(err)
       socket.emit("signInResponse", {response : "failed to log in", status: 403, error: err.message})
     })
   })
 
   socket.on("signUp", (data) => {
     const {user, password, email} = data
-    console.log(`received signup: ${user} ${email}`)
+    logger.log(`received signup: ${user} ${email}`)
     User.signUp(user, password, email, fastify.pg).then(()=>{
       socket.emit("signUpResponse", {response : "user signed up", status: 200})
     }).catch((err) => {
-      console.log(err)
+      logger.log(err)
       socket.emit("signUpResponse", {response : "failed to sign up", status: 403, error: err.message})
     })
   })
 
   socket.on("enterPool", (data) => {
-    console.log(`received enterPool: ${data.poolID} ${data.stackSize}`)
+    logger.log(`received enterPool: ${data.poolID} ${data.stackSize}`)
     return playerPoolManager.enterPool(socket, data.poolID, data.stackSize)
   })
   socket.on("leavePool", (player) => {
-    console.log(`received leavePool: ${player.name} ${player.poolID}`)
+    logger.log(`received leavePool: ${player.name} ${player.poolID}`)
     const user = usersConnected[player.userID]
-    if (socket.id != user.socketID) return console.log("socket mismatch on leavepool")
+    if (socket.id != user.socketID) return logger.log("socket mismatch on leavepool")
     return playerPoolManager.leavePool(player, true)
   })
   socket.on("parseAction", (data) => {
-    console.log(`received parseAction: ${data.player.name} ${data.action}`)
+    logger.log(`received parseAction: ${data.player.name} ${data.action}`)
     const user = usersConnected[data.player.userID]
-    if (socket.id != user.socketID) return console.log("socket mismatch on parseAction")
+    if (socket.id != user.socketID) return logger.log("socket mismatch on parseAction")
     return playerPoolManager.tableManager.parseAction(socket, data.player, data.action)
   })
   socket.on("tryRebuy", (data) => {
-    console.log(`received rebuyAction: ${data.playerID} ${data.poolID} ${data.stackSize}`)
+    logger.log(`received rebuyAction: ${data.playerID} ${data.poolID} ${data.stackSize}`)
     return playerPoolManager.rebuy(data.playerID, data.poolID, data.stackSize)
   })
   socket.on("sitoutUpdate", (data) => {
-    console.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
+    logger.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
     return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
   })
   socket.on('getUserTx', async () => {
     // const client = await fastify.pg.connect();
     const { rows } = await fastify.pg.query(`SELECT * FROM moneyTransactions WHERE userid = ${socket.userID} ORDER BY created_on DESC`);
     // client.release();
-    console.log(`received request getUserTx: ${socket.userID}`)
-    // console.log(rows)
+    logger.log(`received request getUserTx: ${socket.userID}`)
+    // logger.log(rows)
     return socket.emit('updateUserTx', rows)
   })
   
 
 
   socket.on('message', (data) => {
-    if (data.includes("1000")) console.log(`Received message: ${data}`)
-    // console.log(`Received message: ${data}`);
+    if (data.includes("1000")) logger.log(`Received message: ${data}`)
+    // logger.log(`Received message: ${data}`);
   });
   socket.on('reconnectPlayer', async (user) => {
-    console.log("reconnectPlayer")
+    logger.log("reconnectPlayer")
     await tryReconnect(socket, user)
   });
   // socket.on('disconnecting', (reason) => {
-  //   console.log(`User disconnecting: ${socket.id}`);
-  //   console.log(reason)
-  //   // console.log(socket)
-  //   console.log(socket.connected)
+  //   logger.log(`User disconnecting: ${socket.id}`);
+  //   logger.log(reason)
+  //   // logger.log(socket)
+  //   logger.log(socket.connected)
   //   socket.leave("lobby")
-  //   if (!socket.user) return console.log("player didnt loggedin")
-  //   console.log(JSON.stringify(socket.user))
+  //   if (!socket.user) return logger.log("player didnt loggedin")
+  //   logger.log(JSON.stringify(socket.user))
   //   const userID = socket.user.id
   //   disconnectedPlayers[userID] = []
   //   for (let i = 0; i< socket.user.playerIDs.length; i++) {
   //     const playerID = socket.user.playerIDs[i]
   //     const poolID = socket.user.poolIDs[i]
-  //     console.log("player disconnected: " + playerID + " - " + poolID)
+  //     logger.log("player disconnected: " + playerID + " - " + poolID)
   //     let player = playerPoolManager.playersByPool[poolID][playerID];
-  //     if (!player) return console.log("player is undefined")
+  //     if (!player) return logger.log("player is undefined")
   //     player.tableClosed = true;
   //     player.isDisconnected = true;
   //     disconnectedPlayers[userID].push({playerID, poolID})
       
 
-  //     console.log("player disconnected: " + playerID + " - " + poolID)
+  //     logger.log("player disconnected: " + playerID + " - " + poolID)
 
   //     // playerPoolManager.leavePool(socket, {id:playerID, poolID: poolID}, true)
   //   }
@@ -357,12 +359,12 @@ fastify.listen({
 // worker.on('message', (message) => {
 //   const { redis } = fastify
 //   redis.set("message", message, (err) => {
-//     console.log(err || "ok")
+//     logger.log(err || "ok")
 //   })
 //   redis.get("message", (err, val) => {
-//     console.log(err || JSON.stringify(val))
+//     logger.log(err || JSON.stringify(val))
 //   })
-//   console.log(`Main thread received message: ${JSON.stringify(message)}`);
+//   logger.log(`Main thread received message: ${JSON.stringify(message)}`);
 
 // });
 

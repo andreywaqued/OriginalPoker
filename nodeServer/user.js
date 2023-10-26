@@ -1,8 +1,10 @@
 const Decimal = require("decimal.js");
+const Logger = require("./logger")
+const logger = new Logger("User")
 //the user class, responsible for handling the object associated with a login
 class User {
     static async signIn(name, password, db) {
-        console.log("signIn");
+        logger.log("signIn");
         const user = new User();
         const userData = await fetchUserWithPasswordFromDB(name, password, db);
         if (userData) {
@@ -26,7 +28,7 @@ class User {
      *
      */
     static async signUp(name, password, email, db) {
-        console.log("signUp");
+        logger.log("signUp");
         const err = await hasInvalidInputs(name, password, email, db)
         if (err) throw new Error(err)
         const avatar = Math.floor(Math.random() * 32)
@@ -87,7 +89,7 @@ async function hasInvalidInputs(username, password, email, db) {
 
 async function saveUserToDB(name, password, email, avatar, db) {
     // Simulate saving a new user to the database
-    console.log("saveUserToDB")
+    logger.log("saveUserToDB")
     // const client = await db.connect();
     const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES(
                                     '${name}',
@@ -98,29 +100,29 @@ async function saveUserToDB(name, password, email, avatar, db) {
                                     RETURNING *`
                                     );
     if (rows.length>0) {
-        console.log("inserted user into db")
-        console.log(rows[0])
+        logger.log("inserted user into db")
+        logger.log(rows[0])
         return rows[0]
     }
-    console.log("failed to insert user")
+    logger.log("failed to insert user")
     // // client.release();
     // if (rowCount > 0) {
-    //     console.log("inserted user into db")
+    //     logger.log("inserted user into db")
     //     return true
     // }
-    // console.log("failed to insert user")
+    // logger.log("failed to insert user")
     // return false
 }
 
 async function fetchUserFromDB(name, db) {
-    console.log("fetchUserFromDB")
+    logger.log("fetchUserFromDB")
     // const client = await db.connect();
     const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
     // client.release();
     if (rows.length > 0) {
-        console.log("fetchUserFromDB 1")
+        logger.log("fetchUserFromDB 1")
         const user = rows[0] ; // Return user id
-        console.log(user)
+        logger.log(user)
         // const client = await db.connect();
         await db.query(`UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE username = '${name}'`);
         // client.release();
@@ -137,16 +139,16 @@ async function fetchUserFromDB(name, db) {
 }
 
 async function fetchUserWithPasswordFromDB(name, password, db) {
-    console.log("fetchUserWithPasswordFromDB")
+    logger.log("fetchUserWithPasswordFromDB")
     const { rows } = await db.query(`UPDATE users
                                     SET last_login = CURRENT_TIMESTAMP
                                     WHERE username = '${name}' AND password = crypt('${password}', password)
                                     RETURNING *;
                                     `);
     if (rows.length > 0) {
-        console.log("fetchUserWithPasswordFromDB 1")
+        logger.log("fetchUserWithPasswordFromDB 1")
         const user = rows[0] ; // Return user id
-        console.log(user)
+        logger.log(user)
         // const client = await db.connect();
         // client.release();
         return {

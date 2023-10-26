@@ -29,14 +29,23 @@ let tableInfo = {
 // let tableInfoSerialized = JSON.stringify(tableInfo)
 
 
-client.hSet("tableInfo2", "tableInfo", JSON.stringify(tableInfo)).then(()=>{
-    client.hGet("tableInfo2", "tableInfo").then((value)=>{
-        const tableInfo = JSON.parse(value)
-        console.log(tableInfo)
-        console.log(tableInfo.players.player1)
-        // console.log(parseFloat(value.adssda))
-    })
+client.hGet("table:5d0581c3-1804-4e1a-aa48-26d3d0d7df65", "tableInfo").then((value)=>{
+    const tableInfo = JSON.parse(value)
+    console.log(tableInfo)
+    // console.log(parseFloat(value.adssda))
 })
+client.hGet("table:5d0581c3-1804-4e1a-aa48-26d3d0d7df65", "gameState").then((value)=>{
+    const gameState = JSON.parse(value)
+    console.log(gameState)
+    // console.log(parseFloat(value.adssda))
+})
+client.hGet("table:5d0581c3-1804-4e1a-aa48-26d3d0d7df65", "players").then((value)=>{
+    const players = JSON.parse(value)
+    console.log(players)
+    // console.log(parseFloat(value.adssda))
+})
+// client.hSet("tableInfo2", "tableInfo", JSON.stringify(tableInfo)).then(()=>{
+// })
 // client.hSet("tableInfo2", "players", JSON.stringify(playerInfo)).then(()=>{
 //     // client.hGetAll("testObj1234").then((value)=>{
 //     //     console.log(value)
