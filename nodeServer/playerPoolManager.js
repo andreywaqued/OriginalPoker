@@ -282,7 +282,6 @@ class PlayerPoolManager {
             logger.log("rebuy 1")
             const table = this.tableManager.tables[poolID][player.tableID]
             if (table) {
-                logger.log(table)
                 if (table.currentHand.handIsBeingPlayed && !player.hasFolded) {
                     player.askingRebuy = true
                     player.rebuyAmount = rebuyAmount
