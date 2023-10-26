@@ -209,7 +209,7 @@ class PlayerPoolManager {
         this.sendEmptyTable(player)
         if (player.askingRebuy) {
             logger.log("returning rebuy")
-            return this.tableManager.playerPoolManager.rebuy(player.id, player.poolID, player.rebuyAmount)
+            return this.rebuy(player.id, player.poolID, player.rebuyAmount)
         }
         if (player.stackSize.equals(0)) {
             logger.log(`player.stackSize: ${player.stackSize}`)
@@ -250,10 +250,14 @@ class PlayerPoolManager {
         logger.log(poolID)
         logger.log(rebuyAmount)
         const pool = this.pools[poolID]
-        const player = this.playersByPool[poolID][playerID]
-        const socket = this.socketsByUserID[player.userID]
         if (!pool) return logger.log("pool invalid")
-        if (!player) return logger.log("player invalid")
+        const player = this.playersByPool[poolID][playerID]
+        if (!player) {
+            logger.log("player invalid", "ERROR", "rebuy player undefined")
+            logger.log(Object.keys(this.playersByPool), "ERROR", "rebuy player undefined")
+            return
+        }
+        const socket = this.socketsByUserID[player.userID]
         if (!socket) return logger.log("socket invalid")
         if (!player.askingRebuy) {
             if (!typeof(rebuyAmount) === "number") return logger.log("amount invalid")
