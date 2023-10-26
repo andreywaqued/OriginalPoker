@@ -886,7 +886,7 @@ class Table {
             }
             else if (action.pot != undefined) {
                 if (action.winners.length > 1) this.currentHand.handHistory += `\nPot ${action.pot} - Amount: ${action.potSize} Winners: ${action.winners}\n`
-                this.currentHand.handHistory += `\nPot ${action.pot} - Amount: ${action.potSize} Winner: ${action.winners}\n`
+                if (action.winners.length === 1) this.currentHand.handHistory += `\nPot ${action.pot} - Amount: ${action.potSize} Winner: ${action.winners}\n`
             }
         })
         logger.log("updating player hand history arrays")
