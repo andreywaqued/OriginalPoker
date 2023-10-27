@@ -1,4 +1,5 @@
 const fs = require('fs')
+// const request = require("axios") //boilerplate for scaling the log service
 
 class Logger {
     constructor(ownerFile) {
@@ -17,13 +18,23 @@ class Logger {
             console.log(text)
             console.log(err)
         }
-        let logString = `${new Date().toISOString()} - ${type} - ${this.ownerFile}${local? " - " + local : ""}: ${text}\n`
+        let logString = `${new Date().toISOString()} - ${type} - ${this.ownerFile}${local? " - " + local : ""}: ${text}`
         console.log(logString)
-        fs.appendFile(`${this.folder}/log${new Date().getUTCMonth()+1}-${new Date().getUTCDate()}-${new Date().getUTCFullYear()}.log`, logString, (err) => {
+        fs.appendFile(`${this.folder}/log${new Date().getUTCMonth()+1}-${new Date().getUTCDate()}-${new Date().getUTCFullYear()}.log`, logString+"\n", (err) => {
             if (err) {
                 console.error('Error appending to log file:', err);
             }
         });
+        //boilerplate for scaling the log service
+        // request.post(
+        //     'http://127.0.0.1:3100/addLog', 
+        //     {logString}, 
+        //     {headers: {"Content-Type": "application/json"}}
+        // ).then(response =>{
+        //     console.log('Server Response:', response.data);
+        // }).catch(error => {
+        //     console.error('Error making request:', error);
+        // })
     }
 }
 
