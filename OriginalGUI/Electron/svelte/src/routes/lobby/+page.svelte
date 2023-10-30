@@ -80,7 +80,6 @@
                         time: d.toLocaleTimeString()
                     }]
                 })
-                console.log(userTransactions)
                 isUserTransactionsLocked = false
             })
         }
@@ -829,6 +828,14 @@
                 td {
                     height: 2.4em;
                 }
+                td.loader {
+                    width: 100%;
+                    button {
+                        margin: auto;
+                        font-weight: bold;
+                        text-decoration: underline;
+                    }
+                }
                 .ispositive {
                     color: #2bb839;
                 }
@@ -1226,9 +1233,11 @@
                                 {/each}
                                 {#if userTransactions.length % 10 === 0}
                                     <tr>
-                                        <button on:click={handleUserTransactionsOffset}>
-                                            load older transactions
-                                        </button>
+                                        <td colspan="4" class="loader">
+                                            <button on:click={handleUserTransactionsOffset}>
+                                                load more transactions
+                                            </button>
+                                        </td>
                                     </tr>
                                 {/if}
                             {:else}
