@@ -147,7 +147,11 @@ fastify.get('/addchips', async (request, reply) => {
   const userid = parseInt(request.query.user)
   const chips = new Decimal(request.query.chips)
   // const client = await fastify.pg.connect();
-  const result = await fastify.pg.query(`UPDATE users SET balance = balance + ${chips} WHERE userid = ${userid}; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${userid}, ${chips}, 'ORIGINAL CASHIER')`);
+  try {
+    await User.handleMoney(chips, userid, 'ORIGINAL CASHIER', fastify.pg);
+  } catch (err) {
+    return console.log(err)
+  }
   // client.release();
   const user = usersConnected[userid]
   if (!user) return logger.log("user undefined")
@@ -166,8 +170,7 @@ fastify.get('/addchips', async (request, reply) => {
   //     socket.emit("updateUserInfo", { user : socket.user, status: 200})
   //   }
   // })
-  logger.log(result)
-  return result;
+  return `Added $${chips} to ${user.name} that have a total of ${user.balance}`;
 });
 fastify.get('/pools', async (request, reply) => {
   return playerPoolManager.playersByPool
@@ -222,6 +225,7 @@ fastify.get('/tables', async (request, reply) => {
 socketManager.on('connection', (socket) => {
   logger.log('New connection:', socket.id);
   socket.join("lobby")
+  socket.emit("updatePools", playerPoolManager.pools)
   if (socket.recovered) {
     // recovery was successful: socket.id, socket.rooms and socket.data were restored
     logger.log("socket recovered: " + socket.id)
@@ -300,13 +304,16 @@ socketManager.on('connection', (socket) => {
     logger.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
     return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
   })
-  socket.on('getUserTx', async () => {
+  socket.on('getUserTransactions', async ({user, offset}) => {
+    console.log("getUserTransactions")
+    const u = usersConnected[user.id]
+    if (!u) return console.log("this user is not connected");
     // const client = await fastify.pg.connect();
-    const { rows } = await fastify.pg.query(`SELECT * FROM moneyTransactions WHERE userid = ${socket.userID} ORDER BY created_on DESC`);
+    logger.log(`received request getUserTransactions: userid ${socket.userID}`)
+    const txs = await User.getUserTransactionsFromDB(socket.userID, offset, fastify.pg)
     // client.release();
-    logger.log(`received request getUserTx: ${socket.userID}`)
-    // logger.log(rows)
-    return socket.emit('updateUserTx', rows)
+    // logger.log(txs)
+    return socket.emit('userTransactionsResponse', {txs, offset})
   })
   
 

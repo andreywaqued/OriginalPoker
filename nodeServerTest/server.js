@@ -78,7 +78,7 @@ fastify.get('/addchips', async (request, reply) => {
   const userid = parseInt(request.query.user)
   const chips = new Decimal(request.query.chips)
   // const client = await fastify.pg.connect();
-  const result = await fastify.pg.query(`UPDATE users SET balance = balance + ${chips} WHERE userid = ${userid}; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${userid}, ${chips}, 'ORIGINAL CASHIER')`);
+  await User.handleMoney(chips, userid, "ORIGINAL CASIHER", fastify.db)
   // client.release();
   console.log("socketManager.sockets.sockets")
   console.log(socketManager.sockets.sockets)
@@ -91,8 +91,7 @@ fastify.get('/addchips', async (request, reply) => {
       socket.emit("updateUserInfo", { user : socket.user, status: 200})
     }
   })
-  console.log(result)
-  return result;
+  return `${chips} added to ${userid}`;
 });
 fastify.get('/pools', async (request, reply) => {
   return playerPoolManager.playersByPool

@@ -141,7 +141,6 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
   
 let mainLobby
 let user
-let userTx
 app.whenReady().then( () => {
   mainLobby = createWindow("Main Lobby", "lobby")
 });
@@ -249,11 +248,11 @@ socket.on("updateUserInfo", response => {
     user = response.user
     if (mainLobby) mainLobby.addMessage("updateUser", user)
 })
-socket.on("updateUserTx", response => {
-  console.log("updateUserTx")
-  console.log(response)
-  userTx = response
-  if (mainLobby) mainLobby.addMessage("updateUserTx", userTx)
+socket.on("userTransactionsResponse", ({txs, offset}) => {
+  console.log("userTransactionsResponse")
+  console.log(txs)
+  user.transactionsUpdated += offset
+  if (mainLobby) mainLobby.addMessage("userTransactionsResponse", txs)
 })
 socket.on("updatePlayerInfo", player => {
     console.log("updatePlayerInfo")
@@ -262,6 +261,7 @@ socket.on("updatePlayerInfo", player => {
     const playerIndex = playersID.indexOf(player.id)
     const table = tables[playerIndex]
     players[playerIndex] = player
+  user.isTransactionsUpdated = false
     if (table) table.addMessage("updatePlayer", player)
 })
 socket.on("sitoutUpdate", data => {
@@ -492,9 +492,13 @@ ipcMain.on('set-window-size', (event, arg) => {
     win.setPosition(position[0], position[1]);
   }
 });
-ipcMain.on('getUserTx', () => {
-  console.log("Requesting getUserTx")
-  socket.emit('getUserTx')
+ipcMain.on('getUserTransactions', (event, offset) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!win) return
+  if (user.transactionsUpdated !== undefined) user.transactionsUpdated = 0
+  if (user.transactionsUpdated === offset) return
+  console.log("getUserTransactions")
+  socket.emit('getUserTransactions', {user, offset})
 })
 
 // Listen for window size get request

@@ -9,6 +9,7 @@ const Decimal = require('decimal.js');
 const Player = require("./player")
 const TableManager = require("./tableManager")
 const Logger = require("./logger")
+const User = require('./user');
 const logger = new Logger("PlayerPoolManager")
 // // Receive messages from the main thread
 // parentPort.on('message', (message) => {
@@ -83,8 +84,7 @@ class PlayerPoolManager {
             logger.log("log4")
             user.balance = user.balance.minus(stackSize)
             logger.log("updating balance")
-            const result = this.fastify.pg.query(`UPDATE users SET balance = balance - ${stackSize.toNumber()} WHERE username = '${user.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${user.id}, ${-stackSize.toNumber()}, '⚡ ${this.pools[poolID].gameTitle}')`);
-            logger.log(result)
+            User.handleMoney(-stackSize.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
             // this.fastify.pg.connect().then(async (client) => {
             //     logger.log("updating balance")
             //     try {
@@ -298,8 +298,7 @@ class PlayerPoolManager {
                 player.stackSize = player.stackSize.plus(rebuyAmount)
                 user.balance = user.balance.minus(rebuyAmount)
                 logger.log("updating balance")
-                const result = this.fastify.pg.query(`UPDATE users SET balance = balance - ${rebuyAmount.toNumber()} WHERE username = '${user.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${user.id}, ${-rebuyAmount.toNumber()}, '⚡ ${this.pools[poolID].gameTitle}')`);
-                logger.log(result)
+                User.handleMoney(-rebuyAmount.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
                 // this.fastify.pg.connect().then(async (client) => {
                 //     logger.log("updating balance")
                 //     const result = await client.query(`UPDATE users SET balance = balance - ${rebuyAmount.toNumber()} WHERE username = '${user.name}'`);
@@ -360,8 +359,7 @@ class PlayerPoolManager {
             logger.log("leavePool() 2 table undefined or player.tableClosed or player.tableID undefined")
             user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
             logger.log("updating balance")
-            const result = this.fastify.pg.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${player.userID}, ${player.stackSize.toNumber()}, '⚡ ${this.pools[player.poolID].gameTitle}')`);
-            logger.log(result)
+            User.handleMoney(player.stackSize.toNumber(), player.userID, `⚡ ${this.pools[player.poolID].gameTitle}`, this.fastify.pg)
             const socket = this.socketsByUserID[player.userID]
             if (socket) {
                 socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
