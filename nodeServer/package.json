@@ -1,10 +1,12 @@
 {
   "dependencies": {
+    "@fastify/cors": "^8.4.1",
     "@fastify/postgres": "^5.2.0",
     "@fastify/redis": "^6.1.1",
     "@xpressit/winning-poker-hand-rank": "^0.1.6",
     "decimal.js": "^10.4.3",
     "fastify": "^4.23.2",
+    "fastify-cors": "^6.1.0",
     "fastify-postgres": "^3.7.0",
     "fastify-socket.io": "^4.0.0",
     "pg": "^8.11.3",

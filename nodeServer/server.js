@@ -1,4 +1,8 @@
 const fastify = require('fastify')({ logger: true });
+const cors = require('@fastify/cors')
+fastify.register(cors, { 
+  // put your options here
+})
 const socketManager = require('socket.io')(fastify.server);
 const Decimal = require('decimal.js');
 const Logger = require("./logger")
@@ -8,19 +12,19 @@ const logger = new Logger("Server")
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
 // })
 //internal render acess
-fastify.register(require('@fastify/postgres'), {
-  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
-})
-fastify.register(require('@fastify/redis'), {
-  url: 'redis://red-cksjdg6nfb1c73c8tgpg:6379'
-})
-//external render acess
 // fastify.register(require('@fastify/postgres'), {
-//     connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
-//   })
-// fastify.register(require('@fastify/redis'), {
-//   url: 'rediss://red-cksjdg6nfb1c73c8tgpg:eEjoQXin0xOlVfhsOu26xy3BpIjjdgul@oregon-redis.render.com:6379'
+//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
 // })
+// fastify.register(require('@fastify/redis'), {
+//   url: 'redis://red-cksjdg6nfb1c73c8tgpg:6379'
+// })
+//external render acess
+fastify.register(require('@fastify/postgres'), {
+    connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+  })
+fastify.register(require('@fastify/redis'), {
+  url: 'rediss://red-cksjdg6nfb1c73c8tgpg:eEjoQXin0xOlVfhsOu26xy3BpIjjdgul@oregon-redis.render.com:6379'
+})
 const PlayerPoolManager = require('./playerPoolManager');
 // const TableManager = require('./tableManager');
 const User = require('./user');
@@ -32,12 +36,14 @@ fastify.addHook('onReady', async () => {
   // await fastify.pg.query("DROP TABLE users")
   // await fastify.pg.query("DROP TABLE hands")
   // await fastify.pg.query("DROP TABLE moneyTransactions")
+  // await fastify.pg.query("DROP TABLE handsByUser")
   /* add extensions */
   fastify.pg.query("CREATE EXTENSION IF NOT EXISTS pgcrypto")
   fastify.pg.query("CREATE EXTENSION IF NOT EXISTS citext")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username CITEXT UNIQUE NOT NULL,password VARCHAR ( 256 ) NOT NULL,email CITEXT UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS moneyTransactions(id serial PRIMARY KEY, userid serial NOT NULL, amount NUMERIC NOT NULL, source VARCHAR(50) NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS handsByUser(userid serial NOT NULL, handid serial NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (userid, handid))")
   // client.release()
 })
 //COMENTEI PQ NAO TA FUNCIONANDO
@@ -128,12 +134,61 @@ fastify.get('/users', async (request, reply) => {
 fastify.get('/usersConnected', async (request, reply) => {
   return usersConnected;
 });
+fastify.get('/adsCount', async (request, reply) => {
+  const { rows } = await fastify.pg.query('SELECT count(*) FROM handsByUser');
+  return rows[0];
+});
+fastify.get('/handsByUser', async (request, reply) => {
+  // const client = await fastify.pg.connect();
+  const users = {
+    "Andrey": 1,
+    "icaro": 2,
+    "Giu" : 3,
+    "Andersen": 4,
+    "sgsabioni": 5,
+    "grocha86": 6,
+    "campeaodoms": 7,
+    "Squirting": 8,
+    "sarxa": 9,
+    "gaban" : 10
+  }
+  await fastify.pg.query(`DELETE FROM hands WHERE handHistory = 'asdadsa'`);
+  const { rows } = await fastify.pg.query(`SELECT * FROM hands`);
+  rows.forEach(hand=>{
+    const handID = hand.handid
+    const created_on = hand.created_on
+    const matches = [...hand.handhistory.matchAll(/Seat \d: ([\w\d.,]+)/g)]
+    console.log(matches)
+    let insertQuery = ""
+    matches.forEach(playerMatch => {
+      const playerName = playerMatch[1]
+      const userID = users[playerName]
+      insertQuery += `INSERT INTO handsByUser(userid, handid, created_on) VALUES (${userID}, ${handID}, '${new Date(created_on).toISOString()}');`
+    } )
+    fastify.pg.query(insertQuery);
+    // return players
+    // console.log(players)
+  })
+  // return result;
+});
+fastify.get('/getUsers', async (request, reply) => {
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query(`SELECT users.userid, users.username, users.last_login, users.balance, count(*) FROM handsByUser JOIN users ON users.userid = handsByUser.userid GROUP BY users.username, users.last_login, users.balance, users.userid ORDER BY users.username ASC`)
+  return rows;
+});
 fastify.get('/hands', async (request, reply) => {
   // const client = await fastify.pg.connect();
   const { rows } = await fastify.pg.query('SELECT * FROM hands');
   // client.release();
   logger.log(rows)
   return rows;
+});
+fastify.get('/getHandsCount', async (request, reply) => {
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query('SELECT count(*) FROM hands');
+  // client.release();
+  logger.log(rows)
+  return rows[0].count;
 });
 fastify.get('/transactions', async (request, reply) => {
   // const client = await fastify.pg.connect();
@@ -266,7 +321,11 @@ socketManager.on('connection', (socket) => {
 
   socket.on("enterPool", (data) => {
     logger.log(`received enterPool: ${data.poolID} ${data.stackSize}`)
-    return playerPoolManager.enterPool(socket, data.poolID, data.stackSize)
+    try {
+      return playerPoolManager.enterPool(socket, data.poolID, data.stackSize)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on("leavePool", (player) => {
     logger.log(`received leavePool: ${player.name} ${player.poolID}`)
@@ -278,7 +337,11 @@ socketManager.on('connection', (socket) => {
       return
     }
     if (socket.id != user.socketID) return logger.log("socket mismatch on leavepool")
-    return playerPoolManager.leavePool(player, true)
+    try {
+      return playerPoolManager.leavePool(player, true)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on("parseAction", (data) => {
     logger.log(`received parseAction: ${data.player.name} ${data.action}`)
@@ -290,15 +353,27 @@ socketManager.on('connection', (socket) => {
       return
     }
     if (socket.id != user.socketID) return logger.log("socket mismatch on parseAction")
-    return playerPoolManager.tableManager.parseAction(socket, data.player, data.action)
+    try {
+      return playerPoolManager.tableManager.parseAction(socket, data.player, data.action)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on("tryRebuy", (data) => {
     logger.log(`received rebuyAction: ${data.playerID} ${data.poolID} ${data.stackSize}`)
-    return playerPoolManager.rebuy(data.playerID, data.poolID, data.stackSize)
+    try {
+      return playerPoolManager.rebuy(data.playerID, data.poolID, data.stackSize)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on("sitoutUpdate", (data) => {
     logger.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
-    return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
+    try {
+      return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on('getUserTx', async () => {
     // const client = await fastify.pg.connect();
@@ -317,7 +392,11 @@ socketManager.on('connection', (socket) => {
   });
   socket.on('reconnectPlayer', async (user) => {
     logger.log("reconnectPlayer")
-    await tryReconnect(socket, user)
+    try {
+      await tryReconnect(socket, user)
+    } catch (error) {
+      logger.log(error)
+    }
   });
   // socket.on('disconnecting', (reason) => {
   //   logger.log(`User disconnecting: ${socket.id}`);
