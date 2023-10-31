@@ -7,7 +7,7 @@
         console.log("updateUsers()")
         // users = [{username: "asd"}]
         // return users
-        const response = await fetch('https://originaltrial:10000/getUsers')
+        const response = await fetch('https://originaltrial.onrender.com/getUsers')
         if (response.ok) {
             const data = await response.json()
             users = data
@@ -24,7 +24,7 @@
         console.log("updateHands()")
         // users = [{username: "asd"}]
         // return users
-        const response = await fetch('https://originaltrial:10000/getHandsCount')
+        const response = await fetch('https://originaltrial.onrender.com/getHandsCount')
         if (response.ok) {
             const data = await response.json()
             handsPlayed = data
@@ -43,7 +43,7 @@
         console.log(userid)
         const chipsValue = document.getElementById("addChipsInput"+index).value
         if (chipsValue) {
-            const response = await fetch(`https://originaltrial:10000/addchips?user=${userid}&chips=${chipsValue}`)
+            const response = await fetch(`https://originaltrial.onrender.com/addchips?user=${userid}&chips=${chipsValue}`)
             if (response.ok) {
                 updateUsers()
             } else {
