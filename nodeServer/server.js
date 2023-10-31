@@ -1,4 +1,8 @@
 const fastify = require('fastify')({ logger: true });
+const cors = require('@fastify/cors')
+fastify.register(cors, { 
+  // put your options here
+})
 const socketManager = require('socket.io')(fastify.server);
 const Decimal = require('decimal.js');
 const Logger = require("./logger")
@@ -32,12 +36,14 @@ fastify.addHook('onReady', async () => {
   // await fastify.pg.query("DROP TABLE users")
   // await fastify.pg.query("DROP TABLE hands")
   // await fastify.pg.query("DROP TABLE moneyTransactions")
+  // await fastify.pg.query("DROP TABLE handsByUser")
   /* add extensions */
   fastify.pg.query("CREATE EXTENSION IF NOT EXISTS pgcrypto")
   fastify.pg.query("CREATE EXTENSION IF NOT EXISTS citext")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username CITEXT UNIQUE NOT NULL,password VARCHAR ( 256 ) NOT NULL,email CITEXT UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS moneyTransactions(id serial PRIMARY KEY, userid serial NOT NULL, amount NUMERIC NOT NULL, source VARCHAR(50) NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS handsByUser(userid serial NOT NULL, handid serial NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (userid, handid))")
   // client.release()
 })
 //COMENTEI PQ NAO TA FUNCIONANDO
@@ -115,6 +121,14 @@ async function tryReconnect(socket, user) {
     }
     return userRecovered
 }
+
+async function changeAvatar(socket, user, avatar) {
+  User.getChangeAvatarUserFromDB(user, avatar, fastify.pg).then(()=>{
+    console.log("updated avatar");
+  });
+  user = await User.getUserFromDB(user, fastify.pg);
+  socket.emit("updateUserInfo", {user: user, status: 200})
+}
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
 // tableManager.test()
 logger.log("starting")
@@ -128,12 +142,61 @@ fastify.get('/users', async (request, reply) => {
 fastify.get('/usersConnected', async (request, reply) => {
   return usersConnected;
 });
+fastify.get('/adsCount', async (request, reply) => {
+  const { rows } = await fastify.pg.query('SELECT count(*) FROM handsByUser');
+  return rows[0];
+});
+fastify.get('/handsByUser', async (request, reply) => {
+  // const client = await fastify.pg.connect();
+  const users = {
+    "Andrey": 1,
+    "icaro": 2,
+    "Giu" : 3,
+    "Andersen": 4,
+    "sgsabioni": 5,
+    "grocha86": 6,
+    "campeaodoms": 7,
+    "Squirting": 8,
+    "sarxa": 9,
+    "gaban" : 10
+  }
+  await fastify.pg.query(`DELETE FROM hands WHERE handHistory = 'asdadsa'`);
+  const { rows } = await fastify.pg.query(`SELECT * FROM hands`);
+  rows.forEach(hand=>{
+    const handID = hand.handid
+    const created_on = hand.created_on
+    const matches = [...hand.handhistory.matchAll(/Seat \d: ([\w\d.,]+)/g)]
+    console.log(matches)
+    let insertQuery = ""
+    matches.forEach(playerMatch => {
+      const playerName = playerMatch[1]
+      const userID = users[playerName]
+      insertQuery += `INSERT INTO handsByUser(userid, handid, created_on) VALUES (${userID}, ${handID}, '${new Date(created_on).toISOString()}');`
+    } )
+    fastify.pg.query(insertQuery);
+    // return players
+    // console.log(players)
+  })
+  // return result;
+});
+fastify.get('/getUsers', async (request, reply) => {
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query(`SELECT users.userid, users.username, users.last_login, users.balance, count(*) FROM handsByUser JOIN users ON users.userid = handsByUser.userid GROUP BY users.username, users.last_login, users.balance, users.userid ORDER BY users.username ASC`)
+  return rows;
+});
 fastify.get('/hands', async (request, reply) => {
   // const client = await fastify.pg.connect();
   const { rows } = await fastify.pg.query('SELECT * FROM hands');
   // client.release();
   logger.log(rows)
   return rows;
+});
+fastify.get('/getHandsCount', async (request, reply) => {
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query('SELECT count(*) FROM hands');
+  // client.release();
+  logger.log(rows)
+  return rows[0].count;
 });
 fastify.get('/transactions', async (request, reply) => {
   // const client = await fastify.pg.connect();
@@ -268,9 +331,19 @@ socketManager.on('connection', (socket) => {
     })
   })
 
+  socket.on("changeAvatar", (data) => {
+    const {user, avatar} = data
+    logger.log(`received change avatar: ${user} ${avatar}`)
+    changeAvatar(socket, user, avatar)
+  })
+
   socket.on("enterPool", (data) => {
     logger.log(`received enterPool: ${data.poolID} ${data.stackSize}`)
-    return playerPoolManager.enterPool(socket, data.poolID, data.stackSize)
+    try {
+      return playerPoolManager.enterPool(socket, data.poolID, data.stackSize)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on("leavePool", (player) => {
     logger.log(`received leavePool: ${player.name} ${player.poolID}`)
@@ -282,7 +355,11 @@ socketManager.on('connection', (socket) => {
       return
     }
     if (socket.id != user.socketID) return logger.log("socket mismatch on leavepool")
-    return playerPoolManager.leavePool(player, true)
+    try {
+      return playerPoolManager.leavePool(player, true)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on("parseAction", (data) => {
     logger.log(`received parseAction: ${data.player.name} ${data.action}`)
@@ -294,15 +371,27 @@ socketManager.on('connection', (socket) => {
       return
     }
     if (socket.id != user.socketID) return logger.log("socket mismatch on parseAction")
-    return playerPoolManager.tableManager.parseAction(socket, data.player, data.action)
+    try {
+      return playerPoolManager.tableManager.parseAction(socket, data.player, data.action)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on("tryRebuy", (data) => {
     logger.log(`received rebuyAction: ${data.playerID} ${data.poolID} ${data.stackSize}`)
-    return playerPoolManager.rebuy(data.playerID, data.poolID, data.stackSize)
+    try {
+      return playerPoolManager.rebuy(data.playerID, data.poolID, data.stackSize)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on("sitoutUpdate", (data) => {
     logger.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
-    return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
+    try {
+      return playerPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
+    } catch (error) {
+      logger.log(error)
+    }
   })
   socket.on('getUserTransactions', async ({user, offset}) => {
     console.log("getUserTransactions")
@@ -324,7 +413,11 @@ socketManager.on('connection', (socket) => {
   });
   socket.on('reconnectPlayer', async (user) => {
     logger.log("reconnectPlayer")
-    await tryReconnect(socket, user)
+    try {
+      await tryReconnect(socket, user)
+    } catch (error) {
+      logger.log(error)
+    }
   });
   // socket.on('disconnecting', (reason) => {
   //   logger.log(`User disconnecting: ${socket.id}`);

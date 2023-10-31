@@ -745,9 +745,9 @@ class Table {
         this.currentHand.positionActing = this.currentHand.dealerPos //its going to the next player
         setTimeout(() => {this.prepareNextPlayerTurn()}, timeout)
     }
-    closeHand() {
+    async closeHand() {
         logger.log("closeHand()")
-        this.saveHandHistoryToDB()
+        await this.saveHandHistoryToDB()
         // this.currentHand.handIsBeingPlayed = false;
         // this.currentHand.pots = [0];
         // this.currentHand.actionSequence = [];
@@ -867,7 +867,7 @@ class Table {
         }
         this.determinePlayerPositions()
     }
-    saveHandHistoryToDB() {
+    async saveHandHistoryToDB() {
         logger.log("saveHandHistoryToDB()")
         // let playerIndex = 1
         // Object.values(this.players).forEach(player => {
@@ -886,14 +886,19 @@ class Table {
             }
             else if (action.pot != undefined) {
                 if (action.winners.length > 1) this.currentHand.handHistory += `\nPot ${action.pot} - Amount: ${action.potSize} Winners: ${action.winners}\n`
-                this.currentHand.handHistory += `\nPot ${action.pot} - Amount: ${action.potSize} Winner: ${action.winners}\n`
+                if (action.winners.length === 1) this.currentHand.handHistory += `\nPot ${action.pot} - Amount: ${action.potSize} Winner: ${action.winners}\n`
             }
         })
-        logger.log("updating player hand history arrays")
+        const { rows } = await this.tableManager.fastify.pg.query(`INSERT INTO hands(handHistory) VALUES ('${this.currentHand.handHistory}') RETURNING handid, created_on`);
+        const handID = rows[0].handid
+        const created_on = rows[0].created_on
+        let insertQuery = ""
+        logger.log("updating player hand history arrays and saving on DB")
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             if (this.playerIDByPositionIndex[i] === null) continue
             const player = this.tableManager.playerPoolManager.playersByPool[this.poolID][this.playerIDByPositionIndex[i]]
             if (!player) continue
+            insertQuery += `INSERT INTO handsByUser(userid, handid, created_on) VALUES (${player.userID}, ${handID}, '${new Date(created_on).toISOString()}');`
             logger.log(`sending hand history to ${player.name}`)
             const socket = this.tableManager.playerPoolManager.socketsByUserID[player.userID]
             if (!socket) {
@@ -902,7 +907,8 @@ class Table {
             }
             if (socket) socket.emit("updateHandHistory", {player: player, handHistory: this.currentHand.handHistory})
         }
-        this.tableManager.fastify.pg.query(`INSERT INTO hands(handHistory) VALUES ('${this.currentHand.handHistory}')`);
+        this.tableManager.fastify.pg.query(insertQuery);
+
         // this.tableManager.fastify.pg.connect().then(async (client) => {
         //     logger.log("saving hand history")
         //     try {

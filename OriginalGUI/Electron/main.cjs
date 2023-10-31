@@ -409,6 +409,13 @@ ipcMain.on('signUp', (event, user) => {
     socket.emit("signUp", user)
   }
 });
+ipcMain.on('changeAvatar', (event, user) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  // console.log(user)
+  if (win) {
+    socket.emit("changeAvatar", user)
+  }
+});
 ipcMain.on('window-ready', (event) => {
   console.log("window is ready")
   const win = BrowserWindow.fromWebContents(event.sender)
