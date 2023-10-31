@@ -4,23 +4,23 @@ const Decimal = require('decimal.js');
 const Logger = require("./logger")
 const logger = new Logger("Server")
 //docker acess
-// fastify.register(require('@fastify/postgres'), {
-//   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
-// })
-//internal render acess
 fastify.register(require('@fastify/postgres'), {
-  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
+  connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
 })
-fastify.register(require('@fastify/redis'), {
-  url: 'redis://red-cksjdg6nfb1c73c8tgpg:6379'
-})
+//internal render acess
+// fastify.register(require('@fastify/postgres'), {
+//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
+// })
+// fastify.register(require('@fastify/redis'), {
+//   url: 'redis://red-cksjdg6nfb1c73c8tgpg:6379'
+// })
 //external render acess
 // fastify.register(require('@fastify/postgres'), {
 //     connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
 //   })
-// fastify.register(require('@fastify/redis'), {
-//   url: 'rediss://red-cksjdg6nfb1c73c8tgpg:eEjoQXin0xOlVfhsOu26xy3BpIjjdgul@oregon-redis.render.com:6379'
-// })
+fastify.register(require('@fastify/redis'), {
+  url: 'rediss://red-cksjdg6nfb1c73c8tgpg:eEjoQXin0xOlVfhsOu26xy3BpIjjdgul@oregon-redis.render.com:6379'
+})
 const PlayerPoolManager = require('./playerPoolManager');
 // const TableManager = require('./tableManager');
 const User = require('./user');
@@ -116,11 +116,12 @@ async function tryReconnect(socket, user) {
     return userRecovered
 }
 
-async function changeAvatar(socket, user, avatar) {
-  User.getChangeAvatarUserFromDB(user, avatar, fastify.pg).then(()=>{
+async function changeAvatar(socket, username, avatar) {
+   user = await User.getChangeAvatarUserFromDB(username, avatar, fastify.pg).then(()=>{
     console.log("updated avatar");
   });
-  user = await User.getUserFromDB(user, fastify.pg);
+  user = await User.getUserFromDB(username, fastify.pg);
+  console.log("################################ USUARIO AQUI", user)
   socket.emit("updateUserInfo", {user: user, status: 200})
 }
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
@@ -273,9 +274,9 @@ socketManager.on('connection', (socket) => {
   })
 
   socket.on("changeAvatar", (data) => {
-    const {user, avatar} = data
-    logger.log(`received change avatar: ${user} ${avatar}`)
-    changeAvatar(socket, user, avatar)
+    const {userName, userAvatar} = data
+    logger.log(`received change avatar: ${userName} ${userAvatar}`)
+    changeAvatar(socket, userName, userAvatar)
   })
 
   socket.on("enterPool", (data) => {

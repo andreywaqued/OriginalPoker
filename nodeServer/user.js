@@ -147,14 +147,18 @@ async function fetchUserFromDB(name, db) {
 
 async function changeAvatarUserFromDB(name, avatar, db) {
     logger.log("changeAvatarUserFromDB")
+    console.log("############################# ATUALIZANDO AVATAR", name, avatar)
     // const client = await db.connect();
     const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
+    console.log("ROWWWWWWWWWWWWWS: ", rows)
+
     // client.release();
     if (rows.length > 0) {
         logger.log("fetchUserFromDB 1")
         const user = rows[0] ; // Return user id
         logger.log(user)
         // const client = await db.connect();
+        console.log("############################# ATUALIZANDO AVATAR")
         await db.query(`UPDATE users SET avatar = '${avatar}' WHERE username = '${name}'`);
         // client.release();
         user.avatar = avatar;

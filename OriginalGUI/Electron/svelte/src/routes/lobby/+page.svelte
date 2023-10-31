@@ -152,7 +152,7 @@
 
     function closeChooseAvatarScreen(selectedAvatar) {
         showChooseAvatarScreen = false;
-        userAvatar = selectedAvatar[0];
+        userAvatar = selectedAvatar.split('.')[0];
         api.send("changeAvatar", {userName, userAvatar})
     }
 

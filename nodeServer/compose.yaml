@@ -26,9 +26,9 @@ services:
       - "3000:3000"
     # volumes:
     #   - logs:/usr/src/app/logs
-    # depends_on:
-    #   # - redis
-    #   - db
+    depends_on:
+      # - redis
+      - db
           
 
 # The commented out section below is an example of how to define a PostgreSQL
@@ -38,33 +38,33 @@ services:
 # to set the database password. You must create `db/password.txt` and add
 # a password of your choosing to it before running `docker-compose up`.
       
-#   db:
-#     image: postgres
-#     restart: always
-#     user: postgres
-#     secrets:
-#       - db-password
-#     volumes:
-#       - db-data:/var/lib/postgresql/data
+  db:
+    image: postgres
+    restart: always
+    user: postgres
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/var/lib/postgresql/data
     
-#     environment:
-#       POSTGRES_USER: postgres
-#       POSTGRES_PASSWORD: dbpass
-#       POSTGRES_DB: original_poker
-#     # environment:
-#     #   - POSTGRES_DB=example
-#     #   - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
-#     ports:
-#       - "5432:5432"
-#     healthcheck:
-#       test: [ "CMD", "pg_isready" ]
-#       interval: 10s
-#       timeout: 5s
-#       retries: 5
-# volumes:
-# #   logs:
-#   db-data:
-# secrets:
-#   db-password:
-#     file: db/password.txt
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dbpass
+      POSTGRES_DB: original_poker
+    # environment:
+    #   - POSTGRES_DB=example
+    #   - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+#   logs:
+  db-data:
+secrets:
+  db-password:
+    file: db/password.txt
 

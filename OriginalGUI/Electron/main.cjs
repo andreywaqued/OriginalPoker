@@ -34,7 +34,7 @@ const sound = require('sound-play')
 // } catch (_) {}
 
 // const socket = io('https://originaltrial.onrender.com/http://localhost:3000'); // Replace with your server's address
-const socket = io('https://originaltrial.onrender.com', {
+const socket = io('http://localhost:3000', {
   reconnection: true,
   reconnectionAttempts: 30,
   reconnectionDelay: 1000,  // 1 segundo
@@ -413,6 +413,7 @@ ipcMain.on('changeAvatar', (event, user) => {
   const win = BrowserWindow.fromWebContents(event.sender)
   // console.log(user)
   if (win) {
+    console.log("ENTROUUUUUUUUUUUUUUUUUUU NOOOOOOOOOOOOOOOOO WINNNNNNNNNNNN:      ", user)
     socket.emit("changeAvatar", user)
   }
 });
