@@ -256,7 +256,7 @@
         flex-direction: column;
         // border: 1px solid blue;
     }
-    .overlay {
+    .overlay-auth {
         position: absolute;
         width: 100%;
         height: 100%;
@@ -1052,7 +1052,7 @@
                     </Login>
                 {/if}
             </div>
-            <div class="overlay" />
+            <div class="overlay-auth" />
         {/if}
         {#if showChooseAvatarScreen}
             <div class="popover" on:click={handlePopoverClick}>
