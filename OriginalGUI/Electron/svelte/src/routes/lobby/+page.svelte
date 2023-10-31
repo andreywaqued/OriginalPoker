@@ -3,6 +3,7 @@
 	import Ads from "$lib/Ads.svelte";
 	import Login from "$lib/Login.svelte";
     import TitleBar from "$lib/Title_Bar.svelte";
+    import ChooseAvatar from "$lib/ChooseAvatar.svelte";
     import { onMount } from 'svelte';
     let winHeight = 0;
     let displaySize
@@ -142,6 +143,25 @@
     $: if (menuIndexSelected == 1) {
         getUserTx()
     }
+
+    let showChooseAvatarScreen = false;
+
+    function openChooseAvatarScreen() {
+        showChooseAvatarScreen = true;
+    }
+
+    function closeChooseAvatarScreen(selectedAvatar) {
+        showChooseAvatarScreen = false;
+        userAvatar = selectedAvatar[0];
+        api.send("changeAvatar", {userName, userAvatar})
+    }
+
+    function handlePopoverClick(event) {
+        if (event.target.classList.contains('popover')) {
+            closeChooseAvatarScreen();
+        }
+    }
+
 </script>
 
 <style lang="scss">
@@ -218,15 +238,6 @@
         display: flex;
         flex-direction: column;
         // border: 1px solid blue;
-    }
-    .overlay.active {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0,0,0,0.5);
-        height: 100%;
-        width: 100%;
-        z-index: 1000;
     }
     .authDiv {
         position: absolute;
@@ -899,6 +910,67 @@
         }
     }
 
+    .avatarClickable {
+        position: relative;
+        cursor: pointer;
+        border-radius: 50%;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s;
+        border-radius: 50%;
+    }
+
+    .avatarClickable:hover .overlay {
+        opacity: 1;
+    }
+
+    .overlayText {
+        color: white;
+        font-size: 1em;
+    }
+
+    .overlayTextSmall {
+        font-size: 0.6em;
+    }
+
+    .popover {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        display: flex;
+        align-items: center;  /* Centraliza verticalmente */
+        justify-content: center;  /* Centraliza horizontalmente */
+        overflow-y: auto;  /* Adiciona barra de rolagem se necessário */
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+
+    .overlay.active {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        height: 100%;
+        width: 100%;
+        z-index: 1000;
+    }
+
 </style>
 
 <main>
@@ -937,6 +1009,11 @@
             </div>
             <div class="overlay" class:active={!userLoggedIn} />
         {/if}
+        {#if showChooseAvatarScreen}
+            <div class="popover" on:click={handlePopoverClick}>
+                <ChooseAvatar onClose={closeChooseAvatarScreen} />
+            </div>
+        {/if}   
         <div class="playerInfo">
             <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" height="70%" viewBox="0 0 809.523 128.965">
                 <g id="Grupo_438" data-name="Grupo 438" transform="translate(-2649 590.324)">
@@ -946,7 +1023,11 @@
                 </g>
             </svg></div>
             <div class="player">
-                <div class="playerAvatar" style={cssVarStyles}></div>
+                <div class="playerAvatar avatarClickable" style={cssVarStyles} on:click={openChooseAvatarScreen}>
+                    <div class="overlay">
+                        <div class="overlayText overlayTextSmall">Change Avatar</div>
+                    </div>
+                </div> 
                 <div class="playerName"><span>{userName}</span></div>
             </div>
             <div class="cashier">
@@ -1138,47 +1219,47 @@
                 </div>
             {:else if menuIndexSelected === 1}
                 <div class="profileDiv">
-                  <div class="upper">
+                <div class="upper">
                     <div class="caixa">
-                      <h2>
+                    <h2>
                         Cashier
-                      </h2>
-                      <div class="container">
+                    </h2>
+                    <div class="container">
                         <div class="item">
-                          <h3>
-                              Available
-                          </h3>
-                          <p>
+                        <h3>
+                            Available
+                        </h3>
+                        <p>
                             SOON
-                          </p>
+                        </p>
                         </div>
                         <div class="item">
-                          <h3>
-                              In-game
-                          </h3>
-                          <p>
+                        <h3>
+                            In-game
+                        </h3>
+                        <p>
                             SOON
-                          </p>
+                        </p>
                         </div>
                         <div class="item">
-                          <h3>
-                              Total
-                          </h3>
-                          <p>
+                        <h3>
+                            Total
+                        </h3>
+                        <p>
                             ${userBalance}
-                          </p>
+                        </p>
                         </div>
                         <div class="item">
-                          <button>Deposit</button>
-                          <button>Withdraw</button>
+                        <button>Deposit</button>
+                        <button>Withdraw</button>
                         </div>
-                      </div>
+                    </div>
                     </div>
                     <div class="historico">
-                      <h2>
+                    <h2>
                         Player history
-                      </h2>
-                      <div class="container">
+                    </h2>
+                    <div class="container">
                         <table rules=rows>
                             <tr>
                                 <th>Date</th>
@@ -1188,7 +1269,7 @@
                             </tr>
                             {#if userTx}
                                 {#each userTx as {id, userid, amount, source, created_on}}
-                                	  <tr>
+                                    <tr>
                                         <td>{created_on.split('T')[0]}</td>
                                         <td>{created_on.split('T')[1]}</td>
                                         <td>{source}</td>
@@ -1197,7 +1278,7 @@
                                 {/each}
                             {:else}
                                 {#each Array(8) as _}
-                                	  <tr class="pulse">
+                                    <tr class="pulse">
                                         {#each Array(4) as _}
                                             <td />
                                         {/each}
@@ -1205,66 +1286,70 @@
                                 {/each}
                             {/if}
                         </table>
-                      </div>
                     </div>
-                  </div>
-                  <div class="lower">
+                    </div>
+                </div>
+                <div class="lower">
                     <div class="jogador">
-                      <div class="container">
-                        <div class="playerAvatar" style={cssVarStyles} />
+                    <div class="container">
+                        <div class="playerAvatar avatarClickable" style={cssVarStyles} on:click={openChooseAvatarScreen}>
+                            <div class="overlay">
+                                <div class="overlayText">Change Avatar</div>
+                            </div>
+                        </div> 
                         <div class="item">
-                          <h2>
+                        <h2>
                             User
-                          </h2>
-                          <p class="bigText">
+                        </h2>
+                        <p class="bigText">
                             {userName}
-                          </p>
+                        </p>
                         </div>
-                      </div>
-                      <div class="container">
-                        <div class="item">
-                          <h3>
-                              Full Name
-                          </h3>
-                          <p>
-                            SUBMIT A VERIFICATION
-                          </p>
-                        </div>
-                        <div class="item">
-                          <h3>
-                              Birthday
-                          </h3>
-                          <p>
-                            SUBMIT A VERIFICATION
-                          </p>
-                        </div>
-                        <div class="item">
-                          <h3>
-                              E-mail
-                          </h3>
-                          <p>
-                            {userEmail}
-                          </p>
-                        </div>
-                        <div class="item">
-                          <h3>
-                              Telephone
-                          </h3>
-                          <p>
-                            SUBMIT A VERIFICATION
-                          </p>
-                        </div>
-                        <div class="item">
-                          <h3>
-                              Address
-                          </h3>
-                          <p>
-                            SUBMIT A VERIFICATION
-                          </p>
-                        </div>
-                      </div>
                     </div>
-                  </div>
+                    <div class="container">
+                        <div class="item">
+                        <h3>
+                            Full Name
+                        </h3>
+                        <p>
+                            SUBMIT A VERIFICATION
+                        </p>
+                        </div>
+                        <div class="item">
+                        <h3>
+                            Birthday
+                        </h3>
+                        <p>
+                            SUBMIT A VERIFICATION
+                        </p>
+                        </div>
+                        <div class="item">
+                        <h3>
+                            E-mail
+                        </h3>
+                        <p>
+                            {userEmail}
+                        </p>
+                        </div>
+                        <div class="item">
+                        <h3>
+                            Telephone
+                        </h3>
+                        <p>
+                            SUBMIT A VERIFICATION
+                        </p>
+                        </div>
+                        <div class="item">
+                        <h3>
+                            Address
+                        </h3>
+                        <p>
+                            SUBMIT A VERIFICATION
+                        </p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
                 </div>
 
             {/if}

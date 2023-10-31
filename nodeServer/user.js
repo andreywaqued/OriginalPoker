@@ -41,6 +41,12 @@ class User {
         return userData
     }
 
+    static async getChangeAvatarUserFromDB(name, avatar, db) {
+        // Fetch user details from DB
+        const userData = await changeAvatarUserFromDB(name, avatar, db);
+        return userData
+    }
+
     async deposit(amount) {
         if (amount <= 0) {
             throw new Error('Invalid amount');
@@ -136,6 +142,32 @@ async function fetchUserFromDB(name, db) {
         };
     }
     // Simulate fetching a user from the database
+}
+
+
+async function changeAvatarUserFromDB(name, avatar, db) {
+    logger.log("changeAvatarUserFromDB")
+    // const client = await db.connect();
+    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
+    // client.release();
+    if (rows.length > 0) {
+        logger.log("fetchUserFromDB 1")
+        const user = rows[0] ; // Return user id
+        logger.log(user)
+        // const client = await db.connect();
+        await db.query(`UPDATE users SET avatar = '${avatar}' WHERE username = '${name}'`);
+        // client.release();
+        user.avatar = avatar;
+        
+        return {
+            id: user.userid,
+            name: user.username,
+            email: user.email,
+            avatar: user.avatar,
+            balance: new Decimal(user.balance), //it looks like numeric type saves as string
+            players: {}
+        };
+    }
 }
 
 async function fetchUserWithPasswordFromDB(name, password, db) {

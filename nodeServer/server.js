@@ -115,6 +115,14 @@ async function tryReconnect(socket, user) {
     }
     return userRecovered
 }
+
+async function changeAvatar(socket, user, avatar) {
+  User.getChangeAvatarUserFromDB(user, avatar, fastify.pg).then(()=>{
+    console.log("updated avatar");
+  });
+  user = await User.getUserFromDB(user, fastify.pg);
+  socket.emit("updateUserInfo", {user: user, status: 200})
+}
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
 // tableManager.test()
 logger.log("starting")
@@ -262,6 +270,12 @@ socketManager.on('connection', (socket) => {
       logger.log(err)
       socket.emit("signUpResponse", {response : "failed to sign up", status: 403, error: err.message})
     })
+  })
+
+  socket.on("changeAvatar", (data) => {
+    const {user, avatar} = data
+    logger.log(`received change avatar: ${user} ${avatar}`)
+    changeAvatar(socket, user, avatar)
   })
 
   socket.on("enterPool", (data) => {

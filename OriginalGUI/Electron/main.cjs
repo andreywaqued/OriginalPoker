@@ -33,7 +33,7 @@ const sound = require('sound-play')
 //   require('electron-reloader')(module)
 // } catch (_) {}
 
-// const socket = io('http://127.0.0.1:3000'); // Replace with your server's address
+// const socket = io('https://originaltrial.onrender.com/http://localhost:3000'); // Replace with your server's address
 const socket = io('https://originaltrial.onrender.com', {
   reconnection: true,
   reconnectionAttempts: 30,
@@ -407,6 +407,13 @@ ipcMain.on('signUp', (event, user) => {
   // console.log(user)
   if (win) {
     socket.emit("signUp", user)
+  }
+});
+ipcMain.on('changeAvatar', (event, user) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  // console.log(user)
+  if (win) {
+    socket.emit("changeAvatar", user)
   }
 });
 ipcMain.on('window-ready', (event) => {
