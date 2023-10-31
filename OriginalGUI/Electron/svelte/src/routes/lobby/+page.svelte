@@ -11,7 +11,7 @@
     let balanceHidden = false;
     let tabSelected = 0
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
-    let userName, userBalance, userAvatar, userEmail, userTx
+    let userName, userBalance, userAvatar, userEmail, userTransactions = [], userTransactionsOffset = 0, isUserTransactionsLocked = false
     let userLoggedIn = false
     let displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
     let clockUpdateInterval = setInterval(()=>{
@@ -19,10 +19,10 @@
     }, 60000)
    
     let gamesAvaiable = {
-        "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 125, minBuyIn: 2, maxBuyIn: 10, buyInAmount: -1},
-        "lightning2" : {gameTitle: "NL 50", blinds: "$0.25 / $0.50", players: 85, minBuyIn: 10, maxBuyIn: 50, buyInAmount: -1},
-        "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 35, minBuyIn: 20, maxBuyIn: 100, buyInAmount: -1},
-        "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 1025, minBuyIn: 40, maxBuyIn: 200, buyInAmount: -1}
+        "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 0, minBuyIn: 2, maxBuyIn: 10, buyInAmount: -1},
+        "lightning2" : {gameTitle: "NL 50", blinds: "$0.25 / $0.50", players: 0, minBuyIn: 10, maxBuyIn: 50, buyInAmount: -1},
+        "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 0, minBuyIn: 20, maxBuyIn: 100, buyInAmount: -1},
+        "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 0, minBuyIn: 40, maxBuyIn: 200, buyInAmount: -1}
     }
     let menuIndexSelected = 0
     let menuItens = ["games", "profile", "settings"]
@@ -72,16 +72,32 @@
             })
             // displaySize = window.api.getDisplaySize()
             api.send("window-ready")
-            api.on("updateUserTx", tx => {
-                console.log(tx)
-                userTx = tx
+            api.on("userTransactionsResponse", transactions => {
+                transactions.forEach((tx) => {
+                    const d = new Date(tx.created_on)
+                    userTransactions = [...userTransactions, {
+                        ...tx,
+                        date: d.toLocaleDateString(),
+                        time: d.toLocaleTimeString()
+                    }]
+                })
+                isUserTransactionsLocked = false
             })
         }
         // alert(window.api.getDisplaySize())
+        
     });
-    function getUserTx() {
-        if (userTx) return
-        api.send("getUserTx")
+    function getUserTransactions() {
+        if (isUserTransactionsLocked) return
+        console.log("getUserTransactions")
+        isUserTransactionsLocked = true
+        api.send("getUserTransactions", userTransactionsOffset)
+    }
+    function handleUserTransactionsOffset() {
+        if (isUserTransactionsLocked) return
+        console.log("handleUserTransactionsOffset")
+        userTransactionsOffset += 10
+        getUserTransactions()
     }
     function toggleBalanceView() {
         balanceHidden = !balanceHidden
@@ -141,7 +157,7 @@
     $: cssVarStyles = `--avatar-url:${avatarUrl};`;
     // ask for user transactions when entered on profile (1) tab
     $: if (menuIndexSelected == 1) {
-        getUserTx()
+        getUserTransactions()
     }
 
     let showChooseAvatarScreen = false;
@@ -175,6 +191,7 @@
     }
     :global(button) {
         all: unset;
+        cursor: pointer;
     }
     :global(button:active:enabled) {
         transform: scale(0.95);
@@ -239,6 +256,15 @@
         flex-direction: column;
         // border: 1px solid blue;
     }
+    .overlay {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        height: 100%;
+        width: 100%;
+        z-index: 1000;
+    }
     .authDiv {
         position: absolute;
         top: 50%;
@@ -254,10 +280,15 @@
         img {
             padding-top: 2em;  
         }
-        .txtButton {
-            text-align: center;
-            width: 100%;
-            padding: 0.2em 0 1.5em 0;
+        .btnContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 0.2em;
+            margin-bottom: 1em;
+            .txtButton {
+                padding: 0.5em;
+            }
         }
     }
     .playerInfo {
@@ -817,6 +848,14 @@
                 td {
                     height: 2.4em;
                 }
+                td.loader {
+                    width: 100%;
+                    button {
+                        margin: auto;
+                        font-weight: bold;
+                        text-decoration: underline;
+                    }
+                }
                 .ispositive {
                     color: #2bb839;
                 }
@@ -982,10 +1021,12 @@
                <img height=30 src="./originalLogo.png" />
                 {#if authIndexSelected === 0}
                     <Login tipo="signin">
-                        <!-- Button to change to recover page -->
-                        <button class="txtButton" on:click={() => selectAuth(2)}>
-                          Forgot my password
-                        </button>
+                        <div class="btnContainer">
+                            <!-- Button to change to recover page -->
+                            <button class="txtButton" on:click={() => selectAuth(2)}>
+                              Forgot my password
+                            </button>
+                        </div>
                         <!-- Button to change to signup page -->
                         <button class="roundedButton ringed" on:click={() => selectAuth(1)} >
                             Signup
@@ -993,21 +1034,25 @@
                     </Login>
                 {:else if authIndexSelected === 1}
                     <Login tipo="signup">
-                        <!-- Button to change to signin page -->
-                        <button class="txtButton" on:click={() => selectAuth(0)}>
-                            Already have a account? <u>Login here</u>
-                        </button>
+                        <div class="btnContainer">
+                            <!-- Button to change to signin page -->
+                            <button class="txtButton" on:click={() => selectAuth(0)}>
+                                Already have a account? <u>Login here</u>
+                            </button>
+                        </div>
                     </Login>
                 {:else if authIndexSelected === 2}
                     <Login tipo="recover">
-                        <!-- Button to change to signin page -->
-                        <button class="txtButton" on:click={() => selectAuth(0)}>
-                            Remembered? <u>try to login</u>
-                        </button>
+                        <div class="btnContainer">
+                            <!-- Button to change to signin page -->
+                            <button class="txtButton" on:click={() => selectAuth(0)}>
+                                Remembered? <u>try to login</u>
+                            </button>
+                        </div>
                     </Login>
                 {/if}
             </div>
-            <div class="overlay" class:active={!userLoggedIn} />
+            <div class="overlay" />
         {/if}
         {#if showChooseAvatarScreen}
             <div class="popover" on:click={handlePopoverClick}>
@@ -1028,13 +1073,13 @@
                         <div class="overlayText overlayTextSmall">Change Avatar</div>
                     </div>
                 </div> 
-                <div class="playerName"><span>{userName}</span></div>
+                <div class="playerName"><span>{userName || ""}</span></div>
             </div>
             <div class="cashier">
                 <button>CASHIER</button>
                 <div class="balance" on:click={toggleBalanceView}>
                     {#if !balanceHidden}
-                        <span>{userBalance}</span>
+                        <span>{userBalance || 0}</span>
                         <span class="hideBalance">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="0.8em" viewBox="0 0 45 36">
                                 <path id="Icon_awesome-eye-slash" data-name="Icon awesome-eye-slash" fill="rgb(255,255,255)" d="M22.5,28.125a10.087,10.087,0,0,1-10.048-9.359l-7.376-5.7a23.435,23.435,0,0,0-2.582,3.909,2.275,2.275,0,0,0,0,2.052A22.552,22.552,0,0,0,22.5,31.5a21.84,21.84,0,0,0,5.477-.735l-3.649-2.823a10.134,10.134,0,0,1-1.828.184ZM44.565,32.21,36.792,26.2a23.291,23.291,0,0,0,5.713-7.177,2.275,2.275,0,0,0,0-2.052A22.552,22.552,0,0,0,22.5,4.5,21.667,21.667,0,0,0,12.142,7.151L3.2.237a1.125,1.125,0,0,0-1.579.2L.237,2.211a1.125,1.125,0,0,0,.2,1.579L41.8,35.763a1.125,1.125,0,0,0,1.579-.2l1.381-1.777a1.125,1.125,0,0,0-.2-1.579ZM31.648,22.226,28.884,20.09a6.663,6.663,0,0,0-8.164-8.573,3.35,3.35,0,0,1,.655,1.984,3.279,3.279,0,0,1-.108.7l-5.176-4A10.006,10.006,0,0,1,22.5,7.875,10.119,10.119,0,0,1,32.625,18a9.885,9.885,0,0,1-.977,4.226Z" transform="translate(0 0)"/>
@@ -1258,24 +1303,36 @@
                     <div class="historico">
                     <h2>
                         Player history
-                    </h2>
-                    <div class="container">
-                        <table rules=rows>
+
+                      </h2>
+                      <div class="container">
+                        <table rules=rows >
+
                             <tr>
                                 <th>Date</th>
                                 <th>Time</th>
                                 <th>From</th>
                                 <th>Balance</th>
                             </tr>
-                            {#if userTx}
-                                {#each userTx as {id, userid, amount, source, created_on}}
-                                    <tr>
-                                        <td>{created_on.split('T')[0]}</td>
-                                        <td>{created_on.split('T')[1]}</td>
+
+                            {#if userTransactions.length > 0}
+                                {#each userTransactions as {id, userid, amount, source, created_on, date, time}}
+                                	  <tr>
+                                        <td>{date}</td>
+                                        <td>{time}</td>
                                         <td>{source}</td>
                                         <td class:ispositive={amount >= 0} class:isnegative={amount < 0}>{amount > 0 ? "+" : ""}{amount}</td>
                                     </tr>
                                 {/each}
+                                {#if userTransactions.length % 10 === 0}
+                                    <tr>
+                                        <td colspan="4" class="loader">
+                                            <button on:click={handleUserTransactionsOffset}>
+                                                load more transactions
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {/if}
                             {:else}
                                 {#each Array(8) as _}
                                     <tr class="pulse">
