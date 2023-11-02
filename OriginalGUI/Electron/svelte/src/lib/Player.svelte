@@ -16,7 +16,7 @@
     //  * @type {Object.<string,any>}
     //  */
     // export let player
-    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions, isWinner, lastAction, tableClosed;
+    export let id, name, stackSize, avatar, position, betSize, cards, isButton, showCards, hasFolded, isSitout, isHero, possibleActions, isWinner, lastAction, tableClosed, showValuesInBB;
     const deck = "boardDeck"
     let playerTurn = false;
     let lastActionShowed = ""
@@ -401,16 +401,26 @@
         flex-direction: row;
         justify-content: flex-end;
         align-items: center;
+        color: whitesmoke;
         span {
-            color: whitesmoke;
             padding-right: 5%;
         }
-        ::before {
-            position: absolute;
-            content: "$";
-            left: 5%;
+        // ::before {
+            //     position: absolute;
+            //     content: "$";
+            //     left: 5%;
+            // }
+            z-index: 2;
         }
-        z-index: 2;
+    .playerBalance.value::before{
+        position: absolute;
+        content: "$";
+        left: 5%;
+    }
+    .playerBalance.valueInBB::before{
+        position: absolute;
+        content: "BB";
+        left: 5%;
     }
     .playerBalance.winner {
         border-bottom: 1px solid green;
@@ -861,6 +871,9 @@
         .value::before{
             content: "$ ";
         }
+        .valueInBB::before{
+            content: "BB ";
+        }
         span{
             background-color: rgba(77,77,77,0.25);
             padding: 2% 5%;
@@ -942,9 +955,9 @@
                 {/if}
             </span>
         </div>
-        <div class="playerBalance" class:winner={isWinner}><span>{stackSize}</span></div> <!-- {Math.round(stackSize * 100) / 100} -->
+        <div class="playerBalance" class:winner={isWinner} class:value={!showValuesInBB} class:valueInBB={showValuesInBB}><span>{stackSize}</span></div> <!-- {Math.round(stackSize * 100) / 100} -->
         {#if betSize > 0}
-            <div class="playerBet"><span class="value">{betSize}</span></div>
+            <div class="playerBet"><span>{showValuesInBB ? "" : "$ "}{betSize}{showValuesInBB ? " BB" : ""}</span></div>
         {/if}
         {#if showCards}
             <div class="playerCardsHero" class:show={playerCardsShow} class:fold={hasFolded && isHero} bind:this={playerCardsHero}>

@@ -148,6 +148,13 @@ app.whenReady().then( () => {
 let tables = []
 let players = []
 let playersID = []
+function updateUserInfoOnTables() {
+  console.log("updateUserInfo")
+  tables.forEach(table => {
+    table.addMessage("updateUserBalance", user.balance)
+    table.addMessage("updateUserSettings", user.settings)
+  })
+}
 socket.on('connect', () => {
     console.log(`Connected to the server with id: ${socket.id}`);
     // socket.emit("signIn", {user: "asd", password: "asd"})
@@ -166,6 +173,7 @@ socket.on("signInResponse", response => {
         // console.log(mainLobby)
         console.log("chamando send message")
         if (mainLobby) mainLobby.addMessage("updateUser", user)
+        updateUserInfoOnTables()
         // ipcMain.emit("updateUser", user)
     // socket.emit("enterPool", {poolID : "lightning4", stackSize: 100})
     } else if (response.status === 403) {
@@ -194,13 +202,14 @@ socket.on("enterPoolResponse", response => {
     // console.log(response)
     if (response.status === 200) {
       if (tables.length < 4) {
-        const lastIndex = tables.push(createWindow(response.pool.title + " Table 1", "table")) - 1
+        const lastIndex = tables.push(createWindow(response.pool.title, "table")) - 1
         const table = tables[lastIndex]
         console.log(table)
         players.push(response.player)
         playersID.push(response.player.id)
         table.player = response.player
         console.log("chamando send message 1")
+        if (table) table.addMessage("updateUserSettings", user.settings)
         if (table) table.addMessage("updatePlayer", table.player)
         
         // ipcMain.emit("updatePlayer", {})
@@ -228,13 +237,14 @@ socket.on("updateGameState", gameState => {
           continue
         }
         if (tables.length < 4) {
-          const lastIndex = tables.push(createWindow(gameState.title + " Table 1", "table")) - 1
+          const lastIndex = tables.push(createWindow(gameState.title, "table")) - 1
           const table = tables[lastIndex]
           console.log(table)
           players.push(player)
           playersID.push(player.id)
           table.player = player
           console.log("chamando send message 1")
+          if (table) table.addMessage("updateUserSettings", user.settings)
           if (table) table.addMessage("updateGameState", gameState)
           if (table) table.addMessage("updatePlayer", table.player)
         }
@@ -247,6 +257,7 @@ socket.on("updateUserInfo", response => {
     console.log(response)
     user = response.user
     if (mainLobby) mainLobby.addMessage("updateUser", user)
+    updateUserInfoOnTables()
 })
 socket.on("userTransactionsResponse", ({txs, offset}) => {
   console.log("userTransactionsResponse")
@@ -376,7 +387,7 @@ ipcMain.on('focusOnWindow', (event) => {
 });
 ipcMain.on('playSound', (event, soundFile) => {
   console.log('playSound: ' + path.join(process.resourcesPath, soundFile))
-  sound.play(path.join(process.resourcesPath, soundFile), 1)
+  if (user.settings.sounds) sound.play(path.join(process.resourcesPath, soundFile), 1)
 });
 ipcMain.on('sitoutUpdate', (event, data) => {
   console.log("sitoutUpdate")
@@ -488,6 +499,13 @@ ipcMain.on('parseAction', (event, data) => {
   console.log("parseAction")
   console.log(data)
   socket.emit("parseAction", data)
+});
+ipcMain.on('updateUserSettings', (event, userSettings) => {
+  console.log("updateUserSettings")
+  console.log(userSettings)
+  socket.emit("updateUserSettings", userSettings)
+  user.settings = userSettings
+  updateUserInfoOnTables()
 });
 ipcMain.on('set-window-size', (event, arg) => {
   const win = BrowserWindow.fromWebContents(event.sender)

@@ -14,6 +14,7 @@ class User {
             user.email = userData.email;
             user.balance = new Decimal(userData.balance);
             user.players = {};
+            user.settings = userData.settings;
             return user;
         } else {
             throw new Error("Invalid credentials")            
@@ -66,6 +67,10 @@ class User {
         logger.log("handleMoney")
         await updateUserBalanceInDB(amount, id, source, db)
     }
+    static async updateUserSettings(userid, settings, db) {
+        logger.log("updateUserSettings()")
+        await db.query(`UPDATE users SET settings = '${JSON.stringify(settings)}' WHERE userid = ${userid}`);
+    }
     // async deposit(amount) {
     //     if (amount <= 0) {
     //         throw new Error('Invalid amount');
@@ -111,17 +116,37 @@ async function hasInvalidInputs(username, password, email, db) {
     if (password.length < 8) return "Password too short, minimum of 8 characters"
     return null
 }
-
+let userSettings = {
+    sounds: true,
+    preferedSeat: {"3max": 0, "6max": 0, "9max": 0},
+    showValuesInBB: true,
+    adjustBetByBB: true,
+    presetButtons: {
+        preflop:[
+            {type: "pot%", value: 25, display: "%"},
+            {type: "pot%", value: 50, display: "%"},
+            {type: "pot%", value: 75, display: "%"},
+            {type: "pot%", value: 100, display: "%"}
+        ], 
+        postflop:[
+            {type: "pot%", value: 25, display: "%"},
+            {type: "pot%", value: 50, display: "%"},
+            {type: "pot%", value: 75, display: "%"},
+            {type: "pot%", value: 100, display: "%"}
+        ]
+    }
+  }
 async function saveUserToDB(name, password, email, avatar, db) {
     // Simulate saving a new user to the database
     logger.log("saveUserToDB")
     // const client = await db.connect();
-    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES(
+    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance, settings) VALUES(
                                     '${name}',
                                     crypt('${password}', gen_salt('bf')),
                                     '${email}',
                                     '${avatar}',
-                                    0)
+                                    0,
+                                    '${JSON.stringify(userSettings)}')
                                     RETURNING *`
                                     );
     if (rows.length>0) {
@@ -158,6 +183,7 @@ async function fetchUserFromDB(name, db) {
             avatar: user.avatar,
             balance: new Decimal(user.balance), //it looks like numeric type saves as string
             players: {},
+            settings: user.settings
         };
     }
     // Simulate fetching a user from the database
@@ -207,7 +233,8 @@ async function fetchUserWithPasswordFromDB(name, password, db) {
             name: user.username,
             email: user.email,
             avatar: user.avatar,
-            balance: new Decimal(user.balance) //it looks like numeric type saves as string
+            balance: new Decimal(user.balance), //it looks like numeric type saves as string
+            settings: user.settings
         };
     }
     return false;

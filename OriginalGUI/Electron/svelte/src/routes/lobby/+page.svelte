@@ -30,7 +30,26 @@
     let svgMenuColor = "white"
     // 0 signin; 1 signup; 2 recover;
     let authIndexSelected = 0
-
+    let userSettings = {
+        sounds: true,
+        preferedSeat: {"3max": 0, "6max": 0, "9max": 0},
+        showValuesInBB: true,
+        adjustBetByBB: true,
+        presetButtons: {
+            preflop:[
+                {type: "pot%", value: 25, display: "%"},
+                {type: "pot%", value: 50, display: "%"},
+                {type: "pot%", value: 75, display: "%"},
+                {type: "pot%", value: 100, display: "%"}
+            ], 
+            postflop:[
+                {type: "pot%", value: 25, display: "%"},
+                {type: "pot%", value: 50, display: "%"},
+                {type: "pot%", value: 75, display: "%"},
+                {type: "pot%", value: 100, display: "%"}
+            ]
+        }
+    }
     onMount(() => {
         const setHeight = () => {
         document.documentElement.style.setProperty('--window-height', `${window.innerHeight}px`);
@@ -55,6 +74,7 @@
                 userAvatar = user.avatar
                 userEmail = user.email
                 userLoggedIn = true
+                userSettings = user.settings
             });
             api.on("updatePools", (pools) => {
                 let newGamesAvaiable = {...gamesAvaiable}
@@ -177,7 +197,34 @@
             closeChooseAvatarScreen();
         }
     }
-
+    function sendUserSettings(){
+        console.log(userSettings)
+        api.send("updateUserSettings", userSettings)
+    }
+    function setPresetButtonValue(street, index, event = undefined){
+        console.log(`setPresetButtonValue(${street}, ${index})`)
+        console.log(event)
+        let value = 0
+        if (event) {
+            if (Number(event.target.value) > Number(event.target.max)) event.target.value = Number(event.target.max)
+            if (Number(event.target.value) < Number(event.target.min)) event.target.value = Number(event.target.min)
+            value = Math.round(Number(event.target.value) * 100) / 100
+        }
+        userSettings.presetButtons[street][index].value = value
+        if (userSettings.presetButtons[street][index].type === "min") {
+            userSettings.presetButtons[street][index].display = "Min"
+        }
+        if (userSettings.presetButtons[street][index].type === "max") {
+            userSettings.presetButtons[street][index].display = "Max"
+        }
+        if (userSettings.presetButtons[street][index].type === "pot%") {
+            userSettings.presetButtons[street][index].display = `%`
+        }
+        if (userSettings.presetButtons[street][index].type === "bbs") {
+            userSettings.presetButtons[street][index].display = `BB`
+        }
+        // sendUserSettings()
+    }
 </script>
 
 <style lang="scss">
@@ -599,6 +646,11 @@
                 align-items: center;
                 width: 55%;
                 height: 100%;
+                input::-webkit-outer-spin-button,
+                input::-webkit-inner-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
                 span {
                     background-color: rgba(0,0,0,0.5);
                     padding-left: 0.2em;
@@ -628,9 +680,9 @@
             }
         }
     }
-    input::before {
-        content: "$";
-    }
+    // input::before {
+    //     content: "$";
+    // }
     .blinds:before {
         position: absolute;
         content: "BLINDS";
@@ -1009,7 +1061,134 @@
         width: 100%;
         z-index: 1000;
     }
+    .settingsDiv {
+        display: flex;
+        flex-direction: column;
+        width: 90%;
+        height: 94%;
+        padding: 2% 3%;
+        background-color: rgb(24, 24, 24);
+        letter-spacing: 0.1em;
+        .settingsInnerDiv {
+            display: flex;
+            flex-direction: column;
+            width: 96%;
+            height: 96%;
+            padding: 2%;
+            gap: 1%;
+            font-size: 0.6rem;
+            .soundsDiv{
+                width: 100%;
+                height: 10%
+            }
+            .adjustBetsizeDiv{
+                width: 100%;
+                height: 15%;
+                display: flex;
+                flex-direction: column;
 
+            }
+            .showValuesDiv{
+                width: 100%;
+                height: 10%
+            }
+            .presetButtonsDiv{
+                width: 65%;
+                height: 35%;
+                display: flex;
+                flex-direction: column;
+                border: 1px solid rgba(255,255,255,0.5);
+                border-radius: 0.2em;
+                padding: 2%;
+                .presetButtonsUpperDiv{
+                    display: flex;
+                    flex-direction: row;
+                    width: 100%;
+                    height: 20%;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    justify-content: space-between;
+                    .presetButtonsTitle{
+                        width: 20%;
+                        height: 100%;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                    }
+                    .presetButtonsDescription{
+                        width: 80%;
+                        height: 100%;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        font-size: 0.8em;
+                        color: #dddddd;
+                    }
+                }
+                .presetButtonsMainDiv {
+                    width: 100%;
+                    height: 80%;
+                    table {
+                        width: 100%;
+                        height: 100%;
+                    }
+                    td,th {
+                        height: 20%;
+                        width: 20%;
+                        .inputWrapper{
+                            height: 1.5em;
+                            width: 70%;
+                            background-color: #282828;
+                            color: white;
+                            border: 1px solid rgba(255,255,255,0.5);
+                            padding-left: 0.5em;
+                            display: flex;
+                            flex-direction: row;
+                            align-items: center;
+                            position: relative;
+                            input {
+                                all: unset;
+                                width: 100%;
+                            }
+                            input::-webkit-outer-spin-button,
+                            input::-webkit-inner-spin-button {
+                                -webkit-appearance: none;
+                                margin: 0;
+                            }
+                            span {
+                                position: absolute;
+                                right: 5%;
+                            }
+                        }
+                        
+                        select {
+                            background-color: #282828;
+                            color: white;
+                            border: 1px solid rgba(255,255,255,0.5);
+                            padding-left: 2%;
+                            height: 1.5em;
+                            width: 100%;
+                        }
+                    }
+                }
+            }
+            .applyChangesDiv{
+                width: 100%;
+                height: 20%;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                align-items: flex-start;
+                button {
+                    background-color: rgb(79,148,217);
+                    border-radius: 0.2em;
+                    width: 20%;
+                    height: 3em;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+            }
+        }
+    }
 </style>
 
 <main>
@@ -1408,8 +1587,92 @@
                     </div>
                 </div>
                 </div>
-
-            {/if}
+            {:else if menuIndexSelected === 2}
+                <div class="settingsDiv">
+                    SETTINGS
+                    <div class="settingsInnerDiv">
+                        <div class="soundsDiv">
+                            <input type="checkbox" bind:checked={userSettings.sounds} id="sounds" on:change={sendUserSettings}>
+                            <label for="sounds">Sounds</label>
+                        </div>
+                        <div class="adjustBetsizeDiv">
+                            <div>
+                                <input type="radio" name="adjustBetsize" checked={userSettings.adjustBetByBB} bind:group={userSettings.adjustBetByBB} id="betsizeInBB" value={true} on:change={sendUserSettings}>
+                                <label for="betsizeInBB">Adjust Bet Size With Big Blinds</label>
+                            </div>
+                            <div>
+                                <input type="radio" name="adjustBetsize" checked={!userSettings.adjustBetByBB} bind:group={userSettings.adjustBetByBB} id="betsizeInSB" value={false} on:change={sendUserSettings}>
+                                <label for="betsizeInSB">Adjust Bet Size With Small Blinds</label>
+                            </div>
+                        </div>
+                        <div class="showValuesDiv">
+                            <input type="checkbox" bind:checked={userSettings.showValuesInBB} id="showValues" on:change={sendUserSettings}>
+                            <label for="showValues">Show Stack and Bets Values in Big Blinds</label>
+                        </div>
+                        <div class="presetButtonsDiv">
+                            <div class="presetButtonsUpperDiv">
+                                <div class="presetButtonsTitle">
+                                    <span>Pre-set Buttons</span>
+                                </div>
+                                <div class="presetButtonsDescription">
+                                    <span>Pre-set buttons are small buttons above the bet slider that allow you to quickly make a bet of a predefined amount</span>
+                                </div>
+                            </div>
+                            <div class="presetButtonsMainDiv">
+                                <table>
+                                    <tr>
+                                        <th></th>
+                                        <th>Pre-Flop</th>
+                                        <th></th>
+                                        <th>Post-Flop</th>
+                                        <th></th>
+                                    </tr>
+                                    {#each userSettings.presetButtons.preflop as button, index}
+                                    <tr>
+                                        <td>Button {index+1}</td>
+                                        <td>
+                                            <select name="presetButtonType" id="presetButtonType" bind:value={userSettings.presetButtons.preflop[index].type} on:change={()=>{setPresetButtonValue("preflop", index)}}>
+                                                <option value="min">Min</option>
+                                                <option value="pot%">% of Pot</option>
+                                                <option value="bbs">Big Blinds</option>
+                                                <option value="max">Max</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            {#if (userSettings.presetButtons.preflop[index].type === "pot%" || userSettings.presetButtons.preflop[index].type === "bbs")}
+                                                <div class="inputWrapper">
+                                                    <input type="number" step=0.01 min=1 max=999 maxlength=3 bind:value={userSettings.presetButtons.preflop[index].value} on:input={event => {setPresetButtonValue("preflop", index, event)}} on:blur={sendUserSettings}>
+                                                    <span>{userSettings.presetButtons.preflop[index].display}</span>
+                                                </div>
+                                            {/if}
+                                        </td>
+                                        <td>
+                                            <select name="presetButtonType" id="presetButtonType" bind:value={userSettings.presetButtons.postflop[index].type} on:change={()=>{setPresetButtonValue("postflop", index)}}>
+                                                <option value="min">Min</option>
+                                                <option value="pot%">% of Pot</option>
+                                                <option value="bbs">Big Blinds</option>
+                                                <option value="max">Max</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            {#if (userSettings.presetButtons.postflop[index].type === "pot%" || userSettings.presetButtons.postflop[index].type === "bbs")}
+                                                <div class="inputWrapper">
+                                                    <input type="number" step=0.01 min=1 max=999 maxlength=3 bind:value={userSettings.presetButtons.postflop[index].value} on:input={event => {setPresetButtonValue("postflop", index, event)}} on:blur={sendUserSettings}>
+                                                    <span>{userSettings.presetButtons.postflop[index].display}</span>
+                                                </div>
+                                            {/if}
+                                        </td>
+                                    </tr>
+                                    {/each}
+                                </table>
+                            </div>
+                        </div>
+                        <!-- <div class="applyChangesDiv">
+                            <button on:click={sendUserSettings}>Apply Changes</button>
+                        </div> -->
+                    </div>
+                </div>
+                {/if}
         </div>
     </div>
 </main>

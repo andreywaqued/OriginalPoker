@@ -33,14 +33,14 @@ const User = require('./user');
 fastify.addHook('onReady', async () => {
   logger.log("connected")
   // const client = await fastify.pg.connect()
-  // await fastify.pg.query("DROP TABLE users")
+  // await fastify.pg.query(`ALTER TABLE users ADD COLUMN settings JSONB`)
   // await fastify.pg.query("DROP TABLE hands")
   // await fastify.pg.query("DROP TABLE moneyTransactions")
   // await fastify.pg.query("DROP TABLE handsByUser")
   /* add extensions */
   fastify.pg.query("CREATE EXTENSION IF NOT EXISTS pgcrypto")
   fastify.pg.query("CREATE EXTENSION IF NOT EXISTS citext")
-  fastify.pg.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username CITEXT UNIQUE NOT NULL,password VARCHAR ( 256 ) NOT NULL,email CITEXT UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
+  fastify.pg.query("CREATE TABLE IF NOT EXISTS users(userid serial PRIMARY KEY, username CITEXT UNIQUE NOT NULL,password VARCHAR ( 256 ) NOT NULL,email CITEXT UNIQUE NOT NULL, avatar SMALLINT, balance NUMERIC,created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP,last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP, settings JSONB)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS hands(handid serial PRIMARY KEY, handHistory text, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS moneyTransactions(id serial PRIMARY KEY, userid serial NOT NULL, amount NUMERIC NOT NULL, source VARCHAR(50) NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)")
   fastify.pg.query("CREATE TABLE IF NOT EXISTS handsByUser(userid serial NOT NULL, handid serial NOT NULL, created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (userid, handid))")
@@ -133,8 +133,37 @@ async function changeAvatar(socket, user, avatar) {
 // tableManager.test()
 logger.log("starting")
 fastify.get('/users', async (request, reply) => {
+  logger.log("/users")
   // const client = await fastify.pg.connect();
   const { rows } = await fastify.pg.query('SELECT * FROM users');
+  // client.release();
+  logger.log(rows)
+  return rows;
+});
+fastify.get('/updateUserSettings', async (request, reply) => {
+  logger.log("/updateUserSettings")
+  let userSettings = {
+    sounds: true,
+    preferedSeat: {"3max": 0, "6max": 0, "9max": 0},
+    showValuesInBB: true,
+    adjustBetByBB: true,
+    presetButtons: {
+        preflop:[
+            {type: "pot%", value: 25, display: "%"},
+            {type: "pot%", value: 50, display: "%"},
+            {type: "pot%", value: 75, display: "%"},
+            {type: "pot%", value: 100, display: "%"}
+        ], 
+        postflop:[
+            {type: "pot%", value: 25, display: "%"},
+            {type: "pot%", value: 50, display: "%"},
+            {type: "pot%", value: 75, display: "%"},
+            {type: "pot%", value: 100, display: "%"}
+        ]
+    }
+  }
+  // const client = await fastify.pg.connect();
+  const { rows } = await fastify.pg.query(`UPDATE users SET settings = '${JSON.stringify(userSettings)}'`);
   // client.release();
   logger.log(rows)
   return rows;
@@ -335,6 +364,14 @@ socketManager.on('connection', (socket) => {
     const {user, avatar} = data
     logger.log(`received change avatar: ${user} ${avatar}`)
     changeAvatar(socket, user, avatar)
+  })
+  socket.on("updateUserSettings", (userSettings) => {
+    logger.log("updateUserSettings", "INFO")
+    logger.log(userSettings)
+    const user = usersConnected[socket.userID]
+    if (!user) return logger.log("user not found", "ERROR", "updateUserSettings")
+    user.settings = userSettings
+    User.updateUserSettings(socket.userID, userSettings, fastify.pg)
   })
 
   socket.on("enterPool", (data) => {
