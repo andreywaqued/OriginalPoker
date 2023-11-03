@@ -33,7 +33,7 @@ const sound = require('sound-play')
 //   require('electron-reloader')(module)
 // } catch (_) {}
 
-// const socket = io('http://localhost:3000') // Replace with your server's address
+// const socket = io('http://localhost:3000', { // Replace with your server's address
 const socket = io('https://originaltrial.onrender.com', {
   reconnection: true,
   reconnectionAttempts: 30,
@@ -247,6 +247,7 @@ socket.on("updateUserInfo", response => {
     console.log("updateUserInfo")
     console.log(response)
     user = response.user
+    mainLobby.user = user
     if (mainLobby) mainLobby.addMessage("updateUser", user)
 })
 socket.on("updateUserTx", response => {
@@ -413,7 +414,6 @@ ipcMain.on('changeAvatar', (event, user) => {
   const win = BrowserWindow.fromWebContents(event.sender)
   // console.log(user)
   if (win) {
-    console.log("ENTROUUUUUUUUUUUUUUUUUUU NOOOOOOOOOOOOOOOOO WINNNNNNNNNNNN:      ", user)
     socket.emit("changeAvatar", user)
   }
 });

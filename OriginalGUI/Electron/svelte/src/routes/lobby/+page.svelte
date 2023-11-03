@@ -153,7 +153,7 @@
     function closeChooseAvatarScreen(selectedAvatar) {
         showChooseAvatarScreen = false;
         userAvatar = selectedAvatar.split('.')[0];
-        api.send("changeAvatar", {userName, userAvatar})
+        api.send("changeAvatar", {userAvatar})
     }
 
     function handlePopoverClick(event) {
@@ -916,7 +916,7 @@
         border-radius: 50%;
     }
 
-    .overlay {
+    .overlay-avatar {
         position: absolute;
         top: 0;
         left: 0;
@@ -931,7 +931,7 @@
         border-radius: 50%;
     }
 
-    .avatarClickable:hover .overlay {
+    .avatarClickable:hover .overlay-avatar {
         opacity: 1;
     }
 
@@ -1024,7 +1024,7 @@
             </svg></div>
             <div class="player">
                 <div class="playerAvatar avatarClickable" style={cssVarStyles} on:click={openChooseAvatarScreen}>
-                    <div class="overlay">
+                    <div class="overlay-avatar">
                         <div class="overlayText overlayTextSmall">Change Avatar</div>
                     </div>
                 </div> 
@@ -1293,7 +1293,7 @@
                     <div class="jogador">
                     <div class="container">
                         <div class="playerAvatar avatarClickable" style={cssVarStyles} on:click={openChooseAvatarScreen}>
-                            <div class="overlay">
+                            <div class="overlay-avatar">
                                 <div class="overlayText">Change Avatar</div>
                             </div>
                         </div> 
