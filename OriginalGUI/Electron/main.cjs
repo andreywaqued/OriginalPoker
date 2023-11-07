@@ -70,11 +70,10 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     transparent: true,
     // useContentSize: true,
     webPreferences: {
-      devTools: true,
+      devTools: !app.isPackaged,
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
-      // devTools: false
     }
   });
   newWindow.aspectRatio = aspectRatio
