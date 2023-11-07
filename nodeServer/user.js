@@ -42,16 +42,9 @@ class User {
         return userData
     }
 
-
     static async getUserTransactionsFromDB(id, offset, db) {
         const txs = await fetchUserTransactionsFromDB(id, offset, db)
         return txs
-    }
-
-    static async getChangeAvatarUserFromDB(name, avatar, db) {
-        // Fetch user details from DB
-        const userData = await changeAvatarUserFromDB(name, avatar, db);
-        return userData
     }
 
 
@@ -190,28 +183,17 @@ async function fetchUserFromDB(name, db) {
 }
 
 
-async function changeAvatarUserFromDB(name, avatar, db) {
+async function changeAvatarUserFromDB(userId, avatar, db) {
     logger.log("changeAvatarUserFromDB")
-    // const client = await db.connect();
-    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
-    // client.release();
+    console.log("############################# ATUALIZANDO AVATAR", userId, avatar)
+    const { rows } = await db.query(`SELECT * FROM users WHERE userid = '${userId}'`);
+    console.log("ROWWWWWWWWWWWWWS: ", rows)
+
     if (rows.length > 0) {
-        logger.log("fetchUserFromDB 1")
-        const user = rows[0] ; // Return user id
-        logger.log(user)
-        // const client = await db.connect();
-        await db.query(`UPDATE users SET avatar = '${avatar}' WHERE username = '${name}'`);
-        // client.release();
+        const user = rows[0];
+        console.log("############################# ATUALIZANDO AVATAR")
+        await db.query("UPDATE users SET avatar = $1 WHERE userid = $2", [avatar, userId]);
         user.avatar = avatar;
-        
-        return {
-            id: user.userid,
-            name: user.username,
-            email: user.email,
-            avatar: user.avatar,
-            balance: new Decimal(user.balance), //it looks like numeric type saves as string
-            players: {}
-        };
     }
 }
 

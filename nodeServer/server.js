@@ -122,11 +122,12 @@ async function tryReconnect(socket, user) {
     return userRecovered
 }
 
-async function changeAvatar(socket, user, avatar) {
-  User.getChangeAvatarUserFromDB(user, avatar, fastify.pg).then(()=>{
+async function changeAvatar(socket, avatar) {
+  await User.getChangeAvatarUserFromDB(socket.userID, avatar, fastify.pg).then(()=>{
     console.log("updated avatar");
   });
-  user = await User.getUserFromDB(user, fastify.pg);
+  const user = usersConnected[socket.userID]
+  user.avatar = avatar;
   socket.emit("updateUserInfo", {user: user, status: 200})
 }
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
@@ -361,9 +362,9 @@ socketManager.on('connection', (socket) => {
   })
 
   socket.on("changeAvatar", (data) => {
-    const {user, avatar} = data
-    logger.log(`received change avatar: ${user} ${avatar}`)
-    changeAvatar(socket, user, avatar)
+    const {userAvatar} = data
+    logger.log(`received change avatar: ${socket.userName} ${userAvatar}`)
+    changeAvatar(socket, userAvatar)
   })
   socket.on("updateUserSettings", (userSettings) => {
     logger.log("updateUserSettings", "INFO")

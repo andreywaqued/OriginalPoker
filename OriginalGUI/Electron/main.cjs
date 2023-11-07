@@ -255,6 +255,7 @@ socket.on("updateUserInfo", response => {
     console.log("updateUserInfo")
     console.log(response)
     user = response.user
+    mainLobby.user = user
     if (mainLobby) mainLobby.addMessage("updateUser", user)
     updateUserInfoOnTables()
 })
