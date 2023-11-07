@@ -122,14 +122,14 @@ async function tryReconnect(socket, user) {
     return userRecovered
 }
 
-async function changeAvatar(socket, avatar) {
-  await User.getChangeAvatarUserFromDB(socket.userID, avatar, fastify.pg).then(()=>{
-    console.log("updated avatar");
-  });
-  const user = usersConnected[socket.userID]
-  user.avatar = avatar;
-  socket.emit("updateUserInfo", {user: user, status: 200})
-}
+// async function changeAvatar(socket, avatar) {
+//   await User.getChangeAvatarUserFromDB(socket.userID, avatar, fastify.pg).then(()=>{
+//     console.log("updated avatar");
+//   });
+//   const user = usersConnected[socket.userID]
+//   user.avatar = avatar;
+//   socket.emit("updateUserInfo", {user: user, status: 200})
+// }
 // tableManager = new TableManager(socketManager, fastify, playerPoolManager)
 // tableManager.test()
 logger.log("starting")
@@ -362,10 +362,14 @@ socketManager.on('connection', (socket) => {
   })
 
   socket.on("changeAvatar", (data) => {
-    const {userAvatar} = data
     logger.log(`received change avatar: ${socket.userName} ${userAvatar}`)
-    changeAvatar(socket, userAvatar)
+    const user = usersConnected[socket.userID]
+    const {userAvatar} = data
+    if (!user) return logger.log("user not found", "ERROR", "changeAvatar")
+    user.avatar = userAvatar
+    User.changeAvatar(socket.userID, userAvatar, fastify.pg)
   })
+  
   socket.on("updateUserSettings", (userSettings) => {
     logger.log("updateUserSettings", "INFO")
     logger.log(userSettings)

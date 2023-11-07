@@ -64,6 +64,21 @@ class User {
         logger.log("updateUserSettings()")
         await db.query(`UPDATE users SET settings = '${JSON.stringify(settings)}' WHERE userid = ${userid}`);
     }
+    static async changeAvatar(userid, avatar, db) {
+        logger.log("changeAvatar()")
+        await db.query(`UPDATE users SET avatar = ${avatar} WHERE userid = ${userid}`);
+        // logger.log("changeAvatarUserFromDB")
+        // console.log("############################# ATUALIZANDO AVATAR", userId, avatar)
+        // const { rows } = await db.query(`SELECT * FROM users WHERE userid = '${userId}'`);
+        // console.log("ROWWWWWWWWWWWWWS: ", rows)
+    
+        // if (rows.length > 0) {
+        //     const user = rows[0];
+        //     console.log("############################# ATUALIZANDO AVATAR")
+        //     await db.query("UPDATE users SET avatar = $1 WHERE userid = $2", [avatar, userId]);
+        //     user.avatar = avatar;
+        // }
+    }
     // async deposit(amount) {
     //     if (amount <= 0) {
     //         throw new Error('Invalid amount');
@@ -182,20 +197,6 @@ async function fetchUserFromDB(name, db) {
     // Simulate fetching a user from the database
 }
 
-
-async function changeAvatarUserFromDB(userId, avatar, db) {
-    logger.log("changeAvatarUserFromDB")
-    console.log("############################# ATUALIZANDO AVATAR", userId, avatar)
-    const { rows } = await db.query(`SELECT * FROM users WHERE userid = '${userId}'`);
-    console.log("ROWWWWWWWWWWWWWS: ", rows)
-
-    if (rows.length > 0) {
-        const user = rows[0];
-        console.log("############################# ATUALIZANDO AVATAR")
-        await db.query("UPDATE users SET avatar = $1 WHERE userid = $2", [avatar, userId]);
-        user.avatar = avatar;
-    }
-}
 
 async function fetchUserWithPasswordFromDB(name, password, db) {
     logger.log("fetchUserWithPasswordFromDB")
