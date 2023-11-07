@@ -13,7 +13,8 @@ class User {
             user.avatar = userData.avatar;
             user.email = userData.email;
             user.balance = new Decimal(userData.balance);
-            user.players = {}
+            user.players = {};
+            user.settings = userData.settings;
             return user;
         } else {
             throw new Error("Invalid credentials")            
@@ -41,34 +42,51 @@ class User {
         return userData
     }
 
-    static async getChangeAvatarUserFromDB(userId, avatar, db) {
-        // Change user avatar from DB
-        await changeAvatarUserFromDB(userId, avatar, db);
+    static async getUserTransactionsFromDB(id, offset, db) {
+        const txs = await fetchUserTransactionsFromDB(id, offset, db)
+        return txs
     }
 
-    async deposit(amount) {
-        if (amount <= 0) {
-            throw new Error('Invalid amount');
-        }
 
-        // Update balance in DB
-        await updateBalanceInDB(this.name, this.balance + amount);
-
-        // Update local state
-        this.balance += amount;
+    /**
+     *
+     * @param {number} amount 
+     * @param {number} id 
+     * @param {string} source
+     * @param {any} db 
+     *
+    */
+    static async handleMoney(amount, id, source, db) {
+        logger.log("handleMoney")
+        await updateUserBalanceInDB(amount, id, source, db)
     }
-
-    async withdraw(amount) {
-        if (amount <= 0 || amount > this.balance) {
-            throw new Error('Invalid amount');
-        }
-
-        // Update balance in DB
-        await updateBalanceInDB(this.name, this.balance - amount);
-
-        // Update local state
-        this.balance -= amount;
+    static async updateUserSettings(userid, settings, db) {
+        logger.log("updateUserSettings()")
+        await db.query(`UPDATE users SET settings = '${JSON.stringify(settings)}' WHERE userid = ${userid}`);
     }
+    // async deposit(amount) {
+    //     if (amount <= 0) {
+    //         throw new Error('Invalid amount');
+    //     }
+
+    //     // Update balance in DB
+    //     await updateBalanceInDB(this.name, this.balance + amount);
+
+    //     // Update local state
+    //     this.balance += amount;
+    // }
+
+    // async withdraw(amount) {
+    //     if (amount <= 0 || amount > this.balance) {
+    //         throw new Error('Invalid amount');
+    //     }
+
+    //     // Update balance in DB
+    //     await updateBalanceInDB(this.name, this.balance - amount);
+
+    //     // Update local state
+    //     this.balance -= amount;
+    // }
 }
 
 // Mock database functions
@@ -91,17 +109,37 @@ async function hasInvalidInputs(username, password, email, db) {
     if (password.length < 8) return "Password too short, minimum of 8 characters"
     return null
 }
-
+let userSettings = {
+    sounds: true,
+    preferedSeat: {"3max": 0, "6max": 0, "9max": 0},
+    showValuesInBB: true,
+    adjustBetByBB: true,
+    presetButtons: {
+        preflop:[
+            {type: "pot%", value: 25, display: "%"},
+            {type: "pot%", value: 50, display: "%"},
+            {type: "pot%", value: 75, display: "%"},
+            {type: "pot%", value: 100, display: "%"}
+        ], 
+        postflop:[
+            {type: "pot%", value: 25, display: "%"},
+            {type: "pot%", value: 50, display: "%"},
+            {type: "pot%", value: 75, display: "%"},
+            {type: "pot%", value: 100, display: "%"}
+        ]
+    }
+  }
 async function saveUserToDB(name, password, email, avatar, db) {
     // Simulate saving a new user to the database
     logger.log("saveUserToDB")
     // const client = await db.connect();
-    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance) VALUES(
+    const { rows } = await db.query(`INSERT INTO users(username, password, email, avatar, balance, settings) VALUES(
                                     '${name}',
                                     crypt('${password}', gen_salt('bf')),
                                     '${email}',
                                     '${avatar}',
-                                    0)
+                                    0,
+                                    '${JSON.stringify(userSettings)}')
                                     RETURNING *`
                                     );
     if (rows.length>0) {
@@ -137,7 +175,8 @@ async function fetchUserFromDB(name, db) {
             email: user.email,
             avatar: user.avatar,
             balance: new Decimal(user.balance), //it looks like numeric type saves as string
-            players: {}
+            players: {},
+            settings: user.settings
         };
     }
     // Simulate fetching a user from the database
@@ -176,14 +215,33 @@ async function fetchUserWithPasswordFromDB(name, password, db) {
             name: user.username,
             email: user.email,
             avatar: user.avatar,
-            balance: new Decimal(user.balance) //it looks like numeric type saves as string
+            balance: new Decimal(user.balance), //it looks like numeric type saves as string
+            settings: user.settings
         };
     }
     return false;
 }
 
-async function updatebalanceInDB(name, newBalance) {
-    // Simulate updating the user's balance in the database
+async function fetchUserTransactionsFromDB(id, offset, db) {
+    const { rows } = await db.query("SELECT * FROM moneyTransactions WHERE userid = $1 ORDER BY created_on DESC LIMIT 10 OFFSET $2", [id, offset]);
+    return rows
+}
+
+    /**
+     *
+     * @param {number} amount 
+     * @param {number} id 
+     * @param {string} source
+     * @param {any} db 
+     *
+    */
+async function updateUserBalanceInDB(amount, id, source, db) {
+    await db.transact(async client => {
+        await db.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
+            [amount, id])    
+        await db.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
+            [id, amount, source])
+    })
 }
 
 module.exports = User

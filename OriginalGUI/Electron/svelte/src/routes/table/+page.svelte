@@ -41,6 +41,28 @@
   $: console.log(tableRotateAmount = hero.position)
   let handStrength = ""
   let callChangeAds
+  let presetButtonsRound = "preflop"
+  let balance = 0
+  let userSettings = {
+    sounds: true,
+    preferedSeat: {"3max": 0, "6max": 0, "9max": 0},
+    showValuesInBB: true,
+    adjustBetByBB: true,
+    presetButtons: {
+        preflop:[
+            {type: "pot%", value: 25, display: "%"},
+            {type: "pot%", value: 50, display: "%"},
+            {type: "pot%", value: 75, display: "%"},
+            {type: "pot%", value: 100, display: "%"}
+        ], 
+        postflop:[
+            {type: "pot%", value: 25, display: "%"},
+            {type: "pot%", value: 50, display: "%"},
+            {type: "pot%", value: 75, display: "%"},
+            {type: "pot%", value: 100, display: "%"}
+        ]
+    }
+  }
   onMount(() => {
     const setHeight = () => {
       document.documentElement.style.setProperty('--window-height', `${window.innerHeight}px`);
@@ -54,33 +76,120 @@
         hero = player
         hero.isHero = true
         hero.showCards = true
-        hero.betSize = parseFloat(player.betSize)
-        hero.stackSize = parseFloat(player.stackSize)
-        playerSitout = player.isSitout
-        if (player.isSitout) sitoutPopover(player.isSitout)
-        if (player.finalHandRank) handStrength = player.finalHandRank.combination
-        possibleActions = player.possibleActions
-        if (possibleActions.length > 1) {
-          if (possibleActions[1].amount > hero.betSize + hero.stackSize) possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize)*100)/100
-          callAmount = possibleActions[1].amount
-          betValue = Math.round(possibleActions[2].amount * 100) / 100
+        hero.betSize = parseFloat(hero.betSize)
+        hero.stackSize = parseFloat(hero.stackSize)
+        if (userSettings.showValuesInBB) {
+          console.log("changing hero values to BB")
+          hero.betSize = Math.round(hero.betSize/bbSize*100)/100
+          hero.stackSize = Math.round(hero.stackSize/bbSize*100)/100
+        }
+        playerSitout = hero.isSitout
+        if (hero.isSitout) sitoutPopover(hero.isSitout)
+        if (hero.finalHandRank) handStrength = hero.finalHandRank.combination
+        if (hero.possibleActions.length > 1) {
+          if (userSettings.showValuesInBB) hero.possibleActions[1].amount = Math.round(hero.possibleActions[1].amount/bbSize*100)/100
+          if (hero.possibleActions[1].amount > hero.betSize + hero.stackSize) hero.possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize)*100)/100
+          callAmount = hero.possibleActions[1].amount
+          betValue = userSettings.showValuesInBB ? Math.round(hero.possibleActions[2].amount/bbSize*100)/100 : Math.round(hero.possibleActions[2].amount * 100) / 100
           if (betValue > hero.betSize + hero.stackSize) betValue = Math.round((hero.betSize + hero.stackSize)*100)/100
           minBet = betValue;
-          maxBet = Math.round((player.betSize + player.stackSize)*100)/100;
+          maxBet = Math.round((hero.betSize + hero.stackSize)*100)/100;
           api.send("focusOnWindow")
           api.send("playSound", "hora_de_jogar.wav")
         }
+        if (!playerSitout) possibleActions = hero.possibleActions
         tableRotateAmount = hero.position
-        playersTemp[player.id] = hero
+        playersTemp[hero.id] = hero
         players = playersTemp
         console.log(hero)
       });
+      api.on("updateUserBalance", (userBalance) => {
+        console.log("updateUserBalance")
+        balance = parseFloat(userBalance)
+      }) 
+      api.on("updateUserSettings", (settings) => {
+        console.log("updateUserSettings")
+        if (userSettings.showValuesInBB != settings.showValuesInBB) {
+          if (players) {
+            const playersTemp = JSON.parse(JSON.stringify(players))
+            Object.values(playersTemp).forEach(player => {
+              if (settings.showValuesInBB) {
+                player.betSize = Math.round(player.betSize/bbSize*100)/100
+                player.stackSize = Math.round(player.stackSize/bbSize*100)/100
+              }
+              if (!settings.showValuesInBB) {
+                player.betSize = Math.round(player.betSize*bbSize*100)/100
+                player.stackSize = Math.round(player.stackSize*bbSize*100)/100
+              }
+              if (player.id === hero.id) hero = player
+            })
+            players = playersTemp
+          }
+          if (pots) {
+            const potsTemp = JSON.parse(JSON.stringify(pots))
+            for (let i = 0; i< potsTemp.length; i++) {
+              if (settings.showValuesInBB) {
+                potsTemp[i] = Math.round(potsTemp[i]/bbSize*100)/100
+              }
+              if (!settings.showValuesInBB) {
+                potsTemp[i] = Math.round(potsTemp[i]*bbSize*100)/100
+              }
+            }
+            pots = potsTemp
+          }
+          if (possibleActions.length > 1) {
+            possibleActions.forEach(action => {
+              if (settings.showValuesInBB) {
+                action.amount = Math.round(action.amount/bbSize*100)/100
+              }
+              if (!settings.showValuesInBB) {
+                action.amount = Math.round(action.amount*bbSize*100)/100
+              }
+            })
+            if (settings.showValuesInBB) {
+              betValue = Math.round(betValue/bbSize*100)/100
+              minBet = Math.round(minBet/bbSize*100)/100
+              maxBet = Math.round(maxBet/bbSize*100)/100
+              callAmount = Math.round(callAmount/bbSize*100)/100
+              biggestBet = Math.round(biggestBet/bbSize*100)/100
+            }
+            if (!settings.showValuesInBB) {
+              betValue = Math.round(betValue*bbSize*100)/100
+              minBet = Math.round(minBet*bbSize*100)/100
+              maxBet = Math.round(maxBet*bbSize*100)/100
+              callAmount = Math.round(callAmount*bbSize*100)/100
+              biggestBet = Math.round(biggestBet*bbSize*100)/100
+            }
+          }
+        }
+        userSettings = settings
+        console.log(userSettings)
+      }) 
       api.on("updateGameState", (gameState) => {
         console.log("updateGameState")
         console.log(gameState)
+        currentGameState = JSON.parse(JSON.stringify(gameState))
         sumOfBetSizes = 0
         currentPlayerActing = "empty player"
         handIsBeingPlayed = gameState.handIsBeingPlayed
+        tableSize = gameState.tableSize
+        boardCards = gameState.boardCards
+        sbSize = parseFloat(gameState.sb)
+        bbSize = parseFloat(gameState.bb)
+        console.log("gameState.pots")
+        console.log(gameState.pots)
+        if (userSettings.showValuesInBB) {
+          console.log("updating pot size to bbs")
+          for (let i = 0; i<gameState.pots.length; i++) {
+            gameState.pots[i] = Math.round(parseFloat(gameState.pots[i])/bbSize*100)/100
+          }
+          biggestBet = Math.round(gameState.biggestBet/bbSize*100)/100
+        }
+        pots = gameState.pots
+        console.log("pots")
+        console.log(pots)
+        biggestBet = parseFloat(gameState.biggestBet)
+        presetButtonsRound = gameState.boardRound === 0 ? "preflop" : "postflop"
         clearInterval(tryStartPlayerTurn)
         if (!gameState.handIsBeingPlayed) possibleActions = []
         if (gameState.handIsBeingPlayed || gameState.isShowdown) {
@@ -93,6 +202,10 @@
           player.isHero = false
           // player.showCards = false
           player.isButton = false
+          if (userSettings.showValuesInBB) {
+            player.betSize = Math.round(player.betSize/bbSize*100)/100
+            player.stackSize = Math.round(player.stackSize/bbSize*100)/100
+          }
           sumOfBetSizes += parseFloat(player.betSize)
           
           if (gameState.positionActing === player.position) currentPlayerActing = player.id
@@ -111,13 +224,6 @@
         })
         players = gameState.players
         console.log(players)
-        tableSize = gameState.tableSize
-        boardCards = gameState.boardCards
-        pots = gameState.pots
-        sbSize = parseFloat(gameState.sb)
-        bbSize = parseFloat(gameState.bb)
-        biggestBet = parseFloat(gameState.biggestBet)
-        currentGameState = gameState
         console.log(playersComponents)
         Object.values(playersComponents).forEach( playerComponent => { 
           if (playerComponent) playerComponent.endPlayerTurn()
@@ -239,42 +345,40 @@
     // console.log("raise action")
   }
   function plusBetSlider(){
-    if (betValue + sbSize >= maxBet) {
+    let step = sbSize
+    if (userSettings.adjustBetByBB) step = bbSize
+    if (userSettings.showValuesInBB) step = step/bbSize
+    if (betValue + step >= maxBet) {
       betValue = Math.round(maxBet * 100) / 100
     } else {
-      betValue = Math.round((betValue + sbSize) * 100) / 100 
+      betValue = Math.round((betValue + step) * 100) / 100 
     }
   }
   function minusBetSlider(){
-    if (betValue - sbSize <= minBet) {
+    let step = sbSize
+    if (userSettings.adjustBetByBB) step = bbSize
+    if (userSettings.showValuesInBB) step = step/bbSize
+    if (betValue - step <= minBet) {
       betValue = Math.round(minBet * 100) / 100
     } else {
-      betValue = Math.round((betValue - sbSize) * 100) / 100 
+      betValue = Math.round((betValue - step) * 100) / 100 
     }
       
   }
-  function updateBetValue(potPerc){
-    // console.log(`updateBetValue(${potPerc})`)
-    let sumOfPots = 0
-    for (let i = 0; i< pots.length; i++) {
-      sumOfPots += parseFloat(pots[i])
+  function updateBetValue(presetButton){
+    if (presetButton.type === "min") betValue = minBet
+    if (presetButton.type === "max") betValue = maxBet
+    if (presetButton.type === "bbs") betValue = userSettings.showValuesInBB ? presetButton.value : Math.round(presetButton.value * bbSize * 100)/100
+    if (presetButton.type === "pot%") {
+      // console.log(`updateBetValue(${potPerc})`)
+      const potPerc = presetButton.value
+      let sumOfPots = 0
+      for (let i = 0; i< pots.length; i++) {
+        sumOfPots += parseFloat(pots[i])
+      }
+      // console.log("betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount")
+      betValue = potPerc/100*(sumOfPots + sumOfBetSizes + biggestBet - hero.betSize)+biggestBet
     }
-    // console.log("betValue = potPerc/100*(sumOfPots + sumOfBetSizes + callAmount - hero.betSize)+callAmount")
-    betValue = potPerc/100*(sumOfPots + sumOfBetSizes + biggestBet - hero.betSize)+biggestBet
-    // console.log(`${betValue} = ${potPerc}/100*(${sumOfPots} + ${sumOfBetSizes} + ${callAmount}) + ${biggestBet}`)
-    // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
-    // // if (sumOfBetSizes == 0) betValue = sumOfPots * potPerc / 100
-    // // if (sumOfBetSizes == 0) betValue = betValue * potPerc / 100
-    // if (sumOfBetSizes > 0) {
-      
-    //   100/100*(3 + 0 + 2 - 1)+2
-    //   100/100*(3 + 0 + 2 - 0)+2
-    //   100/100*(10 + 0 + 0 - 0)+0
-    //   betValue = (2 - 1) + (0 + 3 + 2) * 100 / 100 //first round sb x bb
-    //   betValue = (2 - 0) * 2 + (0 + 3 + 0) * 100 / 100 //first round other players
-    //   betValue = (callAmount - hero.betSize) + (sumOfPots + sumOfBetSizes + callAmount) * potPerc / 100
-    // }
-
 
     if (betValue > hero.betSize + hero.stackSize) betValue = hero.betSize + hero.stackSize
     if (betValue < minBet) betValue = minBet
@@ -340,17 +444,26 @@
   let sitoutPopoverActive = false;
   function sitoutPopover(isSitout = true) {
     console.log("sitoutPopover" + isSitout)
-    const target = document.getElementById("sitoutPopover")
-    if (isSitout) target?.showPopover()
-    if (!isSitout) target?.hidePopover()
+    // const target = document.getElementById("sitoutPopover")
+    // if (isSitout) target?.showPopover()
+    // if (!isSitout) target?.hidePopover()
+    if (isSitout) possibleActions = [{type:"I`m Back", amount: 0}]
+    if (!isSitout) possibleActions = hero.possibleActions
     sitoutPopoverActive = isSitout;
     // popovertarget="test"
   }
   let rebuyPopoverActive = false;
   let rebuyAmount = 0;
+  let minRebuyAmount = 0;
+  let maxRebuyAmount = 0;
   function toggleRebuy(){
     console.log("toggleRebuy")
-    rebuyAmount = bbSize * 100 - hero.stackSize
+    api.send("getUserBalance")
+    rebuyAmount = userSettings.showValuesInBB ? bbSize * 100 - Math.round(hero.stackSize * bbSize * 100) / 100 : bbSize * 100 - hero.stackSize
+    minRebuyAmount = userSettings.showValuesInBB ? bbSize * 20 - Math.round(hero.stackSize * bbSize * 100) / 100 : bbSize * 20 - hero.stackSize
+    if (minRebuyAmount < 0) minRebuyAmount = 0
+    if (rebuyAmount < 0) rebuyAmount = 0
+    maxRebuyAmount = rebuyAmount
     const target = document.getElementById("rebuyPopover")
     if (rebuyPopoverActive) target?.hidePopover()
     if (!rebuyPopoverActive) target?.showPopover()
@@ -387,10 +500,16 @@
   }
   function parseAction(index) {
     let action = possibleActions[index]
+    if (action.type === "I`m Back") return toggleSitout()
     betValue = parseFloat(betValue.toString().replace(",", "."))
     if (index === 2) action.amount = Math.round(betValue * 100) / 100
+    if (action.amount != 0 && userSettings.showValuesInBB) action.amount = Math.round(action.amount * bbSize * 100) / 100
     api.send("parseAction", {player: hero, action: action})
     possibleActions = []
+  }
+  function setRebuyAmount(presetRebuyAmount) {
+    console.log(`setRebuyAmount(${presetRebuyAmount})`)
+    rebuyAmount = presetRebuyAmount
   }
   
 </script>
@@ -426,19 +545,19 @@
 .bg-table.doordash {
   background-image: url('/fundo doordash.png');
 }
-.waitingForPlayersDiv{
+.centerInfoDiv{
   position: absolute;
   width: 100%;
-  top: 50%;
+  top: 55%;
   // left: 40%;
   z-index: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  .waitingForPlayersText{
+  .centerInfoText{
     // background-color: #c1c1c1;
     color: white;
-    animation-name: pulseWaitingPlayer; 
+    animation-name: pulseCenterInfo; 
     animation-duration: 1.5s; 
     animation-timing-function: ease-in-out; 
     animation-direction: alternate; 
@@ -446,7 +565,7 @@
     animation-play-state: running; 
   }
 }
-@keyframes pulseWaitingPlayer {
+@keyframes pulseCenterInfo {
   0% {
     opacity: 0.3
   }
@@ -652,7 +771,7 @@ button:disabled {
     .playButton:hover, .presetBetSizeButton:hover {
         background-color: white;
     }
-    button:active {
+    button:active:enabled {
       transform: scale(0.95);
     }
     button {
@@ -697,7 +816,10 @@ button:disabled {
       display: none;
     }
     .value::before{
-        content: "$";
+        content: "$ ";
+    }
+    .valueInBB::before{
+        content: "BB ";
     }
     .betSlider {
         // border: 1px solid black;
@@ -801,12 +923,152 @@ button:disabled {
   }
 
   .rebuyPopover {
-    width: 50%;
-    height: 50%;
+    width: 35%;
+    height: 35%;
     // display: flex;
     flex-direction: column;
     overflow: hidden;
     padding: 0;
+    font-size: 0.8rem;
+    background-color: white;
+    border-radius: 1rem;
+    border: 1px solid #dddddd;
+    .popoverTitle {
+      height: 15%;
+      background-color: #f2f2f2;
+      color: #181818;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .popoverMain {
+      width: 90%;
+      height: 85%;
+      display: flex;
+      flex-direction: column;
+      color: #181818;
+      margin-left: 5%;
+      .balanceBlock {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        height: 25%;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #dddddd;
+      }
+      .rebuyBlock {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 50%;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 1%;
+        font-size: 0.8em;
+        .rebuyInputBlock{
+          display: flex;
+          flex-direction: row;
+          width: 100%;
+          height: 40%;
+          justify-content: space-between;
+          align-items: center;
+          font-weight: bold;
+          .inputWrapper {
+              position: relative;
+              width: 40%;
+              height: 1.2em;
+              border: 1px solid #181818;
+              border-radius: 0.2em;
+              input::-webkit-outer-spin-button,
+              input::-webkit-inner-spin-button {
+                  -webkit-appearance: none;
+                  margin: 0;
+              }
+            span {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              left: 1%;
+              height: 100%;
+              position: absolute;
+              color: #181818;
+            }
+            input {
+              all: unset;
+              width: 100%;
+              height: 100%;
+              text-align: right;
+              padding-right: 1%;
+            }
+          }
+        }
+        .rebuyButtonsBlock{
+          display: flex;
+          flex-direction: row;
+          width: 100%;
+          height: 60%;
+          justify-content: space-between;
+          align-items: center;
+          color: #707070;
+          .rebuyPresetButton {
+            all:unset;
+            width: 45%;
+            height: 80%;
+            border-radius: 0.5em;
+            border: 1px solid #181818;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            .value {
+              font-weight: bold;
+              color: #181818;
+            }
+          }
+          .rebuyPresetButton:active:enabled {
+            transform: scale(0.95);
+          }
+          .rebuyPresetButton:hover:enabled {
+            cursor: pointer
+          }
+        }
+      }
+      .rebuyConfirmButtonsBlock {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        height: 25%;
+        justify-content: space-around;
+        align-items: center;
+        font-size: 0.6em;
+        .rebuyConfirmButtons {
+          all: unset;
+          width: 35%;
+          height: 30%;
+          border-radius: 5em;
+          border: 1px solid #181818;
+        }
+        .rebuyConfirmButtons.confirm {
+          color: white;
+          background-color: #181818;
+          text-align: center;
+        }
+        .rebuyConfirmButtons.cancel {
+          color: #181818;
+          background-color: white;
+          text-align: center;
+        }
+        .rebuyConfirmButtons:hover:enabled {
+          cursor: pointer
+        }
+        .rebuyConfirmButtons:active:enabled {
+          transform: scale(0.95);
+        }
+        .rebuyConfirmButtons:disabled {
+          opacity: 0.7;
+        }
+      }
+    }
   }
   .hhPopover {
     width: 80%;
@@ -815,6 +1077,7 @@ button:disabled {
     flex-direction: column;
     overflow: hidden;
     padding: 0;
+    
   }
   .popoverTitle {
     width: 98%;
@@ -852,8 +1115,8 @@ button:disabled {
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
-    padding: 1%;
-    background-color: #1d1d1d;
+    // padding: 1%;
+    // background-color: #1d1d1d;
     color: #e5e5e5;
     .handHistory {
       font-size: 0.75em;
@@ -892,8 +1155,13 @@ button:disabled {
   <div class="bg-table" class:doordash={doordashTable} on:wheel={handleScroll}>
     <div class:transitioning={transitioning}></div>
     {#if waitingForPlayers && !playerSitout}
-      <div class="waitingForPlayersDiv">
-        <span class="waitingForPlayersText">Waiting for players...</span>
+      <div class="centerInfoDiv">
+        <span class="centerInfoText">Waiting for players...</span>
+      </div>
+    {/if}
+    {#if sitoutPopoverActive}
+      <div class="centerInfoDiv">
+        <span class="centerInfoText">You are sitout.</span>
       </div>
     {/if}
     <div class="board">
@@ -902,18 +1170,18 @@ button:disabled {
       {/each}
     </div>
     <div class="potLine potPrincipal">
-        <Pot potAmount = {pots[0]}/>
+        <Pot bind:potAmount = {pots[0]} bind:showValuesInBB={userSettings.showValuesInBB}/>
     </div>
     <div class="potLine potsParalelos">
       {#each pots as pot, index}
         {#if index != 0}
-          <Pot potAmount = {pot}/>
+          <Pot bind:potAmount = {pot} bind:showValuesInBB={userSettings.showValuesInBB}/>
         {/if} 
       {/each}
     </div>
     {#if tableStarted}
       {#each Object.entries(players) as [playerID, player]}
-        <Player {...player} bind:tableRotateAmount={tableRotateAmount} bind:tableSize = {tableSize} bind:handIsBeingPlayed = {handIsBeingPlayed} bind:this={playersComponents[playerID]}/> 
+        <Player {...player} bind:tableRotateAmount={tableRotateAmount} bind:tableSize = {tableSize} bind:handIsBeingPlayed = {handIsBeingPlayed} bind:this={playersComponents[playerID]} bind:showValuesInBB={userSettings.showValuesInBB}/> 
         <!--bind:this={playersComponents[playerID]}-->
       {/each}
     {:else}
@@ -924,12 +1192,14 @@ button:disabled {
         {#if possibleActions.length > 1}
           <div class="betDisplayRow">
             <div class="presetButtons">
-              <button class="presetBetSizeButton" on:click={()=>updateBetValue(25)}>25%</button>
-              <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
+              {#each userSettings.presetButtons[presetButtonsRound] as presetButton}
+                <button class="presetBetSizeButton" on:click={()=>updateBetValue(presetButton)}>{presetButton.value > 0 ? presetButton.value : ""}{presetButton.display}</button>
+              {/each}
+              <!-- <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
               <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
-              <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button>
+              <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button> -->
             </div>
-            <label class="dolarSign">$</label>
+            <label class="dolarSign">{userSettings.showValuesInBB ? "BB" : "$"}</label>
             <input class="betDisplay" bind:value={betValue} type="number" step="0.01" on:keydown={() => betValue = Number(betValue.toFixed(1))}/>
           </div>
           <div class="betSlider">
@@ -944,7 +1214,7 @@ button:disabled {
                 <button class="playButton" class:playerButtonHide={action.amount >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} >
                   <span class:fastFold={action.type === "⚡Fold"}>{action.type}</span>
                   {#if action.amount > 0}
-                    <span class="value">{Math.round((action.amount - hero.betSize)*100)/100}</span>
+                    <span>{userSettings.showValuesInBB ? "" : "$ "}{Math.round((action.amount - hero.betSize)*100)/100}{userSettings.showValuesInBB ? " BB" : ""}</span>
                   {/if}
                 </button>
               {:else}
@@ -955,7 +1225,7 @@ button:disabled {
                   {:else}
                     <span>All-in</span>
                   {/if}
-                  <span class="value">{betValue}</span>
+                  <span>{userSettings.showValuesInBB ? "" : "$ "}{betValue}{userSettings.showValuesInBB ? " BB" : ""}</span>
                 </button>
               {/if}
             {/each}
@@ -970,7 +1240,7 @@ button:disabled {
       </div>
     {/if}
     
-    <div class="popoverOverlay" class:active={sitoutPopoverActive} on:click={() => sitoutPopover(false)}></div>
+    <!-- <div class="popoverOverlay" class:active={sitoutPopoverActive} on:click={() => sitoutPopover(false)}></div>
     <div class="sitoutPopover" popover id="sitoutPopover">
       <div class="popoverTitle">
         <span>Sitout</span>
@@ -980,7 +1250,7 @@ button:disabled {
         You are sitout
         <button on:click={toggleSitout}>I`m Back!`</button>
       </div>
-    </div>
+    </div> -->
     <div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
     <div class="hhPopover" popover id="hhPopover">
       <div class="popoverTitle">
@@ -1000,13 +1270,36 @@ button:disabled {
     <div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
     <div class="rebuyPopover" popover id="rebuyPopover">
       <div class="popoverTitle">
-        <span>Rebuy</span>
-        <button class="closeButton" on:click={toggleRebuy}>X</button>
+        <span>REBUY {winTitle}</span>
       </div>
       <div class="popoverMain">
-        <label for="rebuyAmount">Amount to Rebuy</label>
-        <input placeholder="Amount to Rebuy" id="rebuyAmount" bind:value={rebuyAmount} step=0.01 type="number" on:keydown={() => rebuyAmount = Number(rebuyAmount.toFixed(1))}/>
-        <button on:click={tryRebuy}>Rebuy</button>
+        <div class="balanceBlock">
+          <span>AVAIABLE BALANCE:</span>
+          <span>${balance}</span>
+        </div>
+        <div class="rebuyBlock">
+          <div class="rebuyInputBlock">
+            <label for="rebuyAmount">REBUY AMOUNT:</label>
+            <div class="inputWrapper">
+              <span>$</span>
+              <input placeholder="Amount to Rebuy" id="rebuyAmount" bind:value={rebuyAmount} min={minRebuyAmount} max={maxRebuyAmount} step=0.01 type="number" on:keydown={() => rebuyAmount = Number(rebuyAmount.toFixed(2))}/>
+            </div>
+          </div>
+          <div class="rebuyButtonsBlock">
+            <button class="rebuyPresetButton" on:click={()=>{setRebuyAmount(minRebuyAmount)}}>
+              <span>MIN</span>
+              <span class="value">${minRebuyAmount}</span>
+            </button>
+            <button class="rebuyPresetButton" on:click={()=>{setRebuyAmount(maxRebuyAmount)}}>
+              <span>MAX</span>
+              <span class="value">${maxRebuyAmount}</span>
+            </button>
+          </div>
+        </div>
+        <div class="rebuyConfirmButtonsBlock">
+          <button class="rebuyConfirmButtons confirm" on:click={tryRebuy} disabled={rebuyAmount>balance || rebuyAmount>maxRebuyAmount || rebuyAmount<minRebuyAmount}>OK</button>
+          <button class="rebuyConfirmButtons cancel" on:click={toggleRebuy}>CANCEL</button>
+        </div>
       </div>
     </div>
     <div class="adsContainer">

@@ -11,7 +11,7 @@
     let balanceHidden = false;
     let tabSelected = 0
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
-    let userName, userBalance, userAvatar, userEmail, userTx
+    let userName, userBalance, userAvatar, userEmail, userTransactions = [], userTransactionsOffset = 0, isUserTransactionsLocked = false
     let userLoggedIn = false
     let displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
     let clockUpdateInterval = setInterval(()=>{
@@ -19,10 +19,10 @@
     }, 60000)
    
     let gamesAvaiable = {
-        "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 125, minBuyIn: 2, maxBuyIn: 10, buyInAmount: -1},
-        "lightning2" : {gameTitle: "NL 50", blinds: "$0.25 / $0.50", players: 85, minBuyIn: 10, maxBuyIn: 50, buyInAmount: -1},
-        "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 35, minBuyIn: 20, maxBuyIn: 100, buyInAmount: -1},
-        "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 1025, minBuyIn: 40, maxBuyIn: 200, buyInAmount: -1}
+        "lightning1" : {gameTitle: "NL 10", blinds: "$0.05 / $0.10", players: 0, minBuyIn: 2, maxBuyIn: 10, buyInAmount: -1},
+        "lightning2" : {gameTitle: "NL 50", blinds: "$0.25 / $0.50", players: 0, minBuyIn: 10, maxBuyIn: 50, buyInAmount: -1},
+        "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 0, minBuyIn: 20, maxBuyIn: 100, buyInAmount: -1},
+        "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 0, minBuyIn: 40, maxBuyIn: 200, buyInAmount: -1}
     }
     let menuIndexSelected = 0
     let menuItens = ["games", "profile", "settings"]
@@ -30,7 +30,26 @@
     let svgMenuColor = "white"
     // 0 signin; 1 signup; 2 recover;
     let authIndexSelected = 0
-
+    let userSettings = {
+        sounds: true,
+        preferedSeat: {"3max": 0, "6max": 0, "9max": 0},
+        showValuesInBB: true,
+        adjustBetByBB: true,
+        presetButtons: {
+            preflop:[
+                {type: "pot%", value: 25, display: "%"},
+                {type: "pot%", value: 50, display: "%"},
+                {type: "pot%", value: 75, display: "%"},
+                {type: "pot%", value: 100, display: "%"}
+            ], 
+            postflop:[
+                {type: "pot%", value: 25, display: "%"},
+                {type: "pot%", value: 50, display: "%"},
+                {type: "pot%", value: 75, display: "%"},
+                {type: "pot%", value: 100, display: "%"}
+            ]
+        }
+    }
     onMount(() => {
         const setHeight = () => {
         document.documentElement.style.setProperty('--window-height', `${window.innerHeight}px`);
@@ -55,6 +74,7 @@
                 userAvatar = user.avatar
                 userEmail = user.email
                 userLoggedIn = true
+                userSettings = user.settings
             });
             api.on("updatePools", (pools) => {
                 let newGamesAvaiable = {...gamesAvaiable}
@@ -72,16 +92,32 @@
             })
             // displaySize = window.api.getDisplaySize()
             api.send("window-ready")
-            api.on("updateUserTx", tx => {
-                console.log(tx)
-                userTx = tx
+            api.on("userTransactionsResponse", transactions => {
+                transactions.forEach((tx) => {
+                    const d = new Date(tx.created_on)
+                    userTransactions = [...userTransactions, {
+                        ...tx,
+                        date: d.toLocaleDateString(),
+                        time: d.toLocaleTimeString()
+                    }]
+                })
+                isUserTransactionsLocked = false
             })
         }
         // alert(window.api.getDisplaySize())
+        
     });
-    function getUserTx() {
-        if (userTx) return
-        api.send("getUserTx")
+    function getUserTransactions() {
+        if (isUserTransactionsLocked) return
+        console.log("getUserTransactions")
+        isUserTransactionsLocked = true
+        api.send("getUserTransactions", userTransactionsOffset)
+    }
+    function handleUserTransactionsOffset() {
+        if (isUserTransactionsLocked) return
+        console.log("handleUserTransactionsOffset")
+        userTransactionsOffset += 10
+        getUserTransactions()
     }
     function toggleBalanceView() {
         balanceHidden = !balanceHidden
@@ -141,7 +177,7 @@
     $: cssVarStyles = `--avatar-url:${avatarUrl};`;
     // ask for user transactions when entered on profile (1) tab
     $: if (menuIndexSelected == 1) {
-        getUserTx()
+        getUserTransactions()
     }
 
     let showChooseAvatarScreen = false;
@@ -161,7 +197,34 @@
             closeChooseAvatarScreen();
         }
     }
-
+    function sendUserSettings(){
+        console.log(userSettings)
+        api.send("updateUserSettings", userSettings)
+    }
+    function setPresetButtonValue(street, index, event = undefined){
+        console.log(`setPresetButtonValue(${street}, ${index})`)
+        console.log(event)
+        let value = 0
+        if (event) {
+            if (Number(event.target.value) > Number(event.target.max)) event.target.value = Number(event.target.max)
+            if (Number(event.target.value) < Number(event.target.min)) event.target.value = Number(event.target.min)
+            value = Math.round(Number(event.target.value) * 100) / 100
+        }
+        userSettings.presetButtons[street][index].value = value
+        if (userSettings.presetButtons[street][index].type === "min") {
+            userSettings.presetButtons[street][index].display = "Min"
+        }
+        if (userSettings.presetButtons[street][index].type === "max") {
+            userSettings.presetButtons[street][index].display = "Max"
+        }
+        if (userSettings.presetButtons[street][index].type === "pot%") {
+            userSettings.presetButtons[street][index].display = `%`
+        }
+        if (userSettings.presetButtons[street][index].type === "bbs") {
+            userSettings.presetButtons[street][index].display = `BB`
+        }
+        // sendUserSettings()
+    }
 </script>
 
 <style lang="scss">
@@ -175,6 +238,7 @@
     }
     :global(button) {
         all: unset;
+        cursor: pointer;
     }
     :global(button:active:enabled) {
         transform: scale(0.95);
@@ -239,6 +303,15 @@
         flex-direction: column;
         // border: 1px solid blue;
     }
+    .overlay-auth {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        height: 100%;
+        width: 100%;
+        z-index: 1000;
+    }
     .authDiv {
         position: absolute;
         top: 50%;
@@ -254,10 +327,15 @@
         img {
             padding-top: 2em;  
         }
-        .txtButton {
-            text-align: center;
-            width: 100%;
-            padding: 0.2em 0 1.5em 0;
+        .btnContainer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 0.2em;
+            margin-bottom: 1em;
+            .txtButton {
+                padding: 0.5em;
+            }
         }
     }
     .playerInfo {
@@ -568,6 +646,11 @@
                 align-items: center;
                 width: 55%;
                 height: 100%;
+                input::-webkit-outer-spin-button,
+                input::-webkit-inner-spin-button {
+                    -webkit-appearance: none;
+                    margin: 0;
+                }
                 span {
                     background-color: rgba(0,0,0,0.5);
                     padding-left: 0.2em;
@@ -597,9 +680,9 @@
             }
         }
     }
-    input::before {
-        content: "$";
-    }
+    // input::before {
+    //     content: "$";
+    // }
     .blinds:before {
         position: absolute;
         content: "BLINDS";
@@ -817,6 +900,14 @@
                 td {
                     height: 2.4em;
                 }
+                td.loader {
+                    width: 100%;
+                    button {
+                        margin: auto;
+                        font-weight: bold;
+                        text-decoration: underline;
+                    }
+                }
                 .ispositive {
                     color: #2bb839;
                 }
@@ -970,7 +1061,134 @@
         width: 100%;
         z-index: 1000;
     }
+    .settingsDiv {
+        display: flex;
+        flex-direction: column;
+        width: 90%;
+        height: 94%;
+        padding: 2% 3%;
+        background-color: rgb(24, 24, 24);
+        letter-spacing: 0.1em;
+        .settingsInnerDiv {
+            display: flex;
+            flex-direction: column;
+            width: 96%;
+            height: 96%;
+            padding: 2%;
+            gap: 1%;
+            font-size: 0.6rem;
+            .soundsDiv{
+                width: 100%;
+                height: 10%
+            }
+            .adjustBetsizeDiv{
+                width: 100%;
+                height: 15%;
+                display: flex;
+                flex-direction: column;
 
+            }
+            .showValuesDiv{
+                width: 100%;
+                height: 10%
+            }
+            .presetButtonsDiv{
+                width: 65%;
+                height: 35%;
+                display: flex;
+                flex-direction: column;
+                border: 1px solid rgba(255,255,255,0.5);
+                border-radius: 0.2em;
+                padding: 2%;
+                .presetButtonsUpperDiv{
+                    display: flex;
+                    flex-direction: row;
+                    width: 100%;
+                    height: 20%;
+                    word-wrap: break-word;
+                    overflow-wrap: break-word;
+                    justify-content: space-between;
+                    .presetButtonsTitle{
+                        width: 20%;
+                        height: 100%;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                    }
+                    .presetButtonsDescription{
+                        width: 80%;
+                        height: 100%;
+                        word-wrap: break-word;
+                        overflow-wrap: break-word;
+                        font-size: 0.8em;
+                        color: #dddddd;
+                    }
+                }
+                .presetButtonsMainDiv {
+                    width: 100%;
+                    height: 80%;
+                    table {
+                        width: 100%;
+                        height: 100%;
+                    }
+                    td,th {
+                        height: 20%;
+                        width: 20%;
+                        .inputWrapper{
+                            height: 1.5em;
+                            width: 70%;
+                            background-color: #282828;
+                            color: white;
+                            border: 1px solid rgba(255,255,255,0.5);
+                            padding-left: 0.5em;
+                            display: flex;
+                            flex-direction: row;
+                            align-items: center;
+                            position: relative;
+                            input {
+                                all: unset;
+                                width: 100%;
+                            }
+                            input::-webkit-outer-spin-button,
+                            input::-webkit-inner-spin-button {
+                                -webkit-appearance: none;
+                                margin: 0;
+                            }
+                            span {
+                                position: absolute;
+                                right: 5%;
+                            }
+                        }
+                        
+                        select {
+                            background-color: #282828;
+                            color: white;
+                            border: 1px solid rgba(255,255,255,0.5);
+                            padding-left: 2%;
+                            height: 1.5em;
+                            width: 100%;
+                        }
+                    }
+                }
+            }
+            .applyChangesDiv{
+                width: 100%;
+                height: 20%;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                align-items: flex-start;
+                button {
+                    background-color: rgb(79,148,217);
+                    border-radius: 0.2em;
+                    width: 20%;
+                    height: 3em;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+            }
+        }
+    }
 </style>
 
 <main>
@@ -982,10 +1200,12 @@
                <img height=30 src="./originalLogo.png" />
                 {#if authIndexSelected === 0}
                     <Login tipo="signin">
-                        <!-- Button to change to recover page -->
-                        <button class="txtButton" on:click={() => selectAuth(2)}>
-                          Forgot my password
-                        </button>
+                        <div class="btnContainer">
+                            <!-- Button to change to recover page -->
+                            <button class="txtButton" on:click={() => selectAuth(2)}>
+                              Forgot my password
+                            </button>
+                        </div>
                         <!-- Button to change to signup page -->
                         <button class="roundedButton ringed" on:click={() => selectAuth(1)} >
                             Signup
@@ -993,21 +1213,25 @@
                     </Login>
                 {:else if authIndexSelected === 1}
                     <Login tipo="signup">
-                        <!-- Button to change to signin page -->
-                        <button class="txtButton" on:click={() => selectAuth(0)}>
-                            Already have a account? <u>Login here</u>
-                        </button>
+                        <div class="btnContainer">
+                            <!-- Button to change to signin page -->
+                            <button class="txtButton" on:click={() => selectAuth(0)}>
+                                Already have a account? <u>Login here</u>
+                            </button>
+                        </div>
                     </Login>
                 {:else if authIndexSelected === 2}
                     <Login tipo="recover">
-                        <!-- Button to change to signin page -->
-                        <button class="txtButton" on:click={() => selectAuth(0)}>
-                            Remembered? <u>try to login</u>
-                        </button>
+                        <div class="btnContainer">
+                            <!-- Button to change to signin page -->
+                            <button class="txtButton" on:click={() => selectAuth(0)}>
+                                Remembered? <u>try to login</u>
+                            </button>
+                        </div>
                     </Login>
                 {/if}
             </div>
-            <div class="overlay" class:active={!userLoggedIn} />
+            <div class="overlay-auth" />
         {/if}
         {#if showChooseAvatarScreen}
             <div class="popover" on:click={handlePopoverClick}>
@@ -1028,13 +1252,13 @@
                         <div class="overlayText overlayTextSmall">Change Avatar</div>
                     </div>
                 </div> 
-                <div class="playerName"><span>{userName}</span></div>
+                <div class="playerName"><span>{userName || ""}</span></div>
             </div>
             <div class="cashier">
                 <button>CASHIER</button>
                 <div class="balance" on:click={toggleBalanceView}>
                     {#if !balanceHidden}
-                        <span>{userBalance}</span>
+                        <span>{userBalance || 0}</span>
                         <span class="hideBalance">
                             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="0.8em" viewBox="0 0 45 36">
                                 <path id="Icon_awesome-eye-slash" data-name="Icon awesome-eye-slash" fill="rgb(255,255,255)" d="M22.5,28.125a10.087,10.087,0,0,1-10.048-9.359l-7.376-5.7a23.435,23.435,0,0,0-2.582,3.909,2.275,2.275,0,0,0,0,2.052A22.552,22.552,0,0,0,22.5,31.5a21.84,21.84,0,0,0,5.477-.735l-3.649-2.823a10.134,10.134,0,0,1-1.828.184ZM44.565,32.21,36.792,26.2a23.291,23.291,0,0,0,5.713-7.177,2.275,2.275,0,0,0,0-2.052A22.552,22.552,0,0,0,22.5,4.5,21.667,21.667,0,0,0,12.142,7.151L3.2.237a1.125,1.125,0,0,0-1.579.2L.237,2.211a1.125,1.125,0,0,0,.2,1.579L41.8,35.763a1.125,1.125,0,0,0,1.579-.2l1.381-1.777a1.125,1.125,0,0,0-.2-1.579ZM31.648,22.226,28.884,20.09a6.663,6.663,0,0,0-8.164-8.573,3.35,3.35,0,0,1,.655,1.984,3.279,3.279,0,0,1-.108.7l-5.176-4A10.006,10.006,0,0,1,22.5,7.875,10.119,10.119,0,0,1,32.625,18a9.885,9.885,0,0,1-.977,4.226Z" transform="translate(0 0)"/>
@@ -1258,24 +1482,36 @@
                     <div class="historico">
                     <h2>
                         Player history
-                    </h2>
-                    <div class="container">
-                        <table rules=rows>
+
+                      </h2>
+                      <div class="container">
+                        <table rules=rows >
+
                             <tr>
                                 <th>Date</th>
                                 <th>Time</th>
                                 <th>From</th>
                                 <th>Balance</th>
                             </tr>
-                            {#if userTx}
-                                {#each userTx as {id, userid, amount, source, created_on}}
-                                    <tr>
-                                        <td>{created_on.split('T')[0]}</td>
-                                        <td>{created_on.split('T')[1]}</td>
+
+                            {#if userTransactions.length > 0}
+                                {#each userTransactions as {id, userid, amount, source, created_on, date, time}}
+                                	  <tr>
+                                        <td>{date}</td>
+                                        <td>{time}</td>
                                         <td>{source}</td>
                                         <td class:ispositive={amount >= 0} class:isnegative={amount < 0}>{amount > 0 ? "+" : ""}{amount}</td>
                                     </tr>
                                 {/each}
+                                {#if userTransactions.length % 10 === 0}
+                                    <tr>
+                                        <td colspan="4" class="loader">
+                                            <button on:click={handleUserTransactionsOffset}>
+                                                load more transactions
+                                            </button>
+                                        </td>
+                                    </tr>
+                                {/if}
                             {:else}
                                 {#each Array(8) as _}
                                     <tr class="pulse">
@@ -1351,8 +1587,92 @@
                     </div>
                 </div>
                 </div>
-
-            {/if}
+            {:else if menuIndexSelected === 2}
+                <div class="settingsDiv">
+                    SETTINGS
+                    <div class="settingsInnerDiv">
+                        <div class="soundsDiv">
+                            <input type="checkbox" bind:checked={userSettings.sounds} id="sounds" on:change={sendUserSettings}>
+                            <label for="sounds">Sounds</label>
+                        </div>
+                        <div class="adjustBetsizeDiv">
+                            <div>
+                                <input type="radio" name="adjustBetsize" checked={userSettings.adjustBetByBB} bind:group={userSettings.adjustBetByBB} id="betsizeInBB" value={true} on:change={sendUserSettings}>
+                                <label for="betsizeInBB">Adjust Bet Size With Big Blinds</label>
+                            </div>
+                            <div>
+                                <input type="radio" name="adjustBetsize" checked={!userSettings.adjustBetByBB} bind:group={userSettings.adjustBetByBB} id="betsizeInSB" value={false} on:change={sendUserSettings}>
+                                <label for="betsizeInSB">Adjust Bet Size With Small Blinds</label>
+                            </div>
+                        </div>
+                        <div class="showValuesDiv">
+                            <input type="checkbox" bind:checked={userSettings.showValuesInBB} id="showValues" on:change={sendUserSettings}>
+                            <label for="showValues">Show Stack and Bets Values in Big Blinds</label>
+                        </div>
+                        <div class="presetButtonsDiv">
+                            <div class="presetButtonsUpperDiv">
+                                <div class="presetButtonsTitle">
+                                    <span>Pre-set Buttons</span>
+                                </div>
+                                <div class="presetButtonsDescription">
+                                    <span>Pre-set buttons are small buttons above the bet slider that allow you to quickly make a bet of a predefined amount</span>
+                                </div>
+                            </div>
+                            <div class="presetButtonsMainDiv">
+                                <table>
+                                    <tr>
+                                        <th></th>
+                                        <th>Pre-Flop</th>
+                                        <th></th>
+                                        <th>Post-Flop</th>
+                                        <th></th>
+                                    </tr>
+                                    {#each userSettings.presetButtons.preflop as button, index}
+                                    <tr>
+                                        <td>Button {index+1}</td>
+                                        <td>
+                                            <select name="presetButtonType" id="presetButtonType" bind:value={userSettings.presetButtons.preflop[index].type} on:change={()=>{setPresetButtonValue("preflop", index)}}>
+                                                <option value="min">Min</option>
+                                                <option value="pot%">% of Pot</option>
+                                                <option value="bbs">Big Blinds</option>
+                                                <option value="max">Max</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            {#if (userSettings.presetButtons.preflop[index].type === "pot%" || userSettings.presetButtons.preflop[index].type === "bbs")}
+                                                <div class="inputWrapper">
+                                                    <input type="number" step=0.01 min=1 max=999 maxlength=3 bind:value={userSettings.presetButtons.preflop[index].value} on:input={event => {setPresetButtonValue("preflop", index, event)}} on:blur={sendUserSettings}>
+                                                    <span>{userSettings.presetButtons.preflop[index].display}</span>
+                                                </div>
+                                            {/if}
+                                        </td>
+                                        <td>
+                                            <select name="presetButtonType" id="presetButtonType" bind:value={userSettings.presetButtons.postflop[index].type} on:change={()=>{setPresetButtonValue("postflop", index)}}>
+                                                <option value="min">Min</option>
+                                                <option value="pot%">% of Pot</option>
+                                                <option value="bbs">Big Blinds</option>
+                                                <option value="max">Max</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            {#if (userSettings.presetButtons.postflop[index].type === "pot%" || userSettings.presetButtons.postflop[index].type === "bbs")}
+                                                <div class="inputWrapper">
+                                                    <input type="number" step=0.01 min=1 max=999 maxlength=3 bind:value={userSettings.presetButtons.postflop[index].value} on:input={event => {setPresetButtonValue("postflop", index, event)}} on:blur={sendUserSettings}>
+                                                    <span>{userSettings.presetButtons.postflop[index].display}</span>
+                                                </div>
+                                            {/if}
+                                        </td>
+                                    </tr>
+                                    {/each}
+                                </table>
+                            </div>
+                        </div>
+                        <!-- <div class="applyChangesDiv">
+                            <button on:click={sendUserSettings}>Apply Changes</button>
+                        </div> -->
+                    </div>
+                </div>
+                {/if}
         </div>
     </div>
 </main>
