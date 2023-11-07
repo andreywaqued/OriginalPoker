@@ -362,14 +362,14 @@ socketManager.on('connection', (socket) => {
   })
 
   socket.on("changeAvatar", (data) => {
+    const {userAvatar} = data
     logger.log(`received change avatar: ${socket.userName} ${userAvatar}`)
     const user = usersConnected[socket.userID]
-    const {userAvatar} = data
     if (!user) return logger.log("user not found", "ERROR", "changeAvatar")
     user.avatar = userAvatar
     User.changeAvatar(socket.userID, userAvatar, fastify.pg)
   })
-  
+
   socket.on("updateUserSettings", (userSettings) => {
     logger.log("updateUserSettings", "INFO")
     logger.log(userSettings)
