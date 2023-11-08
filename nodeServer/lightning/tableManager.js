@@ -5,7 +5,7 @@ const Decimal = require('decimal.js');
 // const { parentPort } = require('worker_threads');
 
 const Table = require("./table")
-const Logger = require("./logger")
+const Logger = require("../logger")
 const logger = new Logger("TableManager")
 // // Receive messages from the main thread
 // parentPort.on('message', (message) => {

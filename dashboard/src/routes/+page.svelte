@@ -13,7 +13,7 @@
             users = data
             adsShown = 0
             users.forEach(user => {
-                adsShown += Number(user.count)
+                adsShown += Number(user.hands_count)
             });
             console.log(users)
         } else {
@@ -123,7 +123,7 @@
             <tr>
                 <td>{user.username}</td>
                 <td>{new Date(user.last_login).toDateString()}</td>
-                <td>{user.count}</td>
+                <td>{user.hands_count}</td>
                 <td>${user.balance}</td>
                 <td><input id={"addChipsInput" + index} placeholder="$0"><button on:click={()=>{sendChips(index, user.userid)}}>Send</button></td>
             </tr>

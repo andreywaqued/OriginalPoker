@@ -1,7 +1,7 @@
 const { rankHands } = require('@xpressit/winning-poker-hand-rank');
 const { v4: uuidv4 } = require('uuid');
 const Decimal = require('decimal.js');
-const Logger = require("./logger")
+const Logger = require("../logger")
 const logger = new Logger("Table")
 class Deck {
     constructor() {
@@ -43,7 +43,7 @@ class Table {
         this.id = uuidv4();
         this.title = pool.title || "Table X";
         this.betType = pool.betType || "NL";
-        this.gameType = pool.gameType || "cash";
+        this.gameType = pool.gameType || "tournament";
         this.pokerVariant = pool.pokerVariant || "texas";
         this.tableSize = pool.tableSize || 6;
         this.sb = new Decimal(pool.sb);
@@ -81,8 +81,8 @@ class Table {
             playersAllin : 0,
             playersFolded : 0,
             dealerPos: -1,
-            sbPos: 0,
-            bbPos: 0,
+            sbPos: -1,
+            bbPos: -1,
             handHistory: "",
         }
     }
@@ -348,25 +348,6 @@ class Table {
         if (player.tableID != this.id) return logger.log("player.tableID is not from this table, something went wrong!")
         // player.isSitout = playerFromClient.isSitout
         // logger.log(player)
-        //treat fast fold
-        if (player.possibleActions.length === 1) {
-            logger.log("⚡Fold")
-            if (player.possibleActions[0].type === action.type && action.type === "⚡Fold") {
-                logger.log("player fast folded")
-                player.askedToFold = true;
-                playerSocket.leave(`table:${this.id}`);
-                // if (player.socketID in this.socketsByPlayerID) {
-                //     logger.log("player fast folded with socket")
-                //     // this.sendEmptyTable(player)//send empty table
-                //     // delete this.socketsByPlayerID[player.socketID]
-                // }
-                const playerCopy = JSON.parse(JSON.stringify(player))
-                playerCopy.stackSize = new Decimal(playerCopy.stackSize)
-                playerCopy.betSize = new Decimal(playerCopy.betSize)
-                this.tableManager.playerPoolManager.reEnterPool(playerCopy)
-                return logger.log("player fast folded final")
-            }
-        } 
         //
         if (!this.currentHand.handIsBeingPlayed) return logger.log("hand is over")
         const currentPlayer = this.players[this.playerIDByPositionIndex[this.currentHand.positionActing]]
@@ -405,19 +386,19 @@ class Table {
         if (action.type === "fold") {
             logger.log("player folded")
             player.hasFolded = true;
-            player.tableID = undefined
-            logger.log(`player.isSitout: ${player.isSitout}`)
-            // player.cards = [];
             this.currentHand.playersFolded++
-            playerSocket.leave(`table:${this.id}`);
-            delete this.socketsByUserID[player.userID]
-            if (!player.askedToFold) {
-                logger.log(player.name + " reentering pool when not fast folded")
-                const playerCopy = JSON.parse(JSON.stringify(player))
-                playerCopy.stackSize = new Decimal(playerCopy.stackSize)
-                playerCopy.betSize = new Decimal(playerCopy.betSize)
-                this.tableManager.playerPoolManager.reEnterPool(playerCopy)
-            }
+            // player.tableID = undefined
+            // logger.log(`player.isSitout: ${player.isSitout}`)
+            // // player.cards = [];
+            // playerSocket.leave(`table:${this.id}`);
+            // delete this.socketsByUserID[player.userID]
+            // if (!player.askedToFold) {
+            //     logger.log(player.name + " reentering pool when not fast folded")
+            //     const playerCopy = JSON.parse(JSON.stringify(player))
+            //     playerCopy.stackSize = new Decimal(playerCopy.stackSize)
+            //     playerCopy.betSize = new Decimal(playerCopy.betSize)
+            //     this.tableManager.playerPoolManager.reEnterPool(playerCopy)
+            // }
             // const playerCopy = JSON.parse(JSON.stringify(player))
             // this.players[player.id] = playerCopy
             // if (!player.askedToFold) this.tableManager.playerPoolManager.reEnterPool(player)
@@ -545,7 +526,7 @@ class Table {
             player.stackSize = new Decimal(player.stackSize)
             player.betSize = new Decimal(player.betSize)
             if (!player.hasFolded && nextPlayer.betSize.lessThan(player.stackSize.plus(player.betSize))) playersLeftWithChips++ //old way
-            if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
+            // if (player.betSize.lessThan(this.currentHand.biggestBet) && !player.stackSize.equals(0) && !player.hasFolded && !player.askedToFold) player.possibleActions = [{type: "⚡Fold", amount: 0}] //activate fastfold for everyone that needs to call a bet
             // if (!player.hasFolded && player.stackSize.greaterThan(0)) playersLeftWithChips++ //teste (NAO FUNCIONOU DIREITO, QUANDO O JOGADOR VAI ALLIN ELE FICA COM STACK 0, DAI BUGA)
         }
         if (playersLeftWithChips < 2) return this.startNewRoundAtShowdown()
@@ -748,26 +729,35 @@ class Table {
     async closeHand() {
         logger.log("closeHand()")
         await this.saveHandHistoryToDB()
-        // this.currentHand.handIsBeingPlayed = false;
-        // this.currentHand.pots = [0];
-        // this.currentHand.actionSequence = [];
-        // this.currentHand.boardCards = [];
-        // this.currentHand.boardRound = 0;
-        // this.currentHand.minBet = 0;
-        // this.currentHand.maxBet = 9999999999;
-        // this.currentHand.biggestBet = 0;
-        // this.currentHand.positionActing = 0;
-        // this.currentHand.playersAllin = 0;
-        // this.currentHand.playersFolded = 0;
-        // for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
-        //     const player = this.players[this.playerIDByPositionIndex[i]]
-        //     player.cards = []
-        //     player.actedSinceLastRaise = false
-        //     player.possibleActions = []
-        //     player.hasFolded = false
-        //     player.isButton = false
-        //     player.contestingPots = [0]
-        // } now im resetting these info when the player sits in
+        this.waitingForPlayers = true;
+        this.currentHand.handIsBeingPlayed = false;
+        this.currentHand.pots = [new Decimal(0)];
+        this.currentHand.actionSequence = [];
+        this.currentHand.boardCards = [];
+        this.currentHand.boardRound = 0;
+        this.currentHand.minBet = new Decimal(0);
+        this.currentHand.maxBet = new Decimal(9999999999);
+        this.currentHand.biggestBet = new Decimal(0);
+        this.currentHand.positionActing = -1;
+        this.currentHand.playersAllin = 0;
+        this.currentHand.playersFolded = 0;
+        this.currentHand.handHistory = "";
+        for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
+            const player = this.players[this.playerIDByPositionIndex[i]]
+            player.cards = []
+            player.actedSinceLastRaise = false
+            player.possibleActions = []
+            player.hasFolded = true
+            player.isButton = false
+            player.contestingPots = [0]
+            player.cards = []
+            player.showCards = false
+            player.isWinner = false
+            player.finalHandRank = {rank: -1, combination: ""}
+            player.lastAction = ""
+        } //now im resetting these info when the player sits in
+        this.broadcastHandState()
+        return this.startHandRoutine()
         logger.log("closeHand() 2")
         // this.tableManager.socketManager.socketsLeave(`table:${this.id}`)
         this.tableManager.deleteTable(this.poolID, this.id)
@@ -824,8 +814,12 @@ class Table {
         logger.log("startNewHand()")
         logger.log(this.id)
         if (this.currentHand.handIsBeingPlayed) return logger.log("hand is already being played, something went wrong.")
-        const randomStart = Math.floor(Math.random() * this.countPlayers())
-        this.currentHand.dealerPos = this.findNextPlayer(randomStart)
+        if (this.currentHand.dealerPos === -1) {
+            const randomStart = Math.floor(Math.random() * this.countPlayers())
+            this.currentHand.dealerPos = this.findNextPlayer(randomStart)
+        } else {
+            this.currentHand.dealerPos = this.findNextPlayer(this.currentHand.dealerPos)
+        }
         this.waitingForPlayers = false;
         this.currentHand.handIsBeingPlayed = true;
         this.currentHand.isShowdown = false;

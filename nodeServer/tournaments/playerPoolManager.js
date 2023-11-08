@@ -5,11 +5,19 @@
 //initially will be just an object, later on possible becoming a microservice
 // const { parentPort } = require('worker_threads');
 
+//TOURNAMENTS STEPS:
+//convert table to become fixed (players are not moving from table to table as in lightning)
+//create a tournament that starts with 2 players like a HUSNG (test out the tournament creation)
+//create a blind structure and test that out
+//adjust the tournament to start on a given time
+//keep the registering open and allow players to late register
+//create the frontend to show the tournament info
+
 const Decimal = require('decimal.js');
 const Player = require("./player")
 const TableManager = require("./tableManager")
-const Logger = require("./logger")
-const User = require('./user');
+const Logger = require("../logger")
+const User = require('../user');
 const logger = new Logger("PlayerPoolManager")
 // // Receive messages from the main thread
 // parentPort.on('message', (message) => {
@@ -85,19 +93,7 @@ class PlayerPoolManager {
             user.balance = user.balance.minus(stackSize)
             logger.log("updating balance")
             User.handleMoney(-stackSize.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
-            // this.fastify.pg.connect().then(async (client) => {
-            //     logger.log("updating balance")
-            //     try {
-            //         const result = await client.query(`UPDATE users SET balance = balance - ${stackSize.toNumber()} WHERE username = '${user.name}'`);
-            //         logger.log(result)
-            //     } catch (error) {
-            //         logger.log(error)
-                    
-            //     }
-                
-            //     client.release();
-            // });
-            // if (socket) socket.emit("updatePlayerInfo", player)
+
             if (socket) socket.emit("updateUserInfo", { user : user, status: 200})
             return 
         }
@@ -275,14 +271,6 @@ class PlayerPoolManager {
         if (player.stackSize.plus(rebuyAmount).greaterThan(pool.maxBuyIn)) rebuyAmount = new Decimal(pool.maxBuyIn).minus(player.stackSize)
         logger.log("updated rebuy Amount :" + rebuyAmount)
         if (player.askingRebuy) player.askingRebuy = false //try only once per request
-        // if (rebuyAmount <= 0) {
-        //     //send him back into the pool as he cant make any rebuy
-        //     logger.log("rebuy <= 0")
-        //     player.askingRebuy = false
-        //     player.rebuyAmount = 0
-        //     player.isSitout = false
-        //     return this.reEnterPool(player) 
-        // }
         if (player.stackSize.plus(rebuyAmount).greaterThanOrEqualTo(pool.minBuyIn) && player.stackSize.plus(rebuyAmount).lessThanOrEqualTo(pool.maxBuyIn) && user.balance.greaterThanOrEqualTo(rebuyAmount)) {
             logger.log("rebuy 1")
             const table = this.tableManager.tables[poolID][player.tableID]
@@ -336,12 +324,6 @@ class PlayerPoolManager {
         const user = this.users[player.userID]
         player.stackSize = new Decimal(player.stackSize)
         player.betSize = new Decimal(player.betSize)
-        //player reentering pool after played a hand
-        // logger.log(socket.id)
-        // // logger.log(player.socketID)
-        // logger.log(player.isDisconnected)
-        // logger.log(player.tableClosed)
-        // logger.log(player.isSitout)
         logger.log("leavePool()1")
         const table = this.tableManager.tables[player.poolID][player.tableID]
         if (table && !table.waitingForPlayers) {
@@ -371,94 +353,7 @@ class PlayerPoolManager {
             this.socketManager.to("lobby").emit("updatePools", this.pools)
             return logger.log("finish leavePool() 2")
         }
-        
-
-
-
-        // if (!socket || socket.id === user.socketID) {
-        //     logger.log("leavePool()2")
-        //     logger.log(`player.tableID: ${player.tableID}`)
-            
-        //     const table = this.tableManager.tables[player.poolID][player.tableID]
-        //     if (table && !player.tableClosed) {
-        //         logger.log("leavePool()3")
-        //         logger.log(table.id)
-        //         if (!table.waitingForPlayers) {
-        //             logger.log("leavePool()4")
-        //             logger.log(player.id)
-        //             logger.log(player.position)
-        //             logger.log(player.possibleActions)
-        //             logger.log(player.hasFolded)
-        //             logger.log(player.isSitout)
-        //             logger.log(table.currentHand.positionActing)
-        //             player.isSitout = true
-        //             player.tableClosed = tableClosed
-        //             if (table.currentHand.positionActing === player.position && !player.hasFolded && player.stackSize != 0) return table.validateAction(player, {type: "fold", amount: 0})
-        //         }
-        //         else if (table.waitingForPlayers) {
-        //             logger.log("leavePool()5")
-        //             if (table.waitingForPlayers) table.removePlayer(player) //tira o jogador antes da mao começar
-        //             if (socket) user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
-        //             logger.log("updating balance")
-        //             const result = this.fastify.pg.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${player.userid}, ${player.stackSize.toNumber()}, '⚡ ${this.pools[player.poolID].gameTitle}')`);
-        //             logger.log(result)
-        //             // this.fastify.pg.connect().then(async (client) => {
-        //             //     logger.log("updating balance")
-        //             //     const result = await client.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'`);
-        //             //     logger.log(result)
-        //             //     client.release();
-        //             // });
-        //             if (socket) {
-        //                 const playerIndex = user.playerIDs.indexOf(player.id)
-        //                 user.playerIDs.splice(playerIndex, 1)
-        //                 user.poolIDs.splice(playerIndex, 1)
-        //                 socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
-        //                 socket.emit("updateUserInfo", { user : user, status: 200})
-        //             }
-        //             delete this.playersByPool[player.poolID][player.id]
-        //             this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
-        //             this.socketManager.to("lobby").emit("updatePools", this.pools)
-        //             // delete this.socketsByUserID[player.socketID]
-        //             // if (table.countPlayers() === 0) {
-        //             //     this.socketManager.socketsByUserIDLeave(`table:${table.id}`)
-        //             //     delete this.tableManager.tables[player.poolID][table.id]
-        //             // }
-        //             return 
-        //         }
-        //     } else {
-        //         logger.log("leavePool() 7 table undefined or player.tableClosed = true")
-        //         if (socket) user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
-        //         logger.log("updating balance")
-        //         const result = this.fastify.pg.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'; INSERT INTO moneyTransactions(userid, amount, source) VALUES(${player.userid}, ${player.stackSize.toNumber()}, '⚡ ${this.pools[player.poolID].gameTitle}')`);
-        //         logger.log(result)
-        //         // this.fastify.pg.connect().then(async (client) => {
-        //         //     logger.log("updating balance")
-        //         //     const result = await client.query(`UPDATE users SET balance = balance + ${player.stackSize.toNumber()} WHERE username = '${player.name}'`);
-        //         //     logger.log(result)
-        //         //     client.release();
-
-        //         // });
-        //         if (socket) {
-        //             const playerIndex = user.playerIDs.indexOf(player.id)
-        //             user.playerIDs.splice(playerIndex, 1)
-        //             user.poolIDs.splice(playerIndex, 1)
-        //             socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
-        //             socket.emit("updateUserInfo", { user : user, status: 200})
-        //         }
-        //         delete this.playersByPool[player.poolID][player.id]
-        //         this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
-        //         this.socketManager.to("lobby").emit("updatePools", this.pools)
-        //     }
-        // }
         logger.log("leavePool()6")
-        // if (socket) {
-        //     socket.user.balance += player.stackSize
-        //     delete this.playersByPool[player.poolID][player.id]
-        //     this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
-        //     this.socketManager.to("lobby").emit("updatePools", this.pools)
-        //     if (socket) socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
-        //     if (socket) socket.emit("updateUserInfo", { user : socket.user, status: 200})
-        // }
     }
 }
 
