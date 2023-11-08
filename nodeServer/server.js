@@ -213,7 +213,7 @@ fastify.get('/handsByUser', async (request, reply) => {
 });
 fastify.get('/getUsers', async (request, reply) => {
   // const client = await fastify.pg.connect();
-  const { rows } = await fastify.pg.query(`SELECT users.userid, users.username, users.last_login, users.balance, count(handsByUser.userid) AS hands_count FROM users LEFT JOIN handsByUser ON users.userid = handsByUser.userid GROUP BY users.username, users.last_login, users.balance, users.userid ORDER BY users.username ASC`)
+  const { rows } = await fastify.pg.query(`SELECT users.userid, users.username, users.last_login, users.balance, count(handsByUser.userid) AS hands_count FROM users LEFT JOIN handsByUser ON users.userid = handsByUser.userid GROUP BY users.username, users.last_login, users.balance, users.userid ORDER BY users.last_login DESC`)
   return rows;
 });
 fastify.get('/hands', async (request, reply) => {
