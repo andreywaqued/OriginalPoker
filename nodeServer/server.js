@@ -25,8 +25,8 @@ fastify.register(require('@fastify/redis'), {
 // fastify.register(require('@fastify/redis'), {
 //   url: 'rediss://red-cksjdg6nfb1c73c8tgpg:eEjoQXin0xOlVfhsOu26xy3BpIjjdgul@oregon-redis.render.com:6379'
 // })
-const LightningPoolManager = require('./lightning/playerPoolManager');
-const TournamentPoolManager = require('./tournaments/playerPoolManager');
+const LightningPoolManager = require('./lightning/playerPoolManager'); //testing the table
+// const TournamentPoolManager = require('./tournaments/playerPoolManager');
 // const TableManager = require('./tableManager');
 const User = require('./user');
 // const TableManager = require('./tableManager')
@@ -68,7 +68,7 @@ fastify.setErrorHandler((error, request, reply) => {
 disconnectedPlayers = {}
 usersConnected = {}
 lightningPoolManager = new LightningPoolManager(socketManager, fastify, usersConnected)
-tournamentPoolManager = new TournamentPoolManager(socketManager, fastify, usersConnected)
+// tournamentPoolManager = new TournamentPoolManager(socketManager, fastify, usersConnected)
 async function tryReconnect(socket, user) {
   logger.log("tryReconnect");
     logger.log(user);
@@ -243,29 +243,29 @@ fastify.get('/addchips', async (request, reply) => {
     const userid = parseInt(request.query.user)
     const chips = new Decimal(request.query.chips)
     // const client = await fastify.pg.connect();
-    await User.handleMoney(chips, userid, 'ORIGINAL CASHIER', fastify.pg);
+    await User.handleMoney(chips.toNumber(), userid, 'ORIGINAL CASHIER', fastify.pg);
+    const user = usersConnected[userid]
+    if (!user) return logger.log("user undefined")
+    user.balance = user.balance.plus(chips)
+    const socket = lightningPoolManager.socketsByUserID[userid]
+    if (!socket) return logger.log("socket undefined")
+    socket.emit("updateUserInfo", { user : user, status: 200})
+    // logger.log("socketManager.sockets.sockets")
+    // logger.log(socketManager.sockets.sockets)
+    // socketManager.sockets.sockets.forEach((socket, socketID) => {
+    //   logger.log(socketID)
+    //   logger.log(socket)
+    //   if (socket.user) {
+    //     logger.log("updating chips on player " + socket.user.name)
+    //     if (socket.user.id === userid) socket.user.balance = socket.user.balance.plus(chips)
+    //     socket.emit("updateUserInfo", { user : socket.user, status: 200})
+    //   }
+    // })
+    return `Added $${chips} to ${user.name} that have a total of ${user.balance}`;
   } catch (err) {
     return console.log(err)
   }
   // client.release();
-  const user = usersConnected[userid]
-  if (!user) return logger.log("user undefined")
-  user.balance = user.balance.plus(chips)
-  const socket = lightningPoolManager.socketsByUserID[userid]
-  if (!socket) return logger.log("socket undefined")
-  socket.emit("updateUserInfo", { user : user, status: 200})
-  // logger.log("socketManager.sockets.sockets")
-  // logger.log(socketManager.sockets.sockets)
-  // socketManager.sockets.sockets.forEach((socket, socketID) => {
-  //   logger.log(socketID)
-  //   logger.log(socket)
-  //   if (socket.user) {
-  //     logger.log("updating chips on player " + socket.user.name)
-  //     if (socket.user.id === userid) socket.user.balance = socket.user.balance.plus(chips)
-  //     socket.emit("updateUserInfo", { user : socket.user, status: 200})
-  //   }
-  // })
-  return `Added $${chips} to ${user.name} that have a total of ${user.balance}`;
 });
 fastify.get('/pools', async (request, reply) => {
   return lightningPoolManager.playersByPool
