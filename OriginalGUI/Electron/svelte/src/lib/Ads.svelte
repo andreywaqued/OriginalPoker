@@ -1,6 +1,7 @@
 <script>
     import { onMount } from 'svelte';
     let api
+    let iframe
     onMount(() => {
         if (window.api) {
             api = window.api
@@ -11,7 +12,10 @@
     }
     export let adsIndex = 0
     export const changeAds = () => {
-        adsIndex = Math.floor(Math.random() * urls.length)
+        console.log("changeAds")
+        // iframe.src = "https://www.youtube.com/embed/C8kSrkz8Hz8"
+        iframe.src = "https://acceptable.a-ads.com/2275881"
+        // adsIndex = Math.floor(Math.random() * urls.length)
     }
     const images = [
         "onfire proporção.png",
@@ -33,7 +37,12 @@
 </script>
 
 <div class="adsDiv">
-    <div class="adsImage" style={adsImageUrl} on:click={openExternalUrl}></div>
+    
+    <!-- <div class="adsImage" style={adsImageUrl} on:click={openExternalUrl}> -->
+    <div class="adsImage">
+        <iframe bind:this={iframe} data-aa='2275881' src='https://acceptable.a-ads.com/2275881' style='border:0px; padding:0; width:100%; height:100%; overflow:hidden; background-color: transparent;'></iframe>
+        <!-- <iframe data-aa='2275881' src='https://ad.a-ads.com/2275881?size=320x100' style='width:100%; height:100%; border:0px; padding:0; overflow:hidden; background-color: transparent;'></iframe> -->
+    </div>
 </div>
 <style>
     .adsDiv {
@@ -50,7 +59,7 @@
         align-items: center;
     }
     .adsImage {
-        background-image: var(--ads-image-url);
+        /* background-image: var(--ads-image-url); */
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;

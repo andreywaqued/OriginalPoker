@@ -78,7 +78,11 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
   });
   newWindow.aspectRatio = aspectRatio
   newWindow.windowType = windowType
-  
+  newWindow.webContents.setWindowOpenHandler(({url}) => {
+    shell.openExternal(url); // Open the URL in the default system browser
+    return {action: "deny"}
+  });
+
     // Load an HTML file into the windows
     // newWindow.loadURL(url);
     newWindow.loadFile(path.join(__dirname, url));

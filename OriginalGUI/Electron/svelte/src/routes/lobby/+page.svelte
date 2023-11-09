@@ -10,6 +10,7 @@
     let api
     let balanceHidden = false;
     let tabSelected = 0
+    let callChangeAds
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
     let userName, userBalance, userAvatar, userEmail, userTransactions = [], userTransactionsOffset = 0, isUserTransactionsLocked = false
     let userLoggedIn = false
@@ -105,7 +106,9 @@
             })
         }
         // alert(window.api.getDisplaySize())
-        
+        setInterval(()=>{
+            callChangeAds()
+        }, 60000)
     });
     function getUserTransactions() {
         if (isUserTransactionsLocked) return
@@ -1438,7 +1441,7 @@
                     
                     </div>
                     <div class="adsDiv">
-                        <Ads />
+                        <Ads bind:changeAds={callChangeAds}/>
                     </div>
                 </div>
             {:else if menuIndexSelected === 1}
