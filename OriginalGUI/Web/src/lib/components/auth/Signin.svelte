@@ -1,26 +1,22 @@
 <script>
-	import { socket, user } from '$lib/stores';
-	/**
-	 * Request signin handler
-	 * @param {SubmitEvent} event
-	 */
+	import user from '$lib/stores/user';
+	import socket from '$lib/stores/socket';
+	// import socket from '$lib/services/WebSocketService';
+	// /**
+	//  * Request signin handler
+	//  * @param {SubmitEvent} event
+	//  */
 	async function handleSignin(event) {
 		const data = new FormData(event.target);
 		const user = data.get('username');
 		const password = data.get('password');
 		console.log(user, password);
-		$socket?.emit('signIn', { user, password });
+
+		socket.sendMessage('signIn', { user, password });
 	}
-	socket.subscribe((s) => {
-		// response
-		s?.on('signInResponse', ({ response, status, user: u }) => {
-			console.log('signInResponse: ' + status + ' ' + response);
-			user.set(u);
-		});
-	});
 </script>
 
-<form class="flex flex-col gap-4 w-full max-w-xs px-2 mb-2" on:submit|preventDefault={handleSignin}>
+<form class="flex w-full max-w-xs flex-col gap-4 px-2" on:submit|preventDefault={handleSignin}>
 	<input
 		class="auth"
 		required
@@ -37,10 +33,5 @@
 		type="password"
 		autocomplete="current-password"
 	/>
-	<button
-		class="auth filled mx-auto"
-		type="submit"
-	>
-		Login
-	</button>
+	<button class="auth filled mx-auto" type="submit"> Login </button>
 </form>

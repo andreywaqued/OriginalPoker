@@ -1,14 +1,8 @@
 import { writable } from 'svelte/store';
 
 /**
- * writable store for handling a socket.io variable.
- * @type {import('svelte/store').Writable<(undefined | import('socket.io-client').Socket)>}
- */
-export const socket = writable(undefined);
-
-/**
  * writable store for handling user variable.
- * @type {import('svelte/store').Writable<(undefined | {
+ * @type {import('svelte/store').Writable<(null| {
  *   name: string,
  *   balance: number,
  *   avatar: number,
@@ -23,7 +17,5 @@ export const socket = writable(undefined);
  *   },
  * })>}
  */
-export const user = writable(undefined);
-
-export const navItems = writable(['lobby'])
-export const navSelectedItem = writable('lobby')
+const user = writable(null);
+export default user;

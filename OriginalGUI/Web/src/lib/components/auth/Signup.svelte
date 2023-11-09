@@ -1,5 +1,5 @@
 <script>
-	import { socket, user } from '$lib/stores';
+	import user from '$lib/stores/user';
 	function handleSignup() {}
 </script>
 
@@ -44,5 +44,5 @@
 		type="email"
 		autocomplete="email"
 	/>
-	<button class="auth filled mx-auto" type="submit"> Signup </button>
+	<button class="auth filled mx-auto" type="submit"> Register </button>
 </form>

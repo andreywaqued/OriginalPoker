@@ -4,10 +4,10 @@
 
 @layer components {
 	input.auth {
-		@apply border-b-2 border-zinc-600 bg-transparent pb-1 text-white;
+		@apply border-b-2 border-zinc-500 bg-transparent pb-1 text-white placeholder:text-white;
 	}
 	button.auth {
-		@apply w-36 h-10 font-bold uppercase rounded-full
+		@apply h-10 w-36 rounded-full font-bold uppercase;
 	}
 	button.auth.filled {
 		@apply rounded-full bg-zinc-200 text-black hover:bg-zinc-400;
@@ -15,4 +15,9 @@
 	button.auth.ringed {
 		@apply rounded-full border-2 border-zinc-200 text-white hover:bg-blue-700;
 	}
+}
+
+html,
+body {
+	height: 100%;
 }

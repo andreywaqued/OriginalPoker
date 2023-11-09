@@ -1,12 +1,9 @@
 <script>
-	import Ads from '$lib/Ads.svelte';
-	import TitleBar from '$lib/Title_Bar.svelte';
-	import { SvelteComponent, onMount } from 'svelte';
-	import Card from '$lib/Card.svelte';
-	import Player from '$lib/Player.svelte';
-	import Pot from '$lib/Pot.svelte';
-	import { fade, fly, slide } from 'svelte/transition';
-	export const ssr = false;
+	import { onMount } from 'svelte';
+	import Ads from './Ads.svelte';
+	import Card from './Card.svelte';
+	import Player from './Player.svelte';
+	import Pot from './Pot.svelte';
 	// /**
 	//  * @type {number}
 	//  */
