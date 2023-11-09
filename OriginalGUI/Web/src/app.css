@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+	input.auth {
+		@apply border-b-2 border-zinc-600 bg-transparent pb-1 text-white;
+	}
+	button.auth {
+		@apply w-36 h-10 font-bold uppercase rounded-full
+	}
+	button.auth.filled {
+		@apply rounded-full bg-zinc-200 text-black hover:bg-zinc-400;
+	}
+	button.auth.ringed {
+		@apply rounded-full border-2 border-zinc-200 text-white hover:bg-blue-700;
+	}
+}

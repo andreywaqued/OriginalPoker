@@ -3,7 +3,12 @@ const cors = require('@fastify/cors')
 fastify.register(cors, { 
   // put your options here
 })
-const socketManager = require('socket.io')(fastify.server);
+const socketManager = require('socket.io')(fastify.server, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+  }});
 const Decimal = require('decimal.js');
 const Logger = require("./logger")
 const logger = new Logger("Server")
@@ -12,19 +17,19 @@ const logger = new Logger("Server")
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
 // })
 //internal render acess
-fastify.register(require('@fastify/postgres'), {
-  connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
-})
-fastify.register(require('@fastify/redis'), {
-  url: 'redis://red-cksjdg6nfb1c73c8tgpg:6379'
-})
-//external render acess
 // fastify.register(require('@fastify/postgres'), {
-//     connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
-//   })
-// fastify.register(require('@fastify/redis'), {
-//   url: 'rediss://red-cksjdg6nfb1c73c8tgpg:eEjoQXin0xOlVfhsOu26xy3BpIjjdgul@oregon-redis.render.com:6379'
+//   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
 // })
+// fastify.register(require('@fastify/redis'), {
+//   url: 'redis://red-cksjdg6nfb1c73c8tgpg:6379'
+// })
+//external render acess
+fastify.register(require('@fastify/postgres'), {
+    connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a.oregon-postgres.render.com/original_db?ssl=true'
+  })
+fastify.register(require('@fastify/redis'), {
+  url: 'rediss://red-cksjdg6nfb1c73c8tgpg:eEjoQXin0xOlVfhsOu26xy3BpIjjdgul@oregon-redis.render.com:6379'
+})
 const PlayerPoolManager = require('./playerPoolManager');
 // const TableManager = require('./tableManager');
 const User = require('./user');
