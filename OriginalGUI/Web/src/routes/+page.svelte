@@ -18,12 +18,14 @@
 <Wrapper>
 	{#if !$user}
 		<Auth />
-	{:else if $navSelectedItem === 'lobby'}
-		<Banner />
-		<Navbar />
-		<Lobby />
 	{:else}
-		<Navbar />
-		<!--<Table />-->
+		{#if $navSelectedItem === 'lobby'}
+			<Banner />
+			<Navbar />
+			<Lobby />
+		{/if}
+		{#if $navSelectedItem === 'table'}
+			<Navbar />
+		{/if}
 	{/if}
 </Wrapper>

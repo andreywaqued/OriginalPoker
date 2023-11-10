@@ -15,6 +15,12 @@
 	button.auth.ringed {
 		@apply rounded-full border-2 border-zinc-200 text-white hover:bg-blue-700;
 	}
+	p.title {
+		@apply text-xl leading-6;
+	}
+	p.description {
+		@apply w-full text-xs font-bold uppercase leading-3 tracking-wider text-zinc-500;
+	}
 }
 
 html,

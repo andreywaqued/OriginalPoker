@@ -41,36 +41,24 @@
 					<h3 class="text-center text-2xl font-extrabold">{game.gameTitle}</h3>
 					<div class="space-y-4 border-y-2 border-zinc-600 py-2 text-center">
 						<div>
-							<p class="w-full text-xs font-bold uppercase leading-3 tracking-wider text-zinc-500">
-								Blinds
-							</p>
-							<p class="text-xl leading-6">{game.blinds}</p>
+							<p class="description">Blinds</p>
+							<p class="title">{game.blinds}</p>
 						</div>
 						<div>
-							<p class="w-full text-xs font-bold uppercase leading-3 tracking-wider text-zinc-500">
-								Players
-							</p>
-							<p class="text-xl leading-6">{game.players}</p>
+							<p class="description">Players</p>
+							<p class="title">{game.players}</p>
 						</div>
 
 						<div class="flex justify-around">
 							<div>
-								<p
-									class="w-full text-xs font-bold uppercase leading-3 tracking-wider text-zinc-500"
-								>
-									Min
-								</p>
-								<p class="text-xl leading-6">
+								<p class="description">Min</p>
+								<p class="title">
 									${game.minBuyIn}
 								</p>
 							</div>
 							<div>
-								<p
-									class="w-full text-xs font-bold uppercase leading-3 tracking-wider text-zinc-500"
-								>
-									Max
-								</p>
-								<p class="text-xl leading-6">
+								<p class="description">Max</p>
+								<p class="title">
 									${game.maxBuyIn}
 								</p>
 							</div>

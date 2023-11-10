@@ -14,6 +14,28 @@ socket.on('signInResponse', ({ response, status, user: u }) => {
 	user.set(u);
 });
 
+socket.on("enterPoolResponse", response => {
+    console.log("enterPoolResponse")
+    console.log(response)
+    if (response.status === 200) {
+    //   if (tables.length < 4) {
+    //     const lastIndex = tables.push(createWindow(response.pool.title, "table")) - 1
+    //     const table = tables[lastIndex]
+    //     console.log(table)
+    //     players.push(response.player)
+    //     playersID.push(response.player.id)
+    //     table.player = response.player
+    //     console.log("chamando send message 1")
+    //     if (table) table.addMessage("updateUserSettings", user.settings)
+    //     if (table) table.addMessage("updatePlayer", table.player)
+        
+    //     // ipcMain.emit("updatePlayer", {})
+    //   }
+    //     // socket.emit("parseAction", {player: response.player, action: {type: "raise", amount: 200}})
+    //     // socket.emit("leavePool", response.player)
+    }
+})
+
 socket.on('updateUser', (u) => {
 	user.set({
 		name: u.name,
