@@ -5,6 +5,8 @@ fastify.register(cors, {
 })
 const socketManager = require('socket.io')(fastify.server, {
   cors: {
+    // CAUTION !!!!!!!
+    // ORIGIN NEEDS TO BE THE DOMAIN OF THE WEBSITE
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
@@ -338,8 +340,8 @@ socketManager.on('connection', (socket) => {
     logger.log(`received signin: ${user}`)
     User.signIn(user, password, fastify.pg).then(async user => {
       logger.log("signed user")
-      logger.log(user)
       user = await tryReconnect(socket, user)
+      logger.log(user)
       // socket.userID = user.id
       // user.socketID = socket.id
       // usersConnected[user.id] = user

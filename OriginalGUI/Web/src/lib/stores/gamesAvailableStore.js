@@ -10,15 +10,18 @@ import { writable } from 'svelte/store';
  * }} Game
  */
 /**
- * @typedef {import('svelte/store').Writable<{
+ * @typedef {{
  *   lightning1: Game,
  *   lightning2: Game,
  *   lightning3: Game,
  *   lightning4: Game,
- * }>} GamesAvailable
+ * }} GamesAvailable
  */
 /**
- * @type GamesAvailable
+ * @typedef {import('svelte/store').Writable<GamesAvailable>} GamesAvailableStore
+ */
+/**
+ * @type GamesAvailableStore
  */
 const gamesAvailable = writable({
 	lightning1: {

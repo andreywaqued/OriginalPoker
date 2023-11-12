@@ -1,5 +1,5 @@
 <script>
-	import user from '$lib/stores/user';
+	import userStore from '$lib/stores/userStore';
 	function handleSignup() {}
 </script>
 

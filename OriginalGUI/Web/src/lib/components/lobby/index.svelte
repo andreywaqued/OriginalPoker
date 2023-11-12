@@ -1,28 +1,28 @@
 <script>
-	import user from '$lib/stores/user';
-	import gamesAvailable from '$lib/stores/gamesAvailable';
-	import socket from '$lib/stores/socket';
+	import userStore from '$lib/stores/userStore';
+	import gamesAvailableStore from '$lib/stores/gamesAvailableStore';
+	import socketStore from '$lib/stores/socketStore';
 
 	/**
 	 * @param {('lightning1'|'lightning2'|'lightning3'|'lightning1')} poolID
 	 */
 	function openNewTable(poolID) {
 		console.log('openNewTable');
-		let stackSize = parseFloat($gamesAvailable[poolID].buyInAmount.toString());
+		let stackSize = parseFloat($gamesAvailableStore[poolID].buyInAmount.toString());
 		stackSize = Math.round(stackSize * 100) / 100;
-		const balance = $user?.balance || 0;
+		const balance = $userStore?.balance || 0;
 		console.log(stackSize);
 		console.log(balance);
-		console.log($gamesAvailable[poolID].minBuyIn);
-		console.log($gamesAvailable[poolID].maxBuyIn);
+		console.log($gamesAvailableStore[poolID].minBuyIn);
+		console.log($gamesAvailableStore[poolID].maxBuyIn);
 		console.log(
-			balance < $gamesAvailable[poolID].buyInAmount ||
-				$gamesAvailable[poolID].buyInAmount < $gamesAvailable[poolID].minBuyIn ||
-				$gamesAvailable[poolID].buyInAmount > $gamesAvailable[poolID].maxBuyIn
+			balance < $gamesAvailableStore[poolID].buyInAmount ||
+				$gamesAvailableStore[poolID].buyInAmount < $gamesAvailableStore[poolID].minBuyIn ||
+				$gamesAvailableStore[poolID].buyInAmount > $gamesAvailableStore[poolID].maxBuyIn
 		);
 		// if (stackSize < gamesAvailable[poolID].minBuyIn ) stackSize = gamesAvailable[poolID].minBuyIn
 		// if (stackSize > gamesAvailable[poolID].maxBuyIn ) stackSize = gamesAvailable[poolID].maxBuyIn
-		if (stackSize > 0) socket.sendMessage('enterPool', { poolID: poolID, stackSize: stackSize });
+		if (stackSize > 0) socketStore.sendMessage('enterPool', { poolID: poolID, stackSize: stackSize });
 
 		return null;
 	}
@@ -34,7 +34,7 @@
 			Lightning Cash
 		</h2>
 		<div class="grid max-w-fit grid-flow-col gap-x-2 overflow-x-auto px-3">
-			{#each Object.entries($gamesAvailable) as [key, game]}
+			{#each Object.entries($gamesAvailableStore) as [key, game]}
 				<div
 					class="w-36 space-y-2 rounded-lg border-2 border-[rgb(69,69,69)] bg-[rgb(49,49,49)] p-2 text-white"
 				>

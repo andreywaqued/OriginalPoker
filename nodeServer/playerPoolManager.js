@@ -28,10 +28,10 @@ class PlayerPoolManager {
         this.users = usersConnected
         this.playersByPool = { "lightning1" : {}, "lightning2": {}, "lightning3": {}, "lightning4": {}}
         this.pools = {
-            "lightning1" : {title: "⚡ NL 10", gameTitle: "NL 10", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.05, bb: 0.1, minBuyIn: 2, maxBuyIn: 10, currentPlayers:0},
-            "lightning2" : {title: "⚡ NL 50", gameTitle: "NL 50", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.25, bb: 0.5, minBuyIn: 10, maxBuyIn: 50, currentPlayers:0},
-            "lightning3" : {title: "⚡ NL 100", gameTitle: "NL 100", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.50, bb: 1, minBuyIn: 20, maxBuyIn: 100, currentPlayers:0},
-            "lightning4" : {title: "⚡ NL 200", gameTitle: "NL 200", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:1, bb: 2, minBuyIn: 40, maxBuyIn: 200, currentPlayers:0}
+            "lightning1" : {title: "Lightning Cash Game ⚡ NL 10", gameTitle: "NL 10", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.05, bb: 0.1, minBuyIn: 2, maxBuyIn: 10, currentPlayers:0},
+            "lightning2" : {title: "Lightning Cash Game ⚡ NL 50", gameTitle: "NL 50", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.25, bb: 0.5, minBuyIn: 10, maxBuyIn: 50, currentPlayers:0},
+            "lightning3" : {title: "Lightning Cash Game ⚡ NL 100", gameTitle: "NL 100", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:0.50, bb: 1, minBuyIn: 20, maxBuyIn: 100, currentPlayers:0},
+            "lightning4" : {title: "Lightning Cash Game ⚡ NL 200", gameTitle: "NL 200", gameType: "cash", pokerVariant : "texas", betType : "NL", tableSize : 6, sb:1, bb: 2, minBuyIn: 40, maxBuyIn: 200, currentPlayers:0}
         }
         this.leavePoolTimeout = {}
         this.tableManager = new TableManager(this.socketManager, fastify, this)

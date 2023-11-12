@@ -1,6 +1,5 @@
 <script>
-	import user from '$lib/stores/user';
-	import socket from '$lib/stores/socket';
+	import socketStore from '$lib/stores/socketStore';
 	// import socket from '$lib/services/WebSocketService';
 	// /**
 	//  * Request signin handler
@@ -12,7 +11,7 @@
 		const password = data.get('password');
 		console.log(user, password);
 
-		socket.sendMessage('signIn', { user, password });
+		socketStore.sendMessage('signIn', { user, password });
 	}
 </script>
 
