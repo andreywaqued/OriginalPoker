@@ -1,12 +1,13 @@
 import { writable } from 'svelte/store';
 
 /**
- * @typedef {{
- *   id: string,
- *   name: string,
- *   data?: {},
- * }} Item
- *
+ * @typedef {Object} Item
+ * @property {string} id
+ * @property {string} name
+ * @property {Object} [data]
+ */
+
+/**
  * @typedef {Item[]} Items
  */
 

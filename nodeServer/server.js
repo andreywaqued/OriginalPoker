@@ -6,7 +6,7 @@ fastify.register(cors, {
 const socketManager = require('socket.io')(fastify.server, {
   cors: {
     // CAUTION !!!!!!!
-    // ORIGIN NEEDS TO BE THE DOMAIN OF THE WEBSITE
+    // ORIGIN NEEDS TO BE THE DOMAIN OF ORIGINAL POKER APP
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true

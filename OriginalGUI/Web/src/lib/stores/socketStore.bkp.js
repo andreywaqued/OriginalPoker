@@ -33,22 +33,23 @@ gamesAvailableStore.subscribe((games) => {
 // $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 // const socket = io('http://192.168.237.73:3000'); // Replace with your server's address
-const socket = io('http://192.168.15.13:3000')
+// const socket = io('http://192.168.15.13:3000')
+const socket = io('http://192.168.1.110:3000')
 
 socket.on('connect', () => {
 	console.log('Connected on socket id' + socket.id);
 });
 
-socket.on('signInResponse', ({ response, status, user }) => {
-	console.log('signInResponse');
-	if (status === 200) {
-		const generatedID = crypto.randomUUID();
-		navItemsStore.set([{ id: generatedID, name: 'lobby' }]);
-		navSelectedItemStore.set(generatedID);
-		console.log(user);
-		userStore.set(user);
-	}
-});
+// socket.on('signInResponse', ({ response, status, user }) => {
+// 	console.log('signInResponse');
+// 	if (status === 200) {
+// 		const generatedID = crypto.randomUUID();
+// 		navItemsStore.set([{ id: generatedID, name: 'lobby' }]);
+// 		navSelectedItemStore.set(generatedID);
+// 		console.log(user);
+// 		userStore.set(user);
+// 	}
+// });
 socket.on('enterPoolResponse', (response) => {
 	console.log('enterPoolResponse');
 	console.log(response);
@@ -77,32 +78,32 @@ socket.on('enterPoolResponse', (response) => {
 	}
 });
 
-socket.on('updateUserInfo', (user) => {
-	console.log('updateUserInfo');
-	userStore.set({
-		name: user.name,
-		balance: Math.round(user.balance * 100) / 100,
-		avatar: user.avatar,
-		email: user.email,
-		settings: user.settings,
-		players: user.players
-	});
-});
-socket.on('updatePools', (p) => {
-	console.log('updatePools');
-	Object.keys(p).forEach((key) => {
-		const pool = p[key];
-		const gamePool = gamesAvailable[key];
-		gamePool.gameTitle = pool.gameTitle;
-		gamePool.blinds = `$${pool.sb.toFixed(2)} / $${pool.bb.toFixed(2)}`;
-		gamePool.minBuyIn = pool.minBuyIn;
-		gamePool.maxBuyIn = pool.maxBuyIn;
-		gamePool.players = pool.currentPlayers;
-		if (gamePool.buyInAmount === -1) gamePool.buyInAmount = pool.maxBuyIn;
-	});
-	console.log(gamesAvailable);
-	gamesAvailableStore.set(gamesAvailable);
-});
+// socket.on('updateUserInfo', (user) => {
+// 	console.log('updateUserInfo');
+// 	userStore.set({
+// 		name: user.name,
+// 		balance: Math.round(user.balance * 100) / 100,
+// 		avatar: user.avatar,
+// 		email: user.email,
+// 		settings: user.settings,
+// 		players: user.players
+// 	});
+// });
+// socket.on('updatePools', (p) => {
+// 	console.log('updatePools');
+// 	Object.keys(p).forEach((key) => {
+// 		const pool = p[key];
+// 		const gamePool = gamesAvailable[key];
+// 		gamePool.gameTitle = pool.gameTitle;
+// 		gamePool.blinds = `$${pool.sb.toFixed(2)} / $${pool.bb.toFixed(2)}`;
+// 		gamePool.minBuyIn = pool.minBuyIn;
+// 		gamePool.maxBuyIn = pool.maxBuyIn;
+// 		gamePool.players = pool.currentPlayers;
+// 		if (gamePool.buyInAmount === -1) gamePool.buyInAmount = pool.maxBuyIn;
+// 	});
+// 	console.log(gamesAvailable);
+// 	gamesAvailableStore.set(gamesAvailable);
+// });
 
 /**
  * writable store for handling a socket.io variable.

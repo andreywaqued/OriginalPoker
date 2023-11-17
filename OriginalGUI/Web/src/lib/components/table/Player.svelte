@@ -1,5 +1,4 @@
 <script>
-	import { afterUpdate } from 'svelte';
 	import Card from './Card.svelte';
 	/**
 	 * @type {Number}
@@ -174,7 +173,6 @@
 			// clearInterval(timer)
 			if (playerTurn === false) return;
 			if (timeLeftPerc <= 50 && !attentionSoundPlayed && isHero) {
-				api.send('playSound', 'aviso_de_atencao.wav');
 				attentionSoundPlayed = true;
 			}
 			if (timeLeftPerc > 1) return (timeLeftPerc -= 1);
@@ -292,7 +290,7 @@
 		position: absolute;
 		/* background-color: blue; */
 		// width: 100%;
-		height: calc(0.15 * var(--height));
+		height: 5rem;
 		/* top: 7%; */
 		display: flex;
 		// flex-direction: row;
@@ -305,7 +303,7 @@
 		position: absolute;
 		/* background-color: blue; */
 		width: 100%;
-		height: calc(0.15 * var(--height));
+		height: 5rem;
 		/* top: 7%; */
 		display: flex;
 		flex-direction: row;
@@ -314,42 +312,42 @@
 		/* z-index: 1; */
 	}
 	.row1 {
-		top: 6%;
+		top: 1%;
 		.player {
-			height: calc(0.24 * var(--height));
+			height: 8rem;
 		}
 		font-size: calc(var(--root-font-size) * 0.85);
 	}
 	.row2 {
 		top: 12%;
 		.player {
-			height: calc(0.26 * var(--height));
+			height: 8rem;
 		}
 		.playerButton {
-			top: calc(0.18 * var(--height));
+			top: 6rem;
 		}
 		.playerCards {
-			top: calc(0.255 * var(--height));
+			top: 8rem;
 		}
 		font-size: calc(var(--root-font-size) * 0.9);
 	}
 	.row3 {
 		top: 45%;
 		.player {
-			height: calc(0.28 * var(--height));
+			height: 9rem;
 		}
 		.playerButton {
-			top: calc(0.05 * var(--height));
+			top: 1.5rem;
 		}
 		.playerCards {
-			top: calc(0.105 * var(--height));
+			top: 3rem;
 		}
 		font-size: calc(var(--root-font-size) * 0.95);
 	}
 	.row4 {
 		top: 67%;
 		.player {
-			height: calc(0.3 * var(--height));
+			height: 10rem;
 		}
 	}
 	.middleColumn {
@@ -373,13 +371,13 @@
 	.row5 {
 		top: 67%;
 		.player {
-			height: calc(0.3 * var(--height));
+			height: 10rem;
 		}
 	}
 	.table9max.row1 {
 		top: 5%;
 		.player {
-			height: calc(0.22 * var(--height));
+			height: 8rem;
 		}
 		.playerBet {
 		}
@@ -387,19 +385,19 @@
 	.table9max.row2 {
 		top: 10%;
 		.player {
-			height: calc(0.24 * var(--height));
+			height: 8rem;
 		}
 	}
 	.table9max.row3 {
 		top: 35%;
 		.player {
-			height: calc(0.26 * var(--height));
+			height: 9rem;
 		}
 	}
 	.table9max.row4 {
 		top: 60%;
 		.player {
-			height: calc(0.28 * var(--height));
+			height: 9rem;
 		}
 	}
 	.table9max.leftColumn {
@@ -531,7 +529,7 @@
 		background-repeat: no-repeat;
 		position: absolute;
 		// background-color: red;
-		width: calc(0.03 * var(--height));
+		width: 1rem;
 		aspect-ratio: 1;
 		border-radius: 50%;
 		top: 15%;
@@ -543,7 +541,7 @@
 	.playerCards {
 		position: absolute;
 		// background-color: gray;
-		// width: calc(0.06 * var(--height));
+		// width: 6rem;
 		width: 30%;
 		aspect-ratio: 1;
 		display: flex;
@@ -638,7 +636,7 @@
 		}
 		.playerBet {
 			top: 85%;
-			left: 100%;
+			left: 110%;
 		}
 		.playerCards.fold {
 			top: 30vh;
@@ -651,8 +649,8 @@
 	}
 	.pos3 {
 		.playerButton {
-			top: 95%;
-			left: 105%;
+			top: 100%;
+			left: 50%;
 		}
 		.playerCards {
 			top: 100%;
@@ -665,8 +663,7 @@
 			}
 		}
 		.playerBet {
-			top: 105%;
-			left: 40%;
+			top: 115%;
 		}
 		.playerCards.fold {
 			top: 40vh;
@@ -691,7 +688,7 @@
 		}
 		.playerBet {
 			top: 85%;
-			right: 100%;
+			right: 110%;
 		}
 		.playerCards.fold {
 			top: 30vh;

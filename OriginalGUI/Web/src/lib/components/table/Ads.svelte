@@ -1,18 +1,10 @@
 <script>
-	import { onMount } from 'svelte';
-	let api;
-	onMount(() => {
-		if (window.api) {
-			api = window.api;
-		}
-	});
-	function openExternalUrl() {
-		api.send('openExternalUrl', currentAdUrl);
-	}
 	export let adsIndex = 0;
+
 	export const changeAds = () => {
 		adsIndex = Math.floor(Math.random() * urls.length);
 	};
+
 	const images = [
 		'onfire proporção.png',
 		'jbl wave.png',
@@ -32,9 +24,9 @@
 	$: adsImageUrl = `--ads-image-url:url('../../../anunciantes/${currentAdImageUrl}');`;
 </script>
 
-<div class="adsDiv">
-	<div class="adsImage" style={adsImageUrl} on:click={openExternalUrl}></div>
-</div>
+<a class="adsDiv" href={currentAdUrl}>
+	<div class="adsImage" style={adsImageUrl}></div>
+</a>
 
 <style>
 	.adsDiv {

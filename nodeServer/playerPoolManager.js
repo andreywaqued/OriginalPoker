@@ -152,7 +152,10 @@ class PlayerPoolManager {
             lastAction: player.lastAction
         }
         const socket = this.socketsByUserID[player.userID]
-        if (socket) socket.emit("updateGameState", handState);
+        if (socket) {
+            socket.emit("updateGameState", handState)
+            socket.emit("updatePlayerInfo", handState.players[player.id])
+        }
     }
     sitoutUpdate(playerID, poolID, isSitout) {
         logger.log("sitoutUpdate")

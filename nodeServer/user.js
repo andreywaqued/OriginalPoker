@@ -255,10 +255,13 @@ async function fetchUserTransactionsFromDB(id, offset, db) {
     */
 async function updateUserBalanceInDB(amount, id, source, db) {
     await db.transact(async client => {
-        await db.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
-            [amount, id])    
-        await db.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
-            [id, amount, source])
+        const req = await Promise.all([
+            db.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
+                [amount, id]),    
+            db.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
+                [id, amount, source])
+        ])
+        return req
     })
 }
 
