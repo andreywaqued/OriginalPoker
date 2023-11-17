@@ -53,20 +53,20 @@ class PlayerPoolManager {
         const user = this.users[socket.userID]
         if (!user) return logger.log("enterPool user from usersConnected undefined")
         stackSize = new Decimal(stackSize)
-        //player just entering the pool
-        let player = new Player(user, stackSize)
-        if (!player && socket) return socket.emit("enterPoolResponse", { response: "failed to enter pool", status: 401 })
-        if (!player) return logger.log("failed to enter pool")
-        user.players[player.id] = player
-        // logger.log(poolID)
-        // logger.log(stackSize)
-        // logger.log(typeof stackSize)
         let pool = this.pools[poolID]
+        //player just entering the pool
         // logger.log(pool)
         // logger.log(`${stackSize} >= ${pool.minBuyIn} : ${stackSize >= pool.minBuyIn}`)
         // logger.log(`${stackSize} <= ${pool.maxBuyIn} : ${stackSize <= pool.maxBuyIn}`)
         logger.log(`${user.balance} >= ${stackSize} : ${user.balance.greaterThanOrEqualTo(stackSize)}`)
         if (stackSize.greaterThanOrEqualTo(pool.minBuyIn) && stackSize.lessThanOrEqualTo(pool.maxBuyIn) && user.balance.greaterThanOrEqualTo(stackSize)) {
+            let player = new Player(user, stackSize)
+            if (!player && socket) return socket.emit("enterPoolResponse", { response: "failed to enter pool", status: 401 })
+            if (!player) return logger.log("failed to enter pool")
+            user.players[player.id] = player
+            // logger.log(poolID)
+            // logger.log(stackSize)
+            // logger.log(typeof stackSize)
             logger.log("log1")
             // logger.log(socket.id)
             // logger.log(this.socketsByUserID)
@@ -82,9 +82,9 @@ class PlayerPoolManager {
             this.tableManager.placePlayerIntoTable(player)
             this.socketManager.to("lobby").emit("updatePools", this.pools)
             logger.log("log4")
-            user.balance = user.balance.minus(stackSize)
+            // user.balance = user.balance.minus(stackSize)
             logger.log("updating balance")
-            User.handleMoney(-stackSize.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
+            User.handleMoney(-stackSize.toNumber(), user, socket, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
             // this.fastify.pg.connect().then(async (client) => {
             //     logger.log("updating balance")
             //     try {
@@ -296,9 +296,9 @@ class PlayerPoolManager {
             if (rebuyAmount > 0) {
                 logger.log("rebuyAmount > 0")
                 player.stackSize = player.stackSize.plus(rebuyAmount)
-                user.balance = user.balance.minus(rebuyAmount)
+                // user.balance = user.balance.minus(rebuyAmount)
                 logger.log("updating balance")
-                User.handleMoney(-rebuyAmount.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
+                User.handleMoney(-rebuyAmount.toNumber(), user, socket, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
                 // this.fastify.pg.connect().then(async (client) => {
                 //     logger.log("updating balance")
                 //     const result = await client.query(`UPDATE users SET balance = balance - ${rebuyAmount.toNumber()} WHERE username = '${user.name}'`);
@@ -357,16 +357,16 @@ class PlayerPoolManager {
         if (!table || player.tableClosed || !player.tableID) {
             if (this.leavePoolTimeout[player.id]) clearTimeout(this.leavePoolTimeout[player.id])
             logger.log("leavePool() 2 table undefined or player.tableClosed or player.tableID undefined")
-            user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
+            // user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
             logger.log("updating balance")
-            User.handleMoney(player.stackSize.toNumber(), player.userID, `⚡ ${this.pools[player.poolID].gameTitle}`, this.fastify.pg)
+            delete user.players[player.id]
+            delete this.playersByPool[player.poolID][player.id]
+            User.handleMoney(player.stackSize.toNumber(), user, socket, `⚡ ${this.pools[player.poolID].gameTitle}`, this.fastify.pg)
             const socket = this.socketsByUserID[player.userID]
             if (socket) {
                 socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
                 socket.emit("updateUserInfo", { user : user, status: 200})
             }
-            delete user.players[player.id]
-            delete this.playersByPool[player.poolID][player.id]
             this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
             this.socketManager.to("lobby").emit("updatePools", this.pools)
             return logger.log("finish leavePool() 2")
