@@ -1,0 +1,1 @@
+- [ ] Input ring outline on focus
