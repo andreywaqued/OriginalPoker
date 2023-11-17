@@ -1,7 +1,7 @@
 const { rankHands } = require('@xpressit/winning-poker-hand-rank');
 const { v4: uuidv4 } = require('uuid');
 const Decimal = require('decimal.js');
-const Logger = require("./logger")
+const Logger = require("../logger")
 const logger = new Logger("Table")
 class Deck {
     constructor() {

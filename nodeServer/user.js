@@ -42,16 +42,9 @@ class User {
         return userData
     }
 
-
     static async getUserTransactionsFromDB(id, offset, db) {
         const txs = await fetchUserTransactionsFromDB(id, offset, db)
         return txs
-    }
-
-    static async getChangeAvatarUserFromDB(name, avatar, db) {
-        // Fetch user details from DB
-        const userData = await changeAvatarUserFromDB(name, avatar, db);
-        return userData
     }
 
 
@@ -70,6 +63,21 @@ class User {
     static async updateUserSettings(userid, settings, db) {
         logger.log("updateUserSettings()")
         await db.query(`UPDATE users SET settings = '${JSON.stringify(settings)}' WHERE userid = ${userid}`);
+    }
+    static async changeAvatar(userid, avatar, db) {
+        logger.log("changeAvatar()")
+        await db.query(`UPDATE users SET avatar = ${avatar} WHERE userid = ${userid}`);
+        // logger.log("changeAvatarUserFromDB")
+        // console.log("############################# ATUALIZANDO AVATAR", userId, avatar)
+        // const { rows } = await db.query(`SELECT * FROM users WHERE userid = '${userId}'`);
+        // console.log("ROWWWWWWWWWWWWWS: ", rows)
+    
+        // if (rows.length > 0) {
+        //     const user = rows[0];
+        //     console.log("############################# ATUALIZANDO AVATAR")
+        //     await db.query("UPDATE users SET avatar = $1 WHERE userid = $2", [avatar, userId]);
+        //     user.avatar = avatar;
+        // }
     }
     // async deposit(amount) {
     //     if (amount <= 0) {
@@ -189,31 +197,6 @@ async function fetchUserFromDB(name, db) {
     // Simulate fetching a user from the database
 }
 
-
-async function changeAvatarUserFromDB(name, avatar, db) {
-    logger.log("changeAvatarUserFromDB")
-    // const client = await db.connect();
-    const { rows } = await db.query(`SELECT * FROM users WHERE username = '${name}'`);
-    // client.release();
-    if (rows.length > 0) {
-        logger.log("fetchUserFromDB 1")
-        const user = rows[0] ; // Return user id
-        logger.log(user)
-        // const client = await db.connect();
-        await db.query(`UPDATE users SET avatar = '${avatar}' WHERE username = '${name}'`);
-        // client.release();
-        user.avatar = avatar;
-        
-        return {
-            id: user.userid,
-            name: user.username,
-            email: user.email,
-            avatar: user.avatar,
-            balance: new Decimal(user.balance), //it looks like numeric type saves as string
-            players: {}
-        };
-    }
-}
 
 async function fetchUserWithPasswordFromDB(name, password, db) {
     logger.log("fetchUserWithPasswordFromDB")

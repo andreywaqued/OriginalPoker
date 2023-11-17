@@ -8,8 +8,8 @@
 const Decimal = require('decimal.js');
 const Player = require("./player")
 const TableManager = require("./tableManager")
-const Logger = require("./logger")
-const User = require('./user');
+const Logger = require("../logger")
+const User = require('../user');
 const logger = new Logger("PlayerPoolManager")
 // // Receive messages from the main thread
 // parentPort.on('message', (message) => {

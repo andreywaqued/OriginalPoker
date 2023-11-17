@@ -70,16 +70,19 @@ function createWindow(winTitle = "Main Lobby", windowType = "lobby") {
     transparent: true,
     // useContentSize: true,
     webPreferences: {
-      devTools: true,
+      devTools: !app.isPackaged,
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
-      // devTools: false
     }
   });
   newWindow.aspectRatio = aspectRatio
   newWindow.windowType = windowType
-  
+  newWindow.webContents.setWindowOpenHandler(({url}) => {
+    shell.openExternal(url); // Open the URL in the default system browser
+    return {action: "deny"}
+  });
+
     // Load an HTML file into the windows
     // newWindow.loadURL(url);
     newWindow.loadFile(path.join(__dirname, url));
@@ -256,6 +259,7 @@ socket.on("updateUserInfo", response => {
     console.log("updateUserInfo")
     console.log(response)
     user = response.user
+    mainLobby.user = user
     if (mainLobby) mainLobby.addMessage("updateUser", user)
     updateUserInfoOnTables()
 })
