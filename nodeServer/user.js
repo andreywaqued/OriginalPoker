@@ -52,7 +52,7 @@ class User {
     /**
      *
      * @param {number} amount 
-     * @param {number} id 
+     * @param {number} userID 
      * @param {string} source
      * @param {any} db 
      *
@@ -241,9 +241,9 @@ async function fetchUserTransactionsFromDB(id, offset, db) {
 async function updateUserBalanceInDB(amount, id, source, db) {
     await db.transact(async client => {
         const req = await Promise.all([
-            db.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
+            client.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
                 [amount, id]),    
-            db.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
+            client.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
                 [id, amount, source])
         ])
         return req
