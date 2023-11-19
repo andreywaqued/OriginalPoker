@@ -14,6 +14,7 @@ class User {
             user.email = userData.email;
             user.balance = new Decimal(userData.balance);
             user.players = {};
+            user.tournamentsPlaying = {};
             user.settings = userData.settings;
             return user;
         } else {
@@ -56,9 +57,12 @@ class User {
      * @param {any} db 
      *
     */
-    static async handleMoney(amount, id, source, db) {
+    static async handleMoney(amount, user, socket, source, db) {
         logger.log("handleMoney")
-        await updateUserBalanceInDB(amount, id, source, db)
+        logger.log(user)
+        user.balance = user.balance.plus(amount)
+        if (socket) socket.emit("updateUserInfo", {user: user, status: 200})
+        await updateUserBalanceInDB(amount, user.id, source, db)
     }
     static async updateUserSettings(userid, settings, db) {
         logger.log("updateUserSettings()")
@@ -191,6 +195,7 @@ async function fetchUserFromDB(name, db) {
             avatar: user.avatar,
             balance: new Decimal(user.balance), //it looks like numeric type saves as string
             players: {},
+            tournamentsPlaying: {},
             settings: user.settings
         };
     }

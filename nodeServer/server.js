@@ -32,8 +32,9 @@ fastify.register(require('@fastify/redis'), {
 // fastify.register(require('@fastify/redis'), {
 //   url: 'rediss://red-cksjdg6nfb1c73c8tgpg:eEjoQXin0xOlVfhsOu26xy3BpIjjdgul@oregon-redis.render.com:6379'
 // })
+// const LightningPoolManager = require('./lightning/playerPoolManager');
 const LightningPoolManager = require('./lightning/playerPoolManager'); //testing the table
-// const TournamentPoolManager = require('./tournaments/playerPoolManager');
+const TournamentPoolManager = require('./tournaments/playerPoolManager');
 // const TableManager = require('./tableManager');
 const User = require('./user');
 // const TableManager = require('./tableManager')
@@ -75,7 +76,7 @@ fastify.setErrorHandler((error, request, reply) => {
 disconnectedPlayers = {}
 usersConnected = {}
 lightningPoolManager = new LightningPoolManager(socketManager, fastify, usersConnected)
-// tournamentPoolManager = new TournamentPoolManager(socketManager, fastify, usersConnected)
+tournamentPoolManager = new TournamentPoolManager(socketManager, fastify, usersConnected)
 async function tryReconnect(socket, user) {
   logger.log("tryReconnect");
     logger.log(user);
@@ -88,6 +89,7 @@ async function tryReconnect(socket, user) {
     userRecovered.socketID = socket.id
     usersConnected[userRecovered.id] = userRecovered
     lightningPoolManager.socketsByUserID[userRecovered.id] = socket
+    tournamentPoolManager.socketsByUserID[userRecovered.id] = socket
     socket.emit("updateUserInfo", {user: userRecovered, status: 200})
     socket.emit("updatePools", lightningPoolManager.pools)
     // Recuperar os jogadores desconectados do usuário
@@ -428,21 +430,40 @@ socketManager.on('connection', (socket) => {
       logger.log(error)
     }
   })
-  socket.on("parseAction", (data) => {
+  socket.on("registerOnTournament", (tournamentID) => {
+    logger.log(`received registerOnTournament: ${tournamentID}`)
+    const user = usersConnected[socket.userID]
+    return tournamentPoolManager.registerOnTournament(user, tournamentID)
+    // try {
+    // } catch (error) {
+    //   logger.log(error)
+    // }
+  })
+  socket.on("unregisterOnTournament", (tournamentID) => {
     try {
-      logger.log(`received parseAction: ${data.player.name} ${data.action}`)
-      const user = usersConnected[data.player.userID]
-      if (!user) {
-        logger.log("user not find, something went wrong")
-        logger.log(data.player)
-        logger.log(usersConnected)
-        return
-      }
-      if (socket.id != user.socketID) return logger.log("socket mismatch on parseAction")
-      return lightningPoolManager.tableManager.parseAction(socket, data.player, data.action)
+      logger.log(`received unregisterOnTournament: ${tournamentID}`)
+      const user = usersConnected[socket.userID]
+      return tournamentPoolManager.unregisterOnTournament(user, tournamentID)
     } catch (error) {
       logger.log(error)
     }
+  })
+  socket.on("parseAction", (data) => {
+    logger.log(`received parseAction: ${data.player.name} ${data.action}`)
+    const user = usersConnected[data.player.userID]
+    if (!user) {
+      logger.log("user not find, something went wrong")
+      logger.log(data.player)
+      logger.log(usersConnected)
+      return
+    }
+    if (socket.id != user.socketID) return logger.log("socket mismatch on parseAction")
+    if (data.player.poolID) return lightningPoolManager.tableManager.parseAction(socket, data.player, data.action)
+    if (data.player.tournamentID) return tournamentPoolManager.tableManager.parseAction(socket, data.player, data.action)
+    // try {
+    // } catch (error) {
+    //   logger.log(error)
+    // }
   })
   socket.on("tryRebuy", (data) => {
     try {
@@ -452,10 +473,12 @@ socketManager.on('connection', (socket) => {
       logger.log(error)
     }
   })
-  socket.on("sitoutUpdate", (data) => {
+  socket.on("sitoutUpdate", (player) => {
     try {
-      logger.log(`sitoutUpdate: ${data.playerID} ${data.poolID} ${data.isSitout}`)
-      return lightningPoolManager.sitoutUpdate(data.playerID, data.poolID, data.isSitout)
+      logger.log(`sitoutUpdate: ${player.playerID} ${player.isSitout}`)
+      if (player.player.poolID) return lightningPoolManager.tableManager.sitoutUpdate(player.playerID, player.poolID, player.isSitout)
+      if (player.player.tournamentID) return tournamentPoolManager.tableManager.sitoutUpdate(player.playerID, player.tournamentID, player.isSitout)
+      // return lightningPoolManager.sitoutUpdate(player.playerID, player.poolID, player.isSitout)
     } catch (error) {
       logger.log(error)
     }
