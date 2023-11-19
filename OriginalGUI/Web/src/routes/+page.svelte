@@ -35,7 +35,7 @@
 		<Banner />
 		<Navbar />
 		<Lobby />
-		{#each Object.entries($userStore.players) as [id, player]}
+		{#each Object.entries($userStore.players) as [id, player] (id)}
 			<Table playerID={id} />
 		{/each}
 	{/if}

@@ -62,7 +62,7 @@
         /* background-image: var(--ads-image-url); */
         background-position: center;
         background-repeat: no-repeat;
-        background-size: cover;
+        background-size: contain;
         border-radius: 5px;
         width: 100%;
         height: 100%;

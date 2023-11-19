@@ -107,9 +107,9 @@
 		players = playersTemp;
 		console.log(hero);
 	});
-	socket.on('updateUserBalance', (userBalance) => {
-		console.log('updateUserBalance');
-		balance = parseFloat(userBalance);
+	socket.on('updateUserInfo', ({ user }) => {
+		console.log(user)
+		balance = parseFloat(user.balance);
 	});
 	socket.on('updateUserSettings', (settings) => {
 		console.log('updateUserSettings');
@@ -272,6 +272,14 @@
 		console.log('updatePlayerCards');
 		hero.cards = cards;
 	});
+	socket.on('leavePoolResponse', ({ status }) => {
+		console.log('leavePoolResponse');
+		switch (status) {
+			case 200:
+				navSelectedItemStore.set('lobby');
+				break;
+		}
+	});
 	// function registerPlayer(id, component) {
 	//   playersComponents[id] = component;
 	// }
@@ -405,10 +413,10 @@
 	// let sidePots = [0, 0]
 	// let playerTurn = true; //only for testing, this should come from the server
 	// players = [
-	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["As", "5c"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
 	//   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
 	//   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["As", "Kd"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
 	//   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
 	//   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
 	//   // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
@@ -445,8 +453,8 @@
 	//   restartTable()
 	// }, 2000)
 	function toggleSitout() {
-		console.log(hero)
 		console.log('toggleSitout()');
+		console.log(hero);
 		playerSitout = !playerSitout;
 		if (!playerSitout) sitoutPopover(playerSitout);
 		socket.emit('sitoutUpdate', { playerID: hero.id, poolID: hero.poolID, isSitout: playerSitout });
@@ -527,10 +535,15 @@
 		console.log(`setRebuyAmount(${presetRebuyAmount})`);
 		rebuyAmount = presetRebuyAmount;
 	}
+	function leavePool() {
+		console.log('leavePool');
+		socket.emit('leavePool', hero);
+	}
 </script>
 
-<main class:hidden={!isSelected} class="relative">
+<main class:hidden={!isSelected} class="flex">
 	<div class="auxiliarButtons">
+		<button on:click={leavePool}>Leave Table</button>
 		<button on:click={toggleHH}>Hand History</button>
 		<button on:click={toggleRebuy}>Rebuy</button>
 		<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
@@ -778,35 +791,36 @@
 				</div>
 			</div>
 		</div>
-		<div class="adsContainer">
-			{#if !doordashTable}
-				<Ads bind:changeAds={callChangeAds} />
-			{/if}
-		</div>
+	</div>
+	<div class="adsContainer">
+		{#if !doordashTable}
+			<Ads bind:changeAds={callChangeAds} />
+		{/if}
 	</div>
 </main>
 
 <style lang="scss">
-	:root {
-		font-family: 'Roboto', sans-serif;
-		-webkit-user-select: none;
-	}
 	main {
 		width: 100%;
 		height: 100%;
+		position: relative;
+		flex-direction: column;
+		background-image: url('/fundo.png');
+		background-position: center;
+		background-size: cover;
 	}
 	.bg-table {
 		all: unset;
 		position: relative;
-		height: 100%;
+		height: 90%;
 		width: 50vh;
 		max-width: 100%;
 		overflow: hidden;
-		background-image: url('/fundo-mobile.png');
+		background-image: url('/mesa1.png');
 		background-position: center;
-		background-size: contain;
+		background-size: cover;
 		background-repeat: no-repeat;
-		margin: auto;
+		margin: 0 auto auto auto;
 		display: flex;
 		flex-direction: column;
 		// transition: 0.1s;
@@ -871,6 +885,7 @@
 		}
 	}
 	.potLine {
+		text-wrap: nowrap;
 		position: absolute;
 		// background-color: rgba(255,255,255, 0.05);
 		height: 3%;
@@ -965,11 +980,6 @@
 			// background-color: blue;
 			align-items: center;
 			gap: 1%;
-			input::-webkit-outer-spin-button,
-			input::-webkit-inner-spin-button {
-				-webkit-appearance: none;
-				margin: 0;
-			}
 		}
 		.presetButtons {
 			width: 50%;
@@ -1130,8 +1140,6 @@
 		}
 	}
 	.slider {
-		-webkit-app-region: no-drag;
-		-webkit-appearance: none;
 		width: 80%;
 		height: 25%;
 		border-radius: 5px;
@@ -1159,12 +1167,8 @@
 		left: 0;
 	}
 	.adsContainer {
-		position: absolute;
-		width: 35%;
-		height: 15%;
-		top: 82%;
-		left: 1%;
-		z-index: 1;
+		width: 100%;
+		height: 10%;
 	}
 
 	.betSliderButton:hover {
@@ -1179,19 +1183,15 @@
 	.auxiliarButtons {
 		position: absolute;
 		width: 100%;
-		height: 4.5%;
-		top: 20px;
+		top: 0.2rem;
 		display: flex;
-		z-index: 100;
-		gap: 0.5%;
-		padding-top: 0.5%;
-		padding-left: 0.5%;
+		gap: 0.25rem;
+		padding-left: 0.5rem;
+		z-index: 1000;
 		button {
-			width: 8%;
-			font-size: 0.6em;
-			display: flex;
-			align-items: center;
-			justify-content: center;
+			padding: 0.25rem 0.5rem;
+			line-height: 1rem;
+			font-size: 0.75rem;
 		}
 		.sitout {
 			background-color: lightcoral;
@@ -1255,11 +1255,6 @@
 						height: 1.2em;
 						border: 1px solid #181818;
 						border-radius: 0.2em;
-						input::-webkit-outer-spin-button,
-						input::-webkit-inner-spin-button {
-							-webkit-appearance: none;
-							margin: 0;
-						}
 						span {
 							display: flex;
 							justify-content: center;
