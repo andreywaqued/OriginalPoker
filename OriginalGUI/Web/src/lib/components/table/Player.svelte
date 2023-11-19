@@ -312,29 +312,29 @@
 		/* z-index: 1; */
 	}
 	.row1 {
-		top: 1%;
+		top: 3%;
 		.player {
-			height: 8rem;
+			height: 6rem;
 		}
 		font-size: calc(var(--root-font-size) * 0.85);
 	}
 	.row2 {
-		top: 12%;
+		top: 20%;
 		.player {
-			height: 8rem;
+			height: 6rem;
 		}
 		.playerButton {
 			top: 6rem;
 		}
 		.playerCards {
-			top: 8rem;
+			top: 6rem;
 		}
 		font-size: calc(var(--root-font-size) * 0.9);
 	}
 	.row3 {
 		top: 45%;
 		.player {
-			height: 9rem;
+			height: 7rem;
 		}
 		.playerButton {
 			top: 1.5rem;
@@ -345,9 +345,9 @@
 		font-size: calc(var(--root-font-size) * 0.95);
 	}
 	.row4 {
-		top: 67%;
+		top: 70%;
 		.player {
-			height: 10rem;
+			height: 8rem;
 		}
 	}
 	.middleColumn {
@@ -359,14 +359,12 @@
 	}
 	.leftColumn {
 		justify-content: flex-start;
-		padding: 5%;
-		width: 90%;
+		width: 100%;
 	}
 	.rightColumn {
 		// background-color: white;
 		justify-content: flex-end;
-		padding: 5%;
-		width: 90%;
+		width: 100%;
 	}
 	.row5 {
 		top: 67%;
@@ -377,7 +375,7 @@
 	.table9max.row1 {
 		top: 5%;
 		.player {
-			height: 8rem;
+			height: 6rem;
 		}
 		.playerBet {
 		}
@@ -385,19 +383,19 @@
 	.table9max.row2 {
 		top: 10%;
 		.player {
-			height: 8rem;
+			height: 6rem;
 		}
 	}
 	.table9max.row3 {
 		top: 35%;
 		.player {
-			height: 9rem;
+			height: 7rem;
 		}
 	}
 	.table9max.row4 {
 		top: 60%;
 		.player {
-			height: 9rem;
+			height: 7rem;
 		}
 	}
 	.table9max.leftColumn {

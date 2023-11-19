@@ -1,6 +1,53 @@
 <script>
-	import userStore from '$lib/stores/userStore';
-	function handleSignup() {}
+	import socket from '$lib/services/socket';
+
+	// store the user & password on a component scope variable to be used to signin when successfully signed up
+	let user, password;
+
+	/**
+	 * @param {SubmitEvent} event
+	 */
+	async function handleSignup(event) {
+		formError = {
+			message: '',
+			btnDisabled: true
+		};
+		console.log('handleSignup');
+		const data = new FormData(event.target),
+			confirmPassword = data.get('confirm_password'),
+			email = data.get('email'),
+			confirmEmail = data.get('confirm_email');
+
+		user = data.get('username');
+		password = data.get('password');
+
+		if (password !== confirmPassword) {
+			return (formError = { message: 'Password not match', btnDisabled: false });
+		}
+		if (email !== confirmEmail) {
+			return (formError = { message: 'Email not match', btnDisabled: false });
+		}
+
+		console.log(user, password);
+		socket.emit('signUp', { user, password, email });
+	}
+	socket.on('signUpResponse', ({ status, error = '' }) => {
+		console.log('signUpResponse');
+		switch (status) {
+			case 200:
+				socket.emit('signIn', { user, password });
+				break;
+			case 403:
+				formError.message = error;
+				break;
+		}
+		formError.btnDisabled = false;
+	});
+
+	let formError = {
+		message: '',
+		btnDisabled: false
+	};
 </script>
 
 <form class="mb-2 flex w-full max-w-xs flex-col gap-4 px-2" on:submit|preventDefault={handleSignup}>
@@ -44,5 +91,14 @@
 		type="email"
 		autocomplete="email"
 	/>
-	<button class="auth filled mx-auto" type="submit"> Register </button>
+	<button
+		disabled={formError.btnDisabled}
+		class="auth filled mx-auto disabled:opacity-75"
+		type="submit"
+	>
+		Register
+	</button>
 </form>
+{#if formError.message}
+	<p class="my-2 text-red-700">{formError.message}</p>
+{/if}

@@ -363,13 +363,13 @@ class PlayerPoolManager {
             user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
             logger.log("updating balance")
             User.handleMoney(player.stackSize.toNumber(), player.userID, `⚡ ${this.pools[player.poolID].gameTitle}`, this.fastify.pg)
+            delete user.players[player.id]
+            delete this.playersByPool[player.poolID][player.id]
             const socket = this.socketsByUserID[player.userID]
             if (socket) {
                 socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
                 socket.emit("updateUserInfo", { user : user, status: 200})
             }
-            delete user.players[player.id]
-            delete this.playersByPool[player.poolID][player.id]
             this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
             this.socketManager.to("lobby").emit("updatePools", this.pools)
             return logger.log("finish leavePool() 2")
