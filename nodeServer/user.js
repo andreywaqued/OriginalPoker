@@ -57,12 +57,9 @@ class User {
      * @param {any} db 
      *
     */
-    static async handleMoney(amount, user, socket, source, db) {
+    static async handleMoney(amount, userID, source, db) {
         logger.log("handleMoney")
-        logger.log(user)
-        user.balance = user.balance.plus(amount)
-        if (socket) socket.emit("updateUserInfo", {user: user, status: 200})
-        await updateUserBalanceInDB(amount, user.id, source, db)
+        await updateUserBalanceInDB(amount, userID, source, db)
     }
     static async updateUserSettings(userid, settings, db) {
         logger.log("updateUserSettings()")
