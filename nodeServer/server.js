@@ -506,8 +506,8 @@ socketManager.on('connection', (socket) => {
       logger.log(error)
     }
   });
-  // socket.on('disconnecting', (reason) => {
-  //   logger.log(`User disconnecting: ${socket.id}`);
+  socket.on('disconnecting', (reason) => {
+    logger.log(`User disconnecting: ${socket.userID}`);
   //   logger.log(reason)
   //   // logger.log(socket)
   //   logger.log(socket.connected)
@@ -516,24 +516,16 @@ socketManager.on('connection', (socket) => {
   //   logger.log(JSON.stringify(socket.user))
   //   const userID = socket.user.id
   //   disconnectedPlayers[userID] = []
-  //   for (let i = 0; i< socket.user.playerIDs.length; i++) {
-  //     const playerID = socket.user.playerIDs[i]
-  //     const poolID = socket.user.poolIDs[i]
-  //     logger.log("player disconnected: " + playerID + " - " + poolID)
-  //     let player = lightningPoolManager.playersByPool[poolID][playerID];
-  //     if (!player) return logger.log("player is undefined")
-  //     player.tableClosed = true;
-  //     player.isDisconnected = true;
-  //     disconnectedPlayers[userID].push({playerID, poolID})
-      
+    const user = usersConnected[socket.userID]
+    // safecheck to not panic
+    if (!user ) return
+    Object.entries(user.players).forEach(([_, player]) => {
+      logger.log("player disconnected: " + player.id + " - " + player.poolID)
 
-  //     logger.log("player disconnected: " + playerID + " - " + poolID)
+      lightningPoolManager.leavePool(player, false)
+    })
+  });
 
-  //     // lightningPoolManager.leavePool(socket, {id:playerID, poolID: poolID}, true)
-  //   }
-  //   delete lightningPoolManager.sockets[socket.id]
-  //   socket.leave("lobby")
-  // });
 });
 const port = process.env.PORT || 3000
 fastify.listen({

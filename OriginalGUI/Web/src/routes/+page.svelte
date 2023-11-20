@@ -36,7 +36,7 @@
 		<Navbar />
 		<Lobby />
 		{#each Object.entries($userStore.players) as [id, player] (id)}
-			<Table playerID={id} />
+			<Table hero={player} />
 		{/each}
 	{/if}
 </Wrapper>

@@ -7,8 +7,11 @@
 	import Player from '$lib/components/table/Player.svelte';
 	import Pot from '$lib/components/table/Pot.svelte';
 
-	export let playerID;
-	$: isSelected = playerID === $navSelectedItemStore;
+	/**
+	 * @type {Object.<string, any>}
+	 */
+	export let hero;
+	$: isSelected = hero.id === $navSelectedItemStore;
 
 	// /**
 	//  * @type {number}
@@ -21,7 +24,6 @@
 	let winTitle = '';
 	let handHistories = [];
 	let hhIndex = 0;
-	let hero = { id: '', poolID: '', position: 0, cards: [], betSize: 0, stackSize: 0 };
 	let players = {};
 	let playersComponents = {};
 	let possibleActions = [];
@@ -69,7 +71,7 @@
 	socket.on('updatePlayerInfo', (player) => {
 		console.log('updatePlayerInfo');
 		console.log(player);
-		if (playerID !== player.id) return;
+		if (hero.id !== player.id) return;
 		let playersTemp = JSON.parse(JSON.stringify(players));
 		hero = player;
 		hero.isHero = true;
@@ -172,7 +174,7 @@
 	socket.on('updateGameState', (gameState) => {
 		console.log('updateGameState');
 		console.log(gameState);
-		if (!(playerID in gameState.players)) return;
+		if (!(hero.id in gameState.players)) return;
 
 		currentGameState = JSON.parse(JSON.stringify(gameState));
 		sumOfBetSizes = 0;
@@ -248,7 +250,7 @@
 	});
 	socket.on('handTransition', (player) => {
 		console.log('handTransition');
-		if (playerID !== player.id) return;
+		if (hero.id !== player.id) return;
 		possibleActions = [];
 		handStrength = '';
 		transitionBackground();
@@ -265,7 +267,7 @@
 	});
 	socket.on('sitoutUpdate', (data) => {
 		console.log('sitoutUpdate')
-		if (playerID !== data.playerID) return;
+		if (hero.id !== data.playerID) return;
 		playerSitout = data.isSitout;
 		sitoutPopover(playerSitout);
 	});
@@ -410,20 +412,20 @@
 		}
 	}
 
-	let actualBet = 0;
-	let sidePots = [0, 0]
-	let playerTurn = true; //only for testing, this should come from the server
-	players = [
-	  {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
-	  {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	  // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	  // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	]
+	// let actualBet = 0;
+	// let sidePots = [0, 0]
+	// let playerTurn = true; //only for testing, this should come from the server
+	// players = [
+	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+	//   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	//   // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	//   // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	// ]
 	function findHero() {
 		return 0;
 		// let index = players.findIndex(p => p.isHero === true)
