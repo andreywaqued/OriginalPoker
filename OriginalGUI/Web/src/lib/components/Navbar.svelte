@@ -12,7 +12,7 @@
 </script>
 
 <div
-	class="flex h-14 w-full items-center gap-x-2 overflow-x-auto border-y-2 border-[rgb(69,69,69)] bg-slate-700 px-2"
+	class="flex h-14 w-full items-center gap-x-2 overflow-x-auto bg-slate-700 px-2"
 >
 	{#each Object.entries({ lobby: null, ...$userStore.players }) as [id, player] (id)}
 		<button

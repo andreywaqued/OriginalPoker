@@ -82,7 +82,7 @@ class PlayerPoolManager {
             this.tableManager.placePlayerIntoTable(player)
             this.socketManager.to("lobby").emit("updatePools", this.pools)
             logger.log("log4")
-            // user.balance = user.balance.minus(stackSize)
+            user.balance = user.balance.minus(stackSize)
             logger.log("updating balance")
             User.handleMoney(-stackSize.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
             // this.fastify.pg.connect().then(async (client) => {
@@ -299,7 +299,7 @@ class PlayerPoolManager {
             if (rebuyAmount > 0) {
                 logger.log("rebuyAmount > 0")
                 player.stackSize = player.stackSize.plus(rebuyAmount)
-                // user.balance = user.balance.minus(rebuyAmount)
+                user.balance = user.balance.minus(rebuyAmount)
                 logger.log("updating balance")
                 User.handleMoney(-rebuyAmount.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
                 // this.fastify.pg.connect().then(async (client) => {
@@ -360,7 +360,7 @@ class PlayerPoolManager {
         if (!table || player.tableClosed || !player.tableID) {
             if (this.leavePoolTimeout[player.id]) clearTimeout(this.leavePoolTimeout[player.id])
             logger.log("leavePool() 2 table undefined or player.tableClosed or player.tableID undefined")
-            // user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
+            user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
             logger.log("updating balance")
             delete user.players[player.id]
             delete this.playersByPool[player.poolID][player.id]

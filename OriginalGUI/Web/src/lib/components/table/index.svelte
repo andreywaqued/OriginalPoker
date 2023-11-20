@@ -411,19 +411,19 @@
 	}
 
 	let actualBet = 0;
-	// let sidePots = [0, 0]
-	// let playerTurn = true; //only for testing, this should come from the server
-	// players = [
-	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
-	//   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	//   // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	//   // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	// ]
+	let sidePots = [0, 0]
+	let playerTurn = true; //only for testing, this should come from the server
+	players = [
+	  {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+	  {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	  // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	  // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	]
 	function findHero() {
 		return 0;
 		// let index = players.findIndex(p => p.isHero === true)
@@ -550,7 +550,6 @@
 		<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
 	</div>
 	<div class="bg-table" class:doordash={doordashTable} on:wheel={handleScroll}>
-		<div class:transitioning></div>
 		{#if waitingForPlayers && !playerSitout}
 			<div class="centerInfoDiv">
 				<span class="centerInfoText">Waiting for players...</span>
@@ -696,7 +695,6 @@
         <button on:click={toggleSitout}>I`m Back!`</button>
       </div>
     </div> -->
-		<div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
 		<div class="hhPopover" popover id="hhPopover">
 			<div class="popoverTitle">
 				<button
@@ -732,7 +730,6 @@
 				{/if}
 			</div>
 		</div>
-		<div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
 		<div class="rebuyPopover" popover id="rebuyPopover">
 			<div class="popoverTitle">
 				<span>REBUY {winTitle}</span>
@@ -793,6 +790,9 @@
 			</div>
 		</div>
 	</div>
+	<div class:transitioning></div>
+	<div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
+	<div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
 	<div class="adsContainer">
 		{#if !doordashTable}
 			<Ads bind:changeAds={callChangeAds} />
@@ -809,13 +809,15 @@
 		background-image: url('/fundo.png');
 		background-position: center;
 		background-size: cover;
+		overflow: hidden;
 	}
 	.bg-table {
 		all: unset;
 		position: relative;
 		height: 90%;
-		width: 50vh;
-		max-width: 100%;
+		width: 100%;
+		max-width: 25rem;
+		max-height: 40rem;
 		overflow: hidden;
 		background-image: url('/mesa1.png');
 		background-position: center;
@@ -869,7 +871,7 @@
 		left: -200%;
 		background-image: url('/transitionBackground.png');
 		background-position: center;
-		background-size: contain;
+		background-size: cover;
 		background-repeat: no-repeat;
 		animation-name: slideInOut;
 		animation-timing-function: linear;
@@ -1154,19 +1156,6 @@
 	.slider:hover {
 		opacity: 1;
 	}
-
-	.slider::-webkit-slider-thumb {
-		// position: absolute;
-		-webkit-appearance: none;
-		appearance: none;
-		height: calc(var(--height) * 0.025);
-		aspect-ratio: 1;
-		border-radius: 50%;
-		background: white;
-		cursor: pointer;
-		top: 0;
-		left: 0;
-	}
 	.adsContainer {
 		width: 100%;
 		height: 10%;
@@ -1403,8 +1392,7 @@
 	.popoverOverlay.active {
 		position: absolute;
 		background-color: rgba(0, 0, 0, 0.5);
-		top: 20px;
-		height: calc(100% - 20px);
+		height: 100%;
 		width: 100%;
 		z-index: 10000;
 	}
