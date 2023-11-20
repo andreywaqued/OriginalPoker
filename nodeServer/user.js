@@ -239,15 +239,20 @@ async function fetchUserTransactionsFromDB(id, offset, db) {
      *
     */
 async function updateUserBalanceInDB(amount, id, source, db) {
-    await db.transact(async client => {
-        const req = await Promise.all([
-            client.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
-                [amount, id]),    
-            client.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
-                [id, amount, source])
-        ])
-        return req
-    })
+    try {
+        await db.transact(async client => {
+            const req = await Promise.all([
+                client.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
+                    [amount, id]),    
+                client.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
+                    [id, amount, source])
+            ])
+            return req
+        })
+    } catch (err) {
+        console.log("Something bad happen on updateUserBalanceInDB")
+        console.log(err)
+    }
 }
 
 module.exports = User

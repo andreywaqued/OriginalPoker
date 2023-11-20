@@ -264,6 +264,7 @@
 		toggleRebuy();
 	});
 	socket.on('sitoutUpdate', (data) => {
+		console.log('sitoutUpdate')
 		if (playerID !== data.playerID) return;
 		playerSitout = data.isSitout;
 		sitoutPopover(playerSitout);
