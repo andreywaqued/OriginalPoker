@@ -257,17 +257,17 @@
 		transitionBackground();
 		callChangeAds();
 	});
-	socket.on("updateHandHistory", data => {
-	    console.log("updateHandHistory")
-	    if (!data.player) return console.log("player is undefined")
-	    if (!data.handHistory) return console.log("handHistory is undefined")
-	    const player = data.player
-	    const handHistory = data.handHistory
-			// check if the event is for this component
-			if (player.id !== hero.id) return
-			handHistories = [...handHistories, handHistory]
-			if (hhIndex === -1) hhIndex = handHistories.length - 1;
-	})
+	socket.on('updateHandHistory', (data) => {
+		console.log('updateHandHistory');
+		if (!data.player) return console.log('player is undefined');
+		if (!data.handHistory) return console.log('handHistory is undefined');
+		const player = data.player;
+		const handHistory = data.handHistory;
+		// check if the event is for this component
+		if (player.id !== hero.id) return;
+		handHistories = [...handHistories, handHistory];
+		if (hhIndex === -1) hhIndex = handHistories.length - 1;
+	});
 	socket.on('askRebuy', (data) => {
 		toggleRebuy();
 	});
@@ -418,20 +418,20 @@
 		}
 	}
 
-	// let actualBet = 0;
-	// let sidePots = [0, 0]
-	// let playerTurn = true; //only for testing, this should come from the server
-	// players = [
-	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
-	//   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	//   // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	//   // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	// ]
+	let actualBet = 0;
+	let sidePots = [0, 0]
+	let playerTurn = true; //only for testing, this should come from the server
+	players = [
+	  {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+	  {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	  // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	  // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	]
 	function findHero() {
 		return 0;
 		// let index = players.findIndex(p => p.isHero === true)
@@ -548,6 +548,7 @@
 	}
 </script>
 
+<!-- THIS IS TAILWIND -->
 <main class:hidden={!isSelected} class="flex">
 	<!-- TRANSITION ANIMATION -->
 	<div class:transitioning></div>
@@ -645,6 +646,58 @@
       </div>
     </div> -->
 	</div>
+
+	<div class="bottomContainer">
+		<!-- PLAY BUTTONs -->
+		{#if possibleActions.length > 0}
+			<div class="playButtonsContainer">
+				<!--transition:slide={{duration: 250, axis:"x"}}-->
+				<div class="buttons">
+					{#each possibleActions as action, index}
+						{#if index < 2}
+							<button
+								class="playButton"
+								class:playerButtonHide={action.amount >= hero.betSize + hero.stackSize}
+								on:click={() => parseAction(index)}
+							>
+								<span class:fastFold={action.type === '⚡Fold'}>{action.type}</span>
+								{#if action.amount > 0}
+									<span
+										>{userSettings.showValuesInBB ? '' : '$ '}{Math.round(
+											(action.amount - hero.betSize) * 100
+										) / 100}{userSettings.showValuesInBB ? ' BB' : ''}</span
+									>
+								{/if}
+							</button>
+						{:else}
+							<!-- <button class="playButton" class:allin={betValue >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} > -->
+							<button class="playButton" on:click={() => parseAction(index)}>
+								{#if betValue < hero.betSize + hero.stackSize}
+									<span>{action.type}</span>
+								{:else}
+									<span>All-in</span>
+								{/if}
+								<span
+									>{userSettings.showValuesInBB ? '' : '$ '}{betValue}{userSettings.showValuesInBB
+										? ' BB'
+										: ''}</span
+								>
+							</button>
+						{/if}
+					{/each}
+					<!-- <button class="playButton" on:click={callAction}><span>Call</span><span class="value">0123456789</span></button>
+		        <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button> -->
+				</div>
+			</div>
+		{/if}
+		<!-- TODO ads will be unique each table or persist the same every table? -->
+		<div class="adsContainer">
+			{#if !doordashTable}
+				<Ads bind:changeAds={callChangeAds} />
+			{/if}
+		</div>
+	</div>
+
 	<!-- REBUY -->
 	<div class="rebuyPopover" class:active={rebuyPopoverActive} id="rebuyPopover">
 		<div class="popoverTitle">
@@ -741,103 +794,59 @@
 			{/if}
 		</div>
 	</div>
-	{#if possibleActions.length > 0}
-		<div class="playButtonsContainer">
-			<!--transition:slide={{duration: 250, axis:"x"}}-->
-			{#if possibleActions.length > 1}
-				<div class="betUpperContainer">
-					<div class="betDisplayRow">
-						<div class="presetButtons">
-							{#each userSettings.presetButtons[presetButtonsRound] as presetButton}
-								<button class="presetBetSizeButton" on:click={() => updateBetValue(presetButton)}
-									>{presetButton.value > 0 ? presetButton.value : ''}{presetButton.display}</button
-								>
-							{/each}
-							<!-- <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
-	            <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
-	            <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button> -->
-						</div>
-						<label class="dolarSign">{userSettings.showValuesInBB ? 'BB' : '$'}</label>
-						<input
-							class="betDisplay"
-							bind:value={betValue}
-							type="number"
-							step="0.01"
-							on:keydown={() => (betValue = Number(betValue.toFixed(1)))}
-						/>
-					</div>
-					<div class="betSlider">
-						<button class="betSliderButton" on:click={plusBetSlider}
-							><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-								><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-									d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"
-								/></svg
-							></button
+
+	<!-- BET VALUE CONTAINER -->
+	{#if possibleActions.length > 1}
+		<div class="betContainer">
+			<div class="betDisplayRow">
+				<div class="presetButtons">
+					{#each userSettings.presetButtons[presetButtonsRound] as presetButton}
+						<button class="presetBetSizeButton" on:click={() => updateBetValue(presetButton)}
+							>{presetButton.value > 0 ? presetButton.value : ''}{presetButton.display}</button
 						>
-						<input
-							type="range"
-							min={minBet}
-							max={maxBet}
-							step="0.01"
-							bind:value={betValue}
-							class="slider"
-							id="myRange"
-						/>
-						<button class="betSliderButton" on:click={minusBetSlider}
-							><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-								><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-									d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
-								/></svg
-							></button
-						>
-					</div>
+					{/each}
+					<!-- <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
+          <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
+          <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button> -->
 				</div>
-			{/if}
-			<div class="buttons">
-				{#each possibleActions as action, index}
-					{#if index < 2}
-						<button
-							class="playButton"
-							class:playerButtonHide={action.amount >= hero.betSize + hero.stackSize}
-							on:click={() => parseAction(index)}
-						>
-							<span class:fastFold={action.type === '⚡Fold'}>{action.type}</span>
-							{#if action.amount > 0}
-								<span
-									>{userSettings.showValuesInBB ? '' : '$ '}{Math.round(
-										(action.amount - hero.betSize) * 100
-									) / 100}{userSettings.showValuesInBB ? ' BB' : ''}</span
-								>
-							{/if}
-						</button>
-					{:else}
-						<!-- <button class="playButton" class:allin={betValue >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} > -->
-						<button class="playButton" on:click={() => parseAction(index)}>
-							{#if betValue < hero.betSize + hero.stackSize}
-								<span>{action.type}</span>
-							{:else}
-								<span>All-in</span>
-							{/if}
-							<span
-								>{userSettings.showValuesInBB ? '' : '$ '}{betValue}{userSettings.showValuesInBB
-									? ' BB'
-									: ''}</span
-							>
-						</button>
-					{/if}
-				{/each}
-				<!-- <button class="playButton" on:click={callAction}><span>Call</span><span class="value">0123456789</span></button>
-          <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button> -->
+				<label class="dolarSign">{userSettings.showValuesInBB ? 'BB' : '$'}</label>
+				<input
+					class="betDisplay"
+					bind:value={betValue}
+					type="number"
+					step="0.01"
+					on:keydown={() => (betValue = Number(betValue.toFixed(1)))}
+				/>
+			</div>
+			<div class="betSlider">
+				<button class="betSliderButton" on:click={plusBetSlider}
+					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+							d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"
+						/></svg
+					></button
+				>
+				<input
+					type="range"
+					min={minBet}
+					max={maxBet}
+					step="0.01"
+					bind:value={betValue}
+					class="slider"
+					id="myRange"
+				/>
+				<button class="betSliderButton" on:click={minusBetSlider}
+					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+							d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
+						/></svg
+					></button
+				>
 			</div>
 		</div>
 	{/if}
 </main>
-<!-- TODO ads will be unique each table or persist the same every table? -->
-<div class:hidden={!isSelected} class="adsContainer">
-	{#if !doordashTable}
-		<Ads bind:changeAds={callChangeAds} />
-	{/if}
-</div>
+
 
 <style lang="scss">
 	main {
@@ -854,7 +863,7 @@
 		all: unset;
 		position: relative;
 		height: 100%;
-		aspect-ratio: 1/1.35;
+		aspect-ratio: 10/16;
 		max-width: 100%;
 		margin: auto;
 		overflow: hidden;
@@ -868,8 +877,18 @@
 		img {
 			height: 100%;
 			width: 100%;
-			padding: 20%;
+			padding: 10%;
 		}
+	}
+	.bottomContainer {
+		height: 10%;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+	.adsContainer {
+		width: 100%;
+		height: 100%;
 	}
 	.centerInfoDiv {
 		position: absolute;
@@ -995,44 +1014,36 @@
 		position: absolute;
 		color: #c1c1c1;
 		font-size: 2vh;
-		bottom: 1%;
-		left: 10%;
+		bottom: 6%;
+		right: 70%;
+		text-align: right;
 	}
-	.playButtonsContainer {
+	.betContainer {
 		position: absolute;
-		left: 61%;
-		bottom: 1%;
-		width: 38%;
-		max-width: 20rem;
-		// background-color: white;
 		display: flex;
-		flex-direction: column;
 		justify-content: end;
-		gap: 0.25em;
-		z-index: 10;
-		.betUpperContainer {
-			display: flex;
-			justify-content: end;
-			align-items: end;
-			gap: 1em;
-			padding-bottom: 4%;
-		}
+		align-items: end;
+		gap: 5%;
+		bottom: 11%;
+		right: 1%;
+		width: 20%;
+		height: 50%;
 		.betDisplayRow {
 			display: flex;
-			width: 50%;
+			width: 100%;
 			height: 100%;
 			flex-direction: column;
 			// background-color: blue;
+			justify-content: end;
 			align-items: end;
-			gap: 5%;
+			gap: 2%;
 		}
 		.presetButtons {
-			width: 50%;
-			height: 100%;
+			width: 100%;
+			height: 30%;
 			display: flex;
 			flex-direction: column;
-			gap: 0.2em;
-			padding: 0.25em 0;
+			gap: 0.15em;
 			.presetBetSizeButton {
 				// all: unset;
 				width: 100%;
@@ -1050,8 +1061,8 @@
 			/* Chrome, Safari, Edge, Opera */
 			all: unset;
 			background-color: rgba(0, 0, 0, 0.5);
-			width: 70%;
-			height: 20%;
+			width: 100%;
+			height: 10%;
 			// transform: translateX(80%);
 			display: flex;
 			justify-content: flex-end;
@@ -1092,12 +1103,75 @@
 		.betDisplay:focus {
 			color: rgba(255, 255, 255, 1);
 		}
+
+		.betSlider {
+			// border: 1px solid black;
+			border-radius: 5px;
+			position: relative;
+			background-color: rgba(0, 0, 0, 0.5);
+			width: 50%;
+			max-width: 3em;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-around;
+			align-items: center;
+			margin: 0;
+			.betSliderButton {
+				// all:unset;
+				border: none;
+				background-color: rgba(0,0,0,.5);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				// background-color: green;
+				// border: 1px solid whitesmoke;
+				margin: auto;
+				padding: 10% 0;
+				width: 100%;
+				// border-radius: 50%;
+				svg {
+					fill: #c1c1c1;
+				}
+			}
+			.slider {
+				appearance: slider-vertical;
+				width: 100%;
+				height: 100%;
+				border-radius: 5px;
+				background: #d3d3d3;
+				margin: 20% 0;
+				// outline: none;
+				opacity: 0.7;
+				-webkit-transition: 0.2s;
+				transition: opacity 0.2s;
+			}
+			.slider:hover {
+				opacity: 1;
+			}
+			.betSliderButton:hover {
+				svg {
+					fill: white !important;
+				}
+				// background-color: white;
+			}
+		}
+	}
+	.playButtonsContainer {
+		width: 100%;
+		height: 100%;
+		background-color: rgb(0, 0, 0);
+		display: flex;
+		flex-direction: column;
+		justify-content: end;
+		gap: 0.25em;
+		z-index: 10;
 		.buttons {
 			display: flex;
 			gap: 2%;
 			flex-direction: row;
 			width: 100%;
-			height: fit-content;
+			height: 100%;
+			padding: 1%;
 		}
 		.playButton:hover,
 		.presetBetSizeButton:hover {
@@ -1153,64 +1227,8 @@
 		.valueInBB::before {
 			content: 'BB ';
 		}
-		.betSlider {
-			// border: 1px solid black;
-			border-radius: 5px;
-			position: relative;
-			background-color: rgba(0, 0, 0, 0.5);
-			width: 20%;
-			display: flex;
-			flex-direction: column;
-			justify-content: space-around;
-			align-items: center;
-			margin: 0;
-			.betSliderButton {
-				// all:unset;
-				border: none;
-				color: whitesmoke;
-				font-size: 1.2em;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				// background-color: green;
-				// border: 1px solid whitesmoke;
-				margin: 0;
-				padding: 0;
-				width: 100%;
-				// border-radius: 50%;
-				svg {
-					fill: #c1c1c1;
-				}
-			}
-		}
-	}
-	.slider {
-		appearance: slider-vertical;
-		border-radius: 5px;
-		background: #d3d3d3;
-		// outline: none;
-		opacity: 0.7;
-		-webkit-transition: 0.2s;
-		transition: opacity 0.2s;
 	}
 
-	.slider:hover {
-		opacity: 1;
-	}
-	.adsContainer {
-		width: 100%;
-		height: 10%;
-	}
-
-	.betSliderButton:hover {
-		svg {
-			fill: white !important;
-		}
-		// background-color: white;
-	}
-	// .hidden {
-	//   display: none;
-	// }
 	.auxiliarButtonsHamburger {
 		z-index: 1000;
 		position: absolute;

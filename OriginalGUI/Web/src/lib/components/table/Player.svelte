@@ -310,40 +310,34 @@
 		/* z-index: 1; */
 	}
 	.row1 {
-		top: 1%;
+		top: 0;
 		.player {
 			height: 15vh;
 		}
 		font-size: 2vh;
 	}
 	.row2 {
-		top: 15%;
+		top: 20%;
 		.player {
 			height: 16vh;
 		}
 		.playerButton {
 			top: calc(0.18 * var(--height));
 		}
-		.playerCards {
-			top: calc(0.255 * var(--height));
-		}
 		font-size: 2vh;
 	}
 	.row3 {
-		top: 45%;
+		top: 50%;
 		.player {
 			height: 17vh;
 		}
 		.playerButton {
 			top: calc(0.05 * var(--height));
 		}
-		.playerCards {
-			top: calc(0.105 * var(--height));
-		}
 		font-size: 2vh;
 	}
 	.row4 {
-		top: 70%;
+		bottom: 1%;
 		.player {
 			height: 20vh;
 		}
@@ -358,14 +352,12 @@
 	}
 	.leftColumn {
 		justify-content: flex-start;
-		padding: 5%;
-		width: 90%;
+		width: 100%;
 	}
 	.rightColumn {
 		// background-color: white;
 		justify-content: flex-end;
-		padding: 5%;
-		width: 90%;
+		width: 100%;
 	}
 	.row5 {
 		top: 70%;
@@ -528,7 +520,7 @@
 		background-repeat: no-repeat;
 		position: absolute;
 		// background-color: red;
-		width: calc(0.03 * var(--height));
+		width: 3vh;
 		aspect-ratio: 1;
 		border-radius: 50%;
 		top: 15%;
@@ -586,19 +578,20 @@
 			opacity: 0;
 		}
 		.playerButton {
-			top: 25%;
+			top: 15%;
 		}
-		// .playerBet{
-		//     transform: translateX(-15%) translateY(40%) rotate(-130deg) ;
-		// }
+		.playerBet{
+
+		}
 	}
 	.pos1 {
 		.playerButton {
-			left: 75%;
+			left: 80%;
+			top: 46%;
 		}
 		.playerCards {
-			top: 45%;
-			right: -43%;
+			top: 70%;
+			left: 110%;
 			:first-child {
 				transform: translateX(15%) translateY(10%) rotate(-130deg);
 				z-index: 1;
@@ -608,8 +601,8 @@
 			}
 		}
 		.playerBet {
-			top: 40%;
-			right: -95%;
+			top: 50%;
+			left: 108%;
 		}
 		.playerCards.fold {
 			top: -2vh;
@@ -622,11 +615,12 @@
 	}
 	.pos2 {
 		.playerButton {
-			left: 120%;
+			top: 46%;
+			left: 85%;
 		}
 		.playerCards {
-			right: -55%;
-			bottom: 10%;
+			left: 110%;
+			top: 70%;
 			:first-child {
 				transform: translateX(55%) translateY(10%) rotate(-80deg);
 				z-index: 1;
@@ -636,8 +630,8 @@
 			}
 		}
 		.playerBet {
-			top: 110%;
-			right: -90%;
+			top: 50%;
+			left: 115%;
 		}
 		.playerCards.fold {
 			top: 30vh;
@@ -654,8 +648,8 @@
 			left: 105%;
 		}
 		.playerCards {
-			bottom: -25%;
-			left: 35%;
+			top: 100%;
+			left: 40%;
 			:first-child {
 				transform: translateX(5%) translateY(15%) rotate(-45deg);
 			}
@@ -664,8 +658,9 @@
 			}
 		}
 		.playerBet {
-			top: 145%;
-			left: 20%;
+			top: 135%;
+			left: 35%;
+			text-align: center;
 		}
 		.playerCards.fold {
 			top: 40vh;
@@ -675,11 +670,12 @@
 	}
 	.pos4 {
 		.playerButton {
-			right: 120%;
+			top: 46%;
+			right: 85%;
 		}
 		.playerCards {
-			left: -50%;
-			bottom: 10%;
+			right: 105%;
+			top: 70%;
 			:first-child {
 				transform: translateX(15%) translateY(23%) rotate(-30deg);
 			}
@@ -688,8 +684,8 @@
 			}
 		}
 		.playerBet {
-			top: 110%;
-			left: -90%;
+			top: 50%;
+			right: 115%;
 			text-align: right;
 		}
 		.playerCards.fold {
@@ -700,11 +696,12 @@
 	}
 	.pos5 {
 		.playerButton {
-			right: 75%;
+			top: 46%;
+			right: 80%;
 		}
 		.playerCards {
-			top: 45%;
-			left: -25%;
+			top: 70%;
+			right: 95%;
 			:first-child {
 				transform: translateX(15%) translateY(-5%) rotate(60deg);
 			}
@@ -713,8 +710,8 @@
 			}
 		}
 		.playerBet {
-			top: 40%;
-			left: -95%;
+			top: 50%;
+			right: 108%;
 			text-align: right;
 		}
 		.playerCards.fold {
@@ -954,7 +951,7 @@
 	.playerBet {
 		position: absolute;
 		font-size: 0.8em;
-		width: 60%;
+		text-wrap: nowrap;
 		height: 10%;
 		color: white;
 		display: flex;
@@ -962,6 +959,7 @@
 		align-items: center;
 		top: -5%;
 		border-radius: 5px;
+		z-index: 100;
 		// transition: 1s;
 		.value::before {
 			content: '$ ';
