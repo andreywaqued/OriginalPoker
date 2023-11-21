@@ -16,9 +16,7 @@ socket.on('connect', () => {
 
 socket.on('disconnect', () => {
 	console.log('User disconnected');
-	userStore.subscribe((user) => {
-		if (user) userStore.set(null);
-	});
+	userStore.set(null);
 });
 
 export default socket;

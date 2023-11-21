@@ -110,7 +110,8 @@
 		console.log(hero);
 	});
 	socket.on('updateUserInfo', ({ user }) => {
-		console.log(user)
+		console.log('updateUserInfo');
+		console.log(user);
 		balance = parseFloat(user.balance);
 	});
 	socket.on('updateUserSettings', (settings) => {
@@ -266,7 +267,7 @@
 		toggleRebuy();
 	});
 	socket.on('sitoutUpdate', (data) => {
-		console.log('sitoutUpdate')
+		console.log('sitoutUpdate');
 		if (hero.id !== data.playerID) return;
 		playerSitout = data.isSitout;
 		sitoutPopover(playerSitout);
@@ -549,7 +550,7 @@
 		{#if doordashTable}
 			<!--<img />-->
 		{:else}
-			<img src="/mesa.png"/>
+			<img src="/mesa.png" />
 		{/if}
 		{#if waitingForPlayers && !playerSitout}
 			<div class="centerInfoDiv">
@@ -1152,7 +1153,7 @@
 		}
 	}
 	.slider {
-    appearance: slider-vertical;
+		appearance: slider-vertical;
 		border-radius: 5px;
 		background: #d3d3d3;
 		// outline: none;
