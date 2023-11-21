@@ -257,12 +257,17 @@
 		transitionBackground();
 		callChangeAds();
 	});
-	socket.on('updateHandHistory', (handHistory) => {
-		console.log('updateHandHistory');
-		handHistories.push(handHistory);
-		handHistories = handHistories; //forcing the update
-		if (hhIndex === -1) hhIndex = handHistories.length - 1;
-	});
+	socket.on("updateHandHistory", data => {
+	    console.log("updateHandHistory")
+	    if (!data.player) return console.log("player is undefined")
+	    if (!data.handHistory) return console.log("handHistory is undefined")
+	    const player = data.player
+	    const handHistory = data.handHistory
+			// check if the event is for this component
+			if (player.id !== hero.id) return
+			handHistories = [...handHistories, handHistory]
+			if (hhIndex === -1) hhIndex = handHistories.length - 1;
+	})
 	socket.on('askRebuy', (data) => {
 		toggleRebuy();
 	});
@@ -537,10 +542,40 @@
 		console.log('leavePool');
 		socket.emit('leavePool', hero);
 	}
+	let auxiliarButtonsPopoverActive = false;
+	function toggleAuxiliarButtons() {
+		auxiliarButtonsPopoverActive = !auxiliarButtonsPopoverActive;
+	}
 </script>
 
 <main class:hidden={!isSelected} class="flex">
-	<div class="auxiliarButtons">
+	<!-- TRANSITION ANIMATION -->
+	<div class:transitioning></div>
+	<!-- OVERLAYS -->
+	<div
+		class="popoverOverlay"
+		class:active={auxiliarButtonsPopoverActive}
+		on:click={toggleAuxiliarButtons}
+	></div>
+	<div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
+	<div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
+	<button on:click={toggleAuxiliarButtons} class="auxiliarButtonsHamburger">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			fill="none"
+			viewBox="0 0 24 24"
+			stroke-width="1.5"
+			stroke="currentColor"
+			class="h-6 w-6"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+			/>
+		</svg>
+	</button>
+	<div class:active={auxiliarButtonsPopoverActive} class="auxiliarButtons">
 		<button on:click={leavePool}>Leave Table</button>
 		<button on:click={toggleHH}>Hand History</button>
 		<button on:click={toggleRebuy}>Rebuy</button>
@@ -610,10 +645,7 @@
       </div>
     </div> -->
 	</div>
-	<!-- TRANSITION ANIMATION -->
-	<div class:transitioning></div>
 	<!-- REBUY -->
-	<div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
 	<div class="rebuyPopover" class:active={rebuyPopoverActive} id="rebuyPopover">
 		<div class="popoverTitle">
 			<span>REBUY {winTitle}</span>
@@ -674,7 +706,6 @@
 		</div>
 	</div>
 	<!-- HAND HISTORY -->
-	<div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
 	<div class="hhPopover" class:active={hhPopoverActive} id="hhPopover">
 		<div class="popoverTitle">
 			<button
@@ -801,7 +832,8 @@
 		</div>
 	{/if}
 </main>
-<div class="adsContainer">
+<!-- TODO ads will be unique each table or persist the same every table? -->
+<div class:hidden={!isSelected} class="adsContainer">
 	{#if !doordashTable}
 		<Ads bind:changeAds={callChangeAds} />
 	{/if}
@@ -951,7 +983,7 @@
 		border: none;
 		border-bottom: 0.4vh solid #c1c1c1;
 		background-color: #e3e3e3;
-		border-radius: 20px;
+		border-radius: 0.25rem;
 	}
 	button:hover {
 		background-color: white;
@@ -1179,16 +1211,40 @@
 	// .hidden {
 	//   display: none;
 	// }
-	.auxiliarButtons {
+	.auxiliarButtonsHamburger {
+		z-index: 1000;
 		position: absolute;
-		width: 100%;
-		top: 0.2rem;
+		top: 2%;
+		right: 2%;
+		width: 10%;
+		max-width: 1.75rem;
+		aspect-ratio: 1/1;
+		font-size: 100%;
+		svg {
+			margin: auto;
+			height: 100%;
+			width: 100%;
+			padding: 10%;
+		}
+	}
+	.auxiliarButtons.active {
 		display: flex;
+	}
+	.auxiliarButtons {
+		display: none;
+		position: absolute;
+		width: 30%;
+		max-width: fit-content;
+		text-wrap: nowrap;
+		top: 10%;
+		right: 2%;
+		flex-direction: column;
 		gap: 0.25rem;
 		padding-left: 0.5rem;
-		z-index: 1000;
+		z-index: 10000;
 		button {
-			padding: 1% 2%;
+			padding: 0.25em;
+			text-align: center;
 			font-size: 2vh;
 		}
 		.sitout {
@@ -1206,7 +1262,7 @@
 		transform: translate(-50%, -50%);
 		width: 40%;
 		height: 40%;
-		z-index: 100000;
+		z-index: 10000;
 		flex-direction: column;
 		overflow: hidden;
 		padding: 0;
@@ -1356,15 +1412,14 @@
 		left: 50%;
 		z-index: 10000;
 		transform: translate(-50%, -50%);
-		width: 80%;
+		width: 70%;
 		height: 80%;
 		flex-direction: column;
 		overflow: hidden;
 		padding: 0;
 	}
 	.popoverTitle {
-		width: 98%;
-		height: 5%;
+		width: 100%;
 		// background-color: blue;
 		display: flex;
 		flex-direction: row;
@@ -1405,8 +1460,8 @@
 			font-size: 0.75em;
 			white-space: pre-line;
 			background-color: #2d2d2d;
-			width: 96%;
-			height: 95%;
+			width: 100%;
+			height: 100%;
 			border-radius: 5px;
 			padding: 1%;
 			overflow-y: auto;
