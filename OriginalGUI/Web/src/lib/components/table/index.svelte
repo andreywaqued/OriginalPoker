@@ -551,7 +551,12 @@
 		<button on:click={toggleRebuy}>Rebuy</button>
 		<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
 	</div>
-	<div class="bg-table" class:doordash={doordashTable} on:wheel={handleScroll}>
+	<div class="table" on:wheel={handleScroll}>
+		{#if doordashTable}
+			<!--<img />-->
+		{:else}
+			<img src="/mesa.png"/>
+		{/if}
 		{#if waitingForPlayers && !playerSitout}
 			<div class="centerInfoDiv">
 				<span class="centerInfoText">Waiting for players...</span>
@@ -591,94 +596,6 @@
 			{/each}
 		{:else}
 			<!-- <Player bind:tableSize = {tableSize} bind:tableRotateAmount = {tableRotateAmount} bind:player = {heroPlaceHolder}/> -->
-		{/if}
-		{#if possibleActions.length > 0}
-			<div class="playButtonsContainer">
-				<!--transition:slide={{duration: 250, axis:"x"}}-->
-				{#if possibleActions.length > 1}
-					<div class="betDisplayRow">
-						<div class="presetButtons">
-							{#each userSettings.presetButtons[presetButtonsRound] as presetButton}
-								<button class="presetBetSizeButton" on:click={() => updateBetValue(presetButton)}
-									>{presetButton.value > 0 ? presetButton.value : ''}{presetButton.display}</button
-								>
-							{/each}
-							<!-- <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
-              <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
-              <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button> -->
-						</div>
-						<label class="dolarSign">{userSettings.showValuesInBB ? 'BB' : '$'}</label>
-						<input
-							class="betDisplay"
-							bind:value={betValue}
-							type="number"
-							step="0.01"
-							on:keydown={() => (betValue = Number(betValue.toFixed(1)))}
-						/>
-					</div>
-					<div class="betSlider">
-						<button class="betSliderButton" on:click={minusBetSlider}
-							><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-								><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-									d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
-								/></svg
-							></button
-						>
-						<input
-							type="range"
-							min={minBet}
-							max={maxBet}
-							step="0.01"
-							bind:value={betValue}
-							class="slider"
-							id="myRange"
-						/>
-						<button class="betSliderButton" on:click={plusBetSlider}
-							><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-								><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-									d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"
-								/></svg
-							></button
-						>
-					</div>
-				{/if}
-				<div class="buttons">
-					{#each possibleActions as action, index}
-						{#if index < 2}
-							<button
-								class="playButton"
-								class:playerButtonHide={action.amount >= hero.betSize + hero.stackSize}
-								on:click={() => parseAction(index)}
-							>
-								<span class:fastFold={action.type === '⚡Fold'}>{action.type}</span>
-								{#if action.amount > 0}
-									<span
-										>{userSettings.showValuesInBB ? '' : '$ '}{Math.round(
-											(action.amount - hero.betSize) * 100
-										) / 100}{userSettings.showValuesInBB ? ' BB' : ''}</span
-									>
-								{/if}
-							</button>
-						{:else}
-							<!-- <button class="playButton" class:allin={betValue >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} > -->
-							<button class="playButton" on:click={() => parseAction(index)}>
-								{#if betValue < hero.betSize + hero.stackSize}
-									<span>{action.type}</span>
-								{:else}
-									<span>All-in</span>
-								{/if}
-								<span
-									>{userSettings.showValuesInBB ? '' : '$ '}{betValue}{userSettings.showValuesInBB
-										? ' BB'
-										: ''}</span
-								>
-							</button>
-						{/if}
-					{/each}
-					<!-- <button class="playButton" on:click={callAction}><span>Call</span><span class="value">0123456789</span></button>
-            <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button> -->
-				</div>
-			</div>
 		{/if}
 		{#if handStrength && handStrength != ''}
 			<div class="handStrengthDiv">
@@ -795,12 +712,102 @@
 	<div class:transitioning></div>
 	<div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
 	<div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
-	<div class="adsContainer">
-		{#if !doordashTable}
-			<Ads bind:changeAds={callChangeAds} />
-		{/if}
-	</div>
+	{#if possibleActions.length > 0}
+		<div class="playButtonsContainer">
+			<!--transition:slide={{duration: 250, axis:"x"}}-->
+			{#if possibleActions.length > 1}
+				<div class="betUpperContainer">
+					<div class="betDisplayRow">
+						<div class="presetButtons">
+							{#each userSettings.presetButtons[presetButtonsRound] as presetButton}
+								<button class="presetBetSizeButton" on:click={() => updateBetValue(presetButton)}
+									>{presetButton.value > 0 ? presetButton.value : ''}{presetButton.display}</button
+								>
+							{/each}
+							<!-- <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
+	            <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
+	            <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button> -->
+						</div>
+						<label class="dolarSign">{userSettings.showValuesInBB ? 'BB' : '$'}</label>
+						<input
+							class="betDisplay"
+							bind:value={betValue}
+							type="number"
+							step="0.01"
+							on:keydown={() => (betValue = Number(betValue.toFixed(1)))}
+						/>
+					</div>
+					<div class="betSlider">
+						<button class="betSliderButton" on:click={plusBetSlider}
+							><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+								><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+									d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"
+								/></svg
+							></button
+						>
+						<input
+							type="range"
+							min={minBet}
+							max={maxBet}
+							step="0.01"
+							bind:value={betValue}
+							class="slider"
+							id="myRange"
+						/>
+						<button class="betSliderButton" on:click={minusBetSlider}
+							><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+								><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+									d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
+								/></svg
+							></button
+						>
+					</div>
+				</div>
+			{/if}
+			<div class="buttons">
+				{#each possibleActions as action, index}
+					{#if index < 2}
+						<button
+							class="playButton"
+							class:playerButtonHide={action.amount >= hero.betSize + hero.stackSize}
+							on:click={() => parseAction(index)}
+						>
+							<span class:fastFold={action.type === '⚡Fold'}>{action.type}</span>
+							{#if action.amount > 0}
+								<span
+									>{userSettings.showValuesInBB ? '' : '$ '}{Math.round(
+										(action.amount - hero.betSize) * 100
+									) / 100}{userSettings.showValuesInBB ? ' BB' : ''}</span
+								>
+							{/if}
+						</button>
+					{:else}
+						<!-- <button class="playButton" class:allin={betValue >= hero.betSize + hero.stackSize} on:click={() => parseAction(index)} > -->
+						<button class="playButton" on:click={() => parseAction(index)}>
+							{#if betValue < hero.betSize + hero.stackSize}
+								<span>{action.type}</span>
+							{:else}
+								<span>All-in</span>
+							{/if}
+							<span
+								>{userSettings.showValuesInBB ? '' : '$ '}{betValue}{userSettings.showValuesInBB
+									? ' BB'
+									: ''}</span
+							>
+						</button>
+					{/if}
+				{/each}
+				<!-- <button class="playButton" on:click={callAction}><span>Call</span><span class="value">0123456789</span></button>
+          <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button> -->
+			</div>
+		</div>
+	{/if}
 </main>
+<div class="adsContainer">
+	{#if !doordashTable}
+		<Ads bind:changeAds={callChangeAds} />
+	{/if}
+</div>
 
 <style lang="scss">
 	main {
@@ -813,19 +820,14 @@
 		background-size: cover;
 		overflow: hidden;
 	}
-	.bg-table {
+	.table {
 		all: unset;
 		position: relative;
-		height: 90%;
-		width: 100%;
-		max-width: 25rem;
-		max-height: 40rem;
+		height: 100%;
+		aspect-ratio: 1/1.35;
+		max-width: 100%;
+		margin: auto;
 		overflow: hidden;
-		background-image: url('/mesa1.png');
-		background-position: center;
-		background-size: cover;
-		background-repeat: no-repeat;
-		margin: 0 auto auto auto;
 		display: flex;
 		flex-direction: column;
 		// transition: 0.1s;
@@ -833,15 +835,18 @@
 		// border-radius: 4px;
 		// border-top-left-radius: 3px;
 		// border-top-right-radius: 3px;
-	}
-	.bg-table.doordash {
-		background-image: url('/fundo doordash.png');
+		img {
+			height: 100%;
+			width: 100%;
+			padding: 20%;
+		}
 	}
 	.centerInfoDiv {
 		position: absolute;
 		width: 100%;
 		top: 55%;
 		// left: 40%;
+		font-size: 2vh;
 		z-index: 1;
 		display: flex;
 		justify-content: center;
@@ -890,31 +895,31 @@
 		}
 	}
 	.potLine {
-		text-wrap: nowrap;
 		position: absolute;
 		// background-color: rgba(255,255,255, 0.05);
-		height: 3%;
-		width: 26%;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		flex-direction: row;
+		width: 20%;
 		.value::before {
 			content: '$';
 		}
 	}
 
 	.potsParalelos {
-		top: 37%;
-		left: 37%;
-		font-size: 0.8em;
+		top: 35%;
+		left: 50%;
+		transform: translateX(-50%);
+		font-size: 2vh;
 		justify-content: space-around;
 		// background-color: blue;
 	}
 	.potPrincipal {
 		top: 50%;
-		left: 37%;
-		font-size: 1.2em;
+		left: 50%;
+		transform: translateX(-50%);
+		font-size: 2vh;
 	}
 	.board {
 		position: absolute;
@@ -948,7 +953,7 @@
 		border: none;
 		border-bottom: 0.4vh solid #c1c1c1;
 		background-color: #e3e3e3;
-		border-radius: 1.3vw;
+		border-radius: 20px;
 	}
 	button:hover {
 		background-color: white;
@@ -958,45 +963,52 @@
 	}
 	.handStrengthDiv {
 		position: absolute;
-		display: flex;
-		justify-content: center;
-		align-items: center;
 		color: #c1c1c1;
-		width: 10%;
-		top: 90%;
-		left: 45%;
+		font-size: 2vh;
+		bottom: 1%;
+		left: 10%;
 	}
 	.playButtonsContainer {
 		position: absolute;
 		left: 61%;
-		top: 84%;
+		bottom: 1%;
 		width: 38%;
-		height: 15%;
+		max-width: 20rem;
 		// background-color: white;
 		display: flex;
 		flex-direction: column;
-		gap: 5%;
+		justify-content: end;
+		gap: 0.25em;
 		z-index: 10;
+		.betUpperContainer {
+			display: flex;
+			justify-content: end;
+			align-items: end;
+			gap: 1em;
+			padding-bottom: 4%;
+		}
 		.betDisplayRow {
 			display: flex;
-			width: 100%;
-			height: 30%;
-			flex-direction: row;
+			width: 50%;
+			height: 100%;
+			flex-direction: column;
 			// background-color: blue;
-			align-items: center;
-			gap: 1%;
+			align-items: end;
+			gap: 5%;
 		}
 		.presetButtons {
 			width: 50%;
 			height: 100%;
 			display: flex;
-			flex-direction: row;
-			gap: 1%;
+			flex-direction: column;
+			gap: 0.2em;
+			padding: 0.25em 0;
 			.presetBetSizeButton {
 				// all: unset;
 				width: 100%;
+				height: 100%;
 				// margin: 0 1%;
-				font-size: 0.5em;
+				font-size: 1.5vh;
 				border-radius: 5px;
 				background-color: #c1c1c1;
 				display: flex;
@@ -1008,8 +1020,8 @@
 			/* Chrome, Safari, Edge, Opera */
 			all: unset;
 			background-color: rgba(0, 0, 0, 0.5);
-			width: 46%;
-			height: 100%;
+			width: 70%;
+			height: 20%;
 			// transform: translateX(80%);
 			display: flex;
 			justify-content: flex-end;
@@ -1037,8 +1049,7 @@
 			}
 		}
 		.dolarSign {
-			position: absolute;
-			left: 52%;
+			padding-right: 2%;
 			color: rgba(255, 255, 255, 0.7);
 			font-size: 0.7em;
 		}
@@ -1056,7 +1067,7 @@
 			gap: 2%;
 			flex-direction: row;
 			width: 100%;
-			height: 70%;
+			height: fit-content;
 		}
 		.playButton:hover,
 		.presetBetSizeButton:hover {
@@ -1073,7 +1084,7 @@
 			border: none;
 			width: 33%;
 			border-radius: 1.3vw;
-			font-size: 0.6rem;
+			font-size: 1.5vh;
 			// border-top: 0;
 			border-bottom: 0.4vh solid #c1c1c1;
 			// border: 3px groove #e3e3e3;
@@ -1117,9 +1128,9 @@
 			border-radius: 5px;
 			position: relative;
 			background-color: rgba(0, 0, 0, 0.5);
-			width: 100%;
-			height: 20%;
+			width: 20%;
 			display: flex;
+			flex-direction: column;
 			justify-content: space-around;
 			align-items: center;
 			margin: 0;
@@ -1135,8 +1146,7 @@
 				// border: 1px solid whitesmoke;
 				margin: 0;
 				padding: 0;
-				width: 5%;
-				height: 60%;
+				width: 100%;
 				// border-radius: 50%;
 				svg {
 					fill: #c1c1c1;
@@ -1145,8 +1155,7 @@
 		}
 	}
 	.slider {
-		width: 80%;
-		height: 25%;
+    appearance: slider-vertical;
 		border-radius: 5px;
 		background: #d3d3d3;
 		// outline: none;
@@ -1181,9 +1190,8 @@
 		padding-left: 0.5rem;
 		z-index: 1000;
 		button {
-			padding: 0.25rem 0.5rem;
-			line-height: 1rem;
-			font-size: 0.75rem;
+			padding: 1% 2%;
+			font-size: 2vh;
 		}
 		.sitout {
 			background-color: lightcoral;

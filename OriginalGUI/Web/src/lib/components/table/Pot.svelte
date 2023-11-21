@@ -16,15 +16,15 @@
 
 <style>
 	.pot {
-		transform: translateX(-10%);
 		color: white;
+		width: 100%;
 	}
 	span {
 		background-color: rgba(77, 77, 77, 0.25);
 		width: 100%;
 		padding: 5% 10%;
 		border-radius: 5px;
-		font-size: 0.8em;
+		font-size: 2vh;
 		font-weight: bold;
 		display: flex;
 		justify-content: center;

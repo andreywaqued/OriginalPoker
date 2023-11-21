@@ -507,7 +507,7 @@ socketManager.on('connection', (socket) => {
     }
   });
   socket.on('disconnecting', (reason) => {
-    logger.log(`User disconnecting: ${socket.userID}`);
+    logger.log(`Socket disconnecting: ${socket.id}`);
   //   logger.log(reason)
   //   // logger.log(socket)
   //   logger.log(socket.connected)
@@ -519,7 +519,8 @@ socketManager.on('connection', (socket) => {
     const user = usersConnected[socket.userID]
     // safecheck to not panic
     if (!user ) return
-    Object.entries(user.players).forEach(([_, player]) => {
+    logger.log(`User disconnecting: ${socket.userID}`);
+    Object.values(user.players).forEach((player) => {
       logger.log("player disconnected: " + player.id + " - " + player.poolID)
 
       lightningPoolManager.leavePool(player, false)

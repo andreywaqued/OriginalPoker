@@ -290,7 +290,6 @@
 		position: absolute;
 		/* background-color: blue; */
 		// width: 100%;
-		height: 5rem;
 		/* top: 7%; */
 		display: flex;
 		// flex-direction: row;
@@ -303,7 +302,6 @@
 		position: absolute;
 		/* background-color: blue; */
 		width: 100%;
-		height: 5rem;
 		/* top: 7%; */
 		display: flex;
 		flex-direction: row;
@@ -312,43 +310,44 @@
 		/* z-index: 1; */
 	}
 	.row1 {
-		top: 3%;
+		top: 1%;
 		.player {
-			height: 6rem;
+			height: 15vh;
 		}
-		font-size: calc(var(--root-font-size) * 0.85);
+		font-size: 2vh;
 	}
 	.row2 {
-		top: 20%;
+		top: 15%;
 		.player {
-			height: 6rem;
+			height: 16vh;
 		}
 		.playerButton {
-			top: 6rem;
+			top: calc(0.18 * var(--height));
 		}
 		.playerCards {
-			top: 6rem;
+			top: calc(0.255 * var(--height));
 		}
-		font-size: calc(var(--root-font-size) * 0.9);
+		font-size: 2vh;
 	}
 	.row3 {
 		top: 45%;
 		.player {
-			height: 7rem;
+			height: 17vh;
 		}
 		.playerButton {
-			top: 1.5rem;
+			top: calc(0.05 * var(--height));
 		}
 		.playerCards {
-			top: 3rem;
+			top: calc(0.105 * var(--height));
 		}
-		font-size: calc(var(--root-font-size) * 0.95);
+		font-size: 2vh;
 	}
 	.row4 {
 		top: 70%;
 		.player {
-			height: 8rem;
+			height: 20vh;
 		}
+		font-size: 2vh;
 	}
 	.middleColumn {
 		justify-content: center;
@@ -359,23 +358,25 @@
 	}
 	.leftColumn {
 		justify-content: flex-start;
-		width: 100%;
+		padding: 5%;
+		width: 90%;
 	}
 	.rightColumn {
 		// background-color: white;
 		justify-content: flex-end;
-		width: 100%;
+		padding: 5%;
+		width: 90%;
 	}
 	.row5 {
-		top: 67%;
+		top: 70%;
 		.player {
-			height: 10rem;
+			height: 20vh;
 		}
 	}
 	.table9max.row1 {
 		top: 5%;
 		.player {
-			height: 6rem;
+			height: calc(0.22 * var(--height));
 		}
 		.playerBet {
 		}
@@ -383,19 +384,19 @@
 	.table9max.row2 {
 		top: 10%;
 		.player {
-			height: 6rem;
+			height: calc(0.24 * var(--height));
 		}
 	}
 	.table9max.row3 {
 		top: 35%;
 		.player {
-			height: 7rem;
+			height: calc(0.26 * var(--height));
 		}
 	}
 	.table9max.row4 {
 		top: 60%;
 		.player {
-			height: 7rem;
+			height: calc(0.28 * var(--height));
 		}
 	}
 	.table9max.leftColumn {
@@ -527,7 +528,7 @@
 		background-repeat: no-repeat;
 		position: absolute;
 		// background-color: red;
-		width: 1rem;
+		width: calc(0.03 * var(--height));
 		aspect-ratio: 1;
 		border-radius: 50%;
 		top: 15%;
@@ -539,7 +540,7 @@
 	.playerCards {
 		position: absolute;
 		// background-color: gray;
-		// width: 6rem;
+		// width: calc(0.06 * var(--height));
 		width: 30%;
 		aspect-ratio: 1;
 		display: flex;
@@ -596,7 +597,8 @@
 			left: 75%;
 		}
 		.playerCards {
-			left: 85%;
+			top: 45%;
+			right: -43%;
 			:first-child {
 				transform: translateX(15%) translateY(10%) rotate(-130deg);
 				z-index: 1;
@@ -606,8 +608,8 @@
 			}
 		}
 		.playerBet {
-			top: 25%;
-			left: 80%;
+			top: 40%;
+			right: -95%;
 		}
 		.playerCards.fold {
 			top: -2vh;
@@ -623,7 +625,8 @@
 			left: 120%;
 		}
 		.playerCards {
-			left: 70%;
+			right: -55%;
+			bottom: 10%;
 			:first-child {
 				transform: translateX(55%) translateY(10%) rotate(-80deg);
 				z-index: 1;
@@ -633,8 +636,8 @@
 			}
 		}
 		.playerBet {
-			top: 85%;
-			left: 110%;
+			top: 110%;
+			right: -90%;
 		}
 		.playerCards.fold {
 			top: 30vh;
@@ -647,12 +650,12 @@
 	}
 	.pos3 {
 		.playerButton {
-			top: 100%;
-			left: 50%;
+			top: 95%;
+			left: 105%;
 		}
 		.playerCards {
-			top: 100%;
-			left: 5%;
+			bottom: -25%;
+			left: 35%;
 			:first-child {
 				transform: translateX(5%) translateY(15%) rotate(-45deg);
 			}
@@ -661,7 +664,8 @@
 			}
 		}
 		.playerBet {
-			top: 115%;
+			top: 145%;
+			left: 20%;
 		}
 		.playerCards.fold {
 			top: 40vh;
@@ -674,9 +678,8 @@
 			right: 120%;
 		}
 		.playerCards {
-			// top: 0;
-			left: 10%;
-			// right: 60%;
+			left: -50%;
+			bottom: 10%;
 			:first-child {
 				transform: translateX(15%) translateY(23%) rotate(-30deg);
 			}
@@ -685,8 +688,9 @@
 			}
 		}
 		.playerBet {
-			top: 85%;
-			right: 110%;
+			top: 110%;
+			left: -90%;
+			text-align: right;
 		}
 		.playerCards.fold {
 			top: 30vh;
@@ -699,8 +703,8 @@
 			right: 75%;
 		}
 		.playerCards {
-			left: -5%;
-			// right: 75%;
+			top: 45%;
+			left: -25%;
 			:first-child {
 				transform: translateX(15%) translateY(-5%) rotate(60deg);
 			}
@@ -709,8 +713,9 @@
 			}
 		}
 		.playerBet {
-			top: 25%;
-			right: 80%;
+			top: 40%;
+			left: -95%;
+			text-align: right;
 		}
 		.playerCards.fold {
 			top: -2vh;
