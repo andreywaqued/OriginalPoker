@@ -418,20 +418,20 @@
 		}
 	}
 
-	let actualBet = 0;
-	let sidePots = [0, 0]
-	let playerTurn = true; //only for testing, this should come from the server
-	players = [
-	  {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
-	  {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	  // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	  // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	]
+	// let actualBet = 0;
+	// let sidePots = [0, 0]
+	// let playerTurn = true; //only for testing, this should come from the server
+	// players = [
+	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+	//   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	//   // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	//   // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
+	// ]
 	function findHero() {
 		return 0;
 		// let index = players.findIndex(p => p.isHero === true)
@@ -973,15 +973,15 @@
 	.board {
 		position: absolute;
 		// background-color: rgba(255,255,255,0.1);
-		height: 10%;
-		top: 40%;
-		left: 50%;
+    height: 8%;
+    top: 40%;
+    left: 50%;
 		transform: translateX(-50%);
+		width: 50%;
 		// opacity: 0.1;
 		z-index: 1;
-		display: flex;
-		flex-direction: row;
-		justify-content: flex-start;
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
 		align-items: center;
 		gap: 1.5%;
 	}
@@ -1014,7 +1014,7 @@
 		position: absolute;
 		color: #c1c1c1;
 		font-size: 2vh;
-		bottom: 6%;
+		bottom: 4%;
 		right: 70%;
 		text-align: right;
 	}
