@@ -1158,11 +1158,9 @@
 	}
 	.playButtonsContainer {
 		width: 100%;
+		max-width: 40rem;
 		height: 100%;
-		background-color: rgb(25,25,25);
-		background-image: url('/fundo.png');
-		background-position: top;
-		background-size: cover;
+		margin: auto;
 		display: flex;
 		flex-direction: column;
 		justify-content: end;
