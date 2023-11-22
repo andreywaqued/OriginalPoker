@@ -1115,6 +1115,7 @@
 			justify-content: space-around;
 			align-items: center;
 			margin: 0;
+			z-index: 100;
 			.betSliderButton {
 				// all:unset;
 				border: none;
