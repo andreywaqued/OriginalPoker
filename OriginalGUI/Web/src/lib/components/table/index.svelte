@@ -1033,7 +1033,6 @@
 			width: 100%;
 			height: 100%;
 			flex-direction: column;
-			// background-color: blue;
 			justify-content: end;
 			align-items: end;
 			gap: 2%;
@@ -1159,7 +1158,10 @@
 	.playButtonsContainer {
 		width: 100%;
 		height: 100%;
-		background-color: rgb(0, 0, 0);
+		background-color: rgb(25,25,25);
+		background-image: url('/fundo.png');
+		background-position: top;
+		background-size: cover;
 		display: flex;
 		flex-direction: column;
 		justify-content: end;
@@ -1168,10 +1170,10 @@
 		.buttons {
 			display: flex;
 			gap: 2%;
-			flex-direction: row;
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 			width: 100%;
 			height: 100%;
-			padding: 1%;
 		}
 		.playButton:hover,
 		.presetBetSizeButton:hover {
@@ -1186,8 +1188,7 @@
 		.playButton {
 			position: relative;
 			border: none;
-			width: 33%;
-			border-radius: 1.3vw;
+			width: 100%;
 			font-size: 1.5vh;
 			// border-top: 0;
 			border-bottom: 0.4vh solid #c1c1c1;
@@ -1200,11 +1201,6 @@
 			margin: 0;
 			// padding: 0.2vh 0;
 			background-color: #e3e3e3;
-			:first-child {
-				font-size: 1.3em;
-				text-transform: uppercase;
-				// font-weight: bold;
-			}
 			.fastFold {
 				text-decoration: underline;
 				font-weight: bold;
@@ -1213,6 +1209,7 @@
 			}
 			span {
 				transform: translateY(0.2vh);
+				text-wrap: nowrap;
 			}
 		}
 		.allin {
