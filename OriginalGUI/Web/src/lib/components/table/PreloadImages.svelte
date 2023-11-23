@@ -70,7 +70,7 @@
 </script>
 
 <svelte:head>
-	{#each preloadCardsUrls as image}
-		<link rel="preload" as="image" href={image} />
+	{#each preloadCardsUrls as href}
+		<link rel="preload" as="image" {href} />
 	{/each}
 </svelte:head>
