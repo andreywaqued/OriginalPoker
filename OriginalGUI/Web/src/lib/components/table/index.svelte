@@ -73,6 +73,11 @@
 		console.log('updatePlayerInfo');
 		console.log(player);
 		if (hero.id !== player.id) return;
+		// set userStore to track player cards on navBar
+		userStore.update((user) => {
+			user.players[player.id] = player;
+			return user;
+		});
 		let playersTemp = JSON.parse(JSON.stringify(players));
 		hero = player;
 		hero.isHero = true;
@@ -851,7 +856,6 @@
 	{/if}
 </main>
 
-
 <style lang="scss">
 	main {
 		width: 100%;
@@ -977,9 +981,9 @@
 	.board {
 		position: absolute;
 		// background-color: rgba(255,255,255,0.1);
-    height: 8%;
-    top: 40%;
-    left: 50%;
+		height: 8%;
+		top: 40%;
+		left: 50%;
 		transform: translateX(-50%);
 		width: 50%;
 		// opacity: 0.1;
@@ -1123,7 +1127,7 @@
 			.betSliderButton {
 				// all:unset;
 				border: none;
-				background-color: rgba(0,0,0,.5);
+				background-color: rgba(0, 0, 0, 0.5);
 				display: flex;
 				align-items: center;
 				justify-content: center;
