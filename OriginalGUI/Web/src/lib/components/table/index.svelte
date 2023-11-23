@@ -6,6 +6,7 @@
 	import Card from '$lib/components/table/Card.svelte';
 	import Player from '$lib/components/table/Player.svelte';
 	import Pot from '$lib/components/table/Pot.svelte';
+	import PreloadImages from './PreloadImages.svelte';
 
 	/**
 	 * @type {Object.<string, any>}
@@ -547,6 +548,9 @@
 		auxiliarButtonsPopoverActive = !auxiliarButtonsPopoverActive;
 	}
 </script>
+
+<!-- SET IMAGES PRELOAD HEAD -->
+<PreloadImages />
 
 <!-- THIS IS TAILWIND -->
 <main class:hidden={!isSelected} class="flex">

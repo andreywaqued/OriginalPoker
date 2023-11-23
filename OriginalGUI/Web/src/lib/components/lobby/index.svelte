@@ -4,6 +4,7 @@
 	import socket from '$lib/services/socket';
 	import navItemsStore from '$lib/stores/navItemsStore';
 	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
+	import PreloadImages from './PreloadImages.svelte';
 
 	$: isSelected = $navSelectedItemStore === 'lobby';
 
@@ -74,6 +75,10 @@
 		return null;
 	}
 </script>
+
+
+<!-- SET IMAGES PRELOAD HEAD -->
+<PreloadImages />
 
 <div class="h-full" class:hidden={!isSelected}>
 	<section >
