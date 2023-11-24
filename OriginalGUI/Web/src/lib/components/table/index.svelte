@@ -558,7 +558,7 @@
 <PreloadImages />
 
 <!-- THIS IS TAILWIND -->
-<main class:hidden={!isSelected} class="flex">
+<main class:hidden={!isSelected} class="flex" on:wheel={handleScroll}>
 	<!-- TRANSITION ANIMATION -->
 	<div class:transitioning></div>
 	<!-- OVERLAYS -->
@@ -591,7 +591,7 @@
 		<button on:click={toggleRebuy}>Rebuy</button>
 		<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
 	</div>
-	<div class="table" on:wheel={handleScroll}>
+	<div class="table">
 		{#if doordashTable}
 			<!--<img />-->
 		{:else}
