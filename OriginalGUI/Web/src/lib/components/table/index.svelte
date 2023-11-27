@@ -598,6 +598,7 @@
 			<img
 				on:touchstart|self={(event) => handleSwipe(event, hero.id)}
 				on:touchmove|self={(event) => handleSwipe(event, hero.id)}
+				on:touchend|self={(event) => handleSwipe(event, hero.id)}
 				alt="Table background"
 				src="/mesa.png"
 			/>

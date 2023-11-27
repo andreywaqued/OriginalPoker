@@ -83,6 +83,7 @@
 	class:hidden={$navSelectedItemStore !== 'lobby'}
 	on:touchstart|self={(event) => handleSwipe(event, 'lobby')}
 	on:touchmove|self={(event) => handleSwipe(event, 'lobby')}
+	on:touchend|self={(event) => handleSwipe(event, 'lobby')}
 >
 	<h2 class="pb-2 pl-6 pt-4 text-lg font-bold uppercase tracking-widest text-white">
 		Lightning Cash
