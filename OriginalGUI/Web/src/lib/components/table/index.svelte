@@ -2,6 +2,7 @@
 	import socket from '$lib/services/socket';
 	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
 	import userStore from '$lib/stores/userStore';
+	import { handleSwipe } from '$lib/utils/Swiper';
 	import Ads from '$lib/components/table/Ads.svelte';
 	import Card from '$lib/components/table/Card.svelte';
 	import Player from '$lib/components/table/Player.svelte';
@@ -12,7 +13,6 @@
 	 * @type {Object.<string, any>}
 	 */
 	export let hero;
-	$: isSelected = hero.id === $navSelectedItemStore;
 
 	// /**
 	//  * @type {number}
@@ -558,7 +558,7 @@
 <PreloadImages />
 
 <!-- THIS IS TAILWIND -->
-<main class:hidden={!isSelected} class="flex" on:wheel={handleScroll}>
+<section class:hide={$navSelectedItemStore !== hero.id} on:wheel={handleScroll}>
 	<!-- TRANSITION ANIMATION -->
 	<div class:transitioning></div>
 	<!-- OVERLAYS -->
@@ -595,7 +595,12 @@
 		{#if doordashTable}
 			<!--<img />-->
 		{:else}
-			<img src="/mesa.png" />
+			<img
+				on:touchstart|self={(event) => handleSwipe(event, hero.id)}
+				on:touchmove|self={(event) => handleSwipe(event, hero.id)}
+				alt="Table background"
+				src="/mesa.png"
+			/>
 		{/if}
 		{#if waitingForPlayers && !playerSitout}
 			<div class="centerInfoDiv">
@@ -854,10 +859,10 @@
 			</div>
 		</div>
 	{/if}
-</main>
+</section>
 
 <style lang="scss">
-	main {
+	section {
 		width: 100%;
 		height: 100%;
 		position: relative;
@@ -866,6 +871,9 @@
 		background-position: center;
 		background-size: cover;
 		overflow: hidden;
+	}
+	.hide {
+		display: none;
 	}
 	.table {
 		all: unset;

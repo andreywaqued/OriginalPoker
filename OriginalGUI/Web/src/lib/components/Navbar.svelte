@@ -13,7 +13,7 @@
 </script>
 
 <div class="flex h-14 w-full items-center gap-x-2 overflow-x-auto bg-gray-darkest px-2">
-	{#each Object.entries({ lobby: [], ...$userStore.players }) as [id, player] (id)}
+	{#each Object.entries({ lobby: {}, ...$userStore.players }) as [id, player] (id)}
 		<button
 			on:click={() => handleSelected(id)}
 			class:!bg-gray={$navSelectedItemStore === id}
