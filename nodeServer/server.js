@@ -502,8 +502,8 @@ socketManager.on('connection', (socket) => {
   socket.on("sitoutUpdate", (player) => {
     try {
       logger.log(`sitoutUpdate: ${player.playerID} ${player.isSitout}`)
-      if (player.player.poolID) return lightningPoolManager.sitoutUpdate(player.playerID, player.poolID, player.isSitout)
-      if (player.player.tournamentID) return tournamentPoolManager.sitoutUpdate(player.playerID, player.tournamentID, player.isSitout)
+      if (player.poolID) return lightningPoolManager.sitoutUpdate(player.playerID, player.poolID, player.isSitout)
+      if (player.tournamentID) return tournamentPoolManager.sitoutUpdate(player.playerID, player.tournamentID, player.isSitout)
       // return lightningPoolManager.sitoutUpdate(player.playerID, player.poolID, player.isSitout)
     } catch (error) {
       logger.log(error)
