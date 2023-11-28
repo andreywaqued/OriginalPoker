@@ -39,17 +39,17 @@ class Deck {
 roundStr = ["Preflop", "Flop", "Turn", "River"]
 
 class Table {
-    constructor(TableManager, pool, poolID) {
+    constructor(TableManager, tournament) {
         this.id = uuidv4();
-        this.title = pool.title || "Table X";
-        this.betType = pool.betType || "NL";
-        this.gameType = pool.gameType || "tournament";
-        this.pokerVariant = pool.pokerVariant || "texas";
-        this.tableSize = pool.tableSize || 6;
-        this.sb = new Decimal(pool.sb);
-        this.bb = new Decimal(pool.bb);
-        this.ante = pool.ante || new Decimal(0);
-        this.poolID = poolID || "";
+        this.title = tournament.title || "Table X";
+        this.betType = tournament.betType || "NL";
+        this.gameType = tournament.gameType || "tournament";
+        this.pokerVariant = tournament.pokerVariant || "texas";
+        this.tableSize = tournament.tableSize || 6;
+        this.sb = new Decimal(tournament.sb);
+        this.bb = new Decimal(tournament.bb);
+        this.ante = new Decimal(tournament.ante) || new Decimal(0);
+        this.tournamentID = tournament.id || "";
         this.timeBank = 20000
         this.timeLimitCounter = undefined
         this.waitingForPlayers = true;
@@ -134,9 +134,10 @@ class Table {
         // logger.log(this.players)
         // logger.log(this.playerIDByPositionIndex)
         // logger.log(this.socketsByPlayerID)
-        this.startHandRoutine()
         
-        if (!this.currentHand.handIsBeingPlayed) this.broadcastHandState()
+        // if (!this.currentHand.handIsBeingPlayed) this.broadcastHandState()
+        this.broadcastHandState()
+        if (!this.currentHand.handIsBeingPlayed) this.startHandRoutine()
         // this.socketManager.to(`table:${this.id}`).emit("updateGameState", this.currentHand);
         
     }
@@ -145,7 +146,7 @@ class Table {
         clearTimeout(this.startHandTimer)
         const countPlayers = this.countPlayers()
         logger.log("countPlayers " + countPlayers)
-        if (countPlayers === 0) return this.tableManager.deleteTable(this.poolID, this.id)
+        if (countPlayers === 0) return this.tableManager.deleteTable(this.tournamentID, this.id)
         if (countPlayers < this.tableSize) this.waitingForPlayers = true
         if (countPlayers === this.tableSize) {
             this.waitingForPlayers = false
@@ -154,7 +155,7 @@ class Table {
             // this.startNewHand()
         } else if (countPlayers >= 2) {
             // clearTimeout(this.startHandTimer)
-            this.startHandTimer = setTimeout(() => this.startNewHand(), 5000)
+            this.startHandTimer = setTimeout(() => this.startNewHand(), 1000)
         }
     }
     sendHandTrasition(player) {
@@ -206,7 +207,7 @@ class Table {
                 userID: player.userID,
                 avatar: player.avatar,
                 tableID: player.tableID,
-                poolID: player.poolID,
+                tournamentID: player.tournamentID,
                 stackSize: player.stackSize.toNumber(),
                 hasFolded: player.hasFolded,
                 isSitout: player.isSitout,
@@ -369,6 +370,7 @@ class Table {
                 logger.log(`(${action.type} === "raise" || ${action.type} === "bet") && ${action.amount} >= ${actionAtIndex.amount} : ${(action.type === "raise" || action.type === "bet") && action.amount.greaterThanOrEqualTo(actionAtIndex.amount)}`)
                 // if (action.amount.greaterThanOrEqualTo(actionAtIndex.amount))
                 if ((action.type === "call" || action.type === "fold" || action.type === "check") && action.amount.equals(actionAtIndex.amount)) actionAllowed = true;
+                // if ((action.type === "call") && action.amount.equals(player.betSize.plus(player.stackSize))) actionAllowed = true;
                 if ((action.type === "raise" || action.type === "bet") && action.amount.lessThan(this.currentHand.minBet)) return this.validateAction(player, {type: "raise", amount: this.currentHand.minBet.toNumber()});
                 if ((action.type === "raise" || action.type === "bet") && action.amount.greaterThanOrEqualTo(this.currentHand.minBet)) actionAllowed = true;
             }
@@ -442,6 +444,10 @@ class Table {
             let winners = []
             let winnerNames = []
             let playersContestingThisPot = 0
+            if (this.currentHand.pots[potIndex].equals(0)) {
+                logger.log("pot is empty")
+                continue
+            }
             for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
                 const player = this.players[this.playerIDByPositionIndex[i]]
                 if (!player) continue
@@ -466,6 +472,46 @@ class Table {
                 winners[i].isWinner = true
                 winnerNames.push(JSON.stringify(winners[i].name).replaceAll("\"", ""))
             }
+            logger.log("creating array to remove players")
+            let playersToRemoveFromTournament = []
+            for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
+                const player = this.players[this.playerIDByPositionIndex[i]]
+                if (!player) continue
+                logger.log(`checking player ${player.name}`)
+                logger.log(playersToRemoveFromTournament)
+                if (player.hasFolded || !player.contestingPots.includes(potIndex)) continue
+                if (player.stackSize.greaterThan(0)) continue //player still on the tournament
+                if (player.contestingPots[player.contestingPots.length-1] != potIndex) continue //player can still win another pot
+                if (player.leftPosition) continue //player already left
+                let arrayTemp = []
+                for (let x = 0; x < playersToRemoveFromTournament.length; x++) {
+                    const playerToCompare = playersToRemoveFromTournament[x]
+                    arrayTemp = playersToRemoveFromTournament.slice(0, x+1)
+                    if (player.finalHandRank.rank > playerToCompare.finalHandRank.rank) continue
+                    logger.log(`adding player ${player.name}`)
+                    arrayTemp.push(player)
+                    playersToRemoveFromTournament.slice(x+1).forEach(playerLeft => {
+                        arrayTemp.push(playerLeft)
+                    })
+                    // break
+                    // if (player.finalHandRank.rank < playerToCompare.finalHandRank.rank) {
+                    //     playersToRemoveFromTournament.splice(x, 0, playerToCompare)
+                    //     break
+                    // } else {
+                    //     logger.log(`adding player ${player.name}`)
+                    //     playersToRemoveFromTournament.splice(x, 0, player)
+                    //     break
+                    // }
+                }
+                if (playersToRemoveFromTournament.length === 0) arrayTemp.push(player) //add the player here, because will not enter the for loop
+                playersToRemoveFromTournament = arrayTemp
+            }
+            for (let i = 0; i < playersToRemoveFromTournament.length; i++) {
+                const player = playersToRemoveFromTournament[i]
+                logger.log(`removing player ${player.name} with hand rank ${player.finalHandRank.rank}`)
+                this.tableManager.playerPoolManager.leaveTournament(player, this.tournamentID)
+            }
+            
             if (winners.length > 0) this.currentHand.actionSequence.push({pot: potIndex, potSize: this.currentHand.pots[potIndex], winners: winnerNames})
             this.currentHand.pots[potIndex] = new Decimal(0)
         }
@@ -550,7 +596,13 @@ class Table {
         logger.log("prepareNextPlayerTurn() 4")
         logger.log("nextPlayer: " + nextPlayer.name)
         // if (nextPlayer.isSitout) return this.validateAction(nextPlayer, nextPlayer.possibleActions[nextPlayer.possibleActions.length -1])
-        if (!this.currentHand.biggestBet.equals(nextPlayer.betSize)) nextPlayer.possibleActions.push({type: "call", amount: this.currentHand.biggestBet.toNumber()})
+        if (this.currentHand.biggestBet.greaterThan(nextPlayer.betSize)) {
+            if (nextPlayer.stackSize.plus(nextPlayer.betSize).greaterThan(this.currentHand.biggestBet)) {
+                nextPlayer.possibleActions.push({type: "call", amount: this.currentHand.biggestBet.toNumber()})
+            } else {
+                nextPlayer.possibleActions.push({type: "call", amount: nextPlayer.stackSize.plus(nextPlayer.betSize).toNumber()})
+            }
+        } 
         if (this.currentHand.biggestBet.equals(0)) nextPlayer.possibleActions.push({type: "bet", amount: this.bb})
         if (this.currentHand.biggestBet.greaterThan(0)) nextPlayer.possibleActions.push({type: "raise", amount: this.currentHand.minBet.toNumber()}) 
         logger.log("prepareNextPlayerTurn() 5")
@@ -729,6 +781,8 @@ class Table {
     async closeHand() {
         logger.log("closeHand()")
         await this.saveHandHistoryToDB()
+        const tournament = this.tableManager.playerPoolManager.tournaments[this.tournamentID]
+        this.tableManager.playerPoolManager.rankPlayers(this.tournamentID)
         this.waitingForPlayers = true;
         this.currentHand.handIsBeingPlayed = false;
         this.currentHand.pots = [new Decimal(0)];
@@ -744,17 +798,27 @@ class Table {
         this.currentHand.handHistory = "";
         for (let i = 0; i<this.playerIDByPositionIndex.length; i++) {
             const player = this.players[this.playerIDByPositionIndex[i]]
+            if (!player) continue
+            if (player.stackSize.equals(0)) {
+                this.tableManager.playerPoolManager.sendEmptyTable(player)
+                this.removePlayer(player) //remove player if stack === 0
+                continue
+            }
+            if (player.nextTableID && player.nextTableID!=this.id) {
+                this.removePlayer(player) //remove player because he has been sent to another table
+                this.tableManager.placePlayerIntoTable(player, player.nextTableID)
+            }
             player.cards = []
             player.actedSinceLastRaise = false
             player.possibleActions = []
             player.hasFolded = true
             player.isButton = false
             player.contestingPots = [0]
-            player.cards = []
             player.showCards = false
             player.isWinner = false
             player.finalHandRank = {rank: -1, combination: ""}
             player.lastAction = ""
+            if (tournament) player.tournamentPosition = tournament.playersList.indexOf(player)+1
         } //now im resetting these info when the player sits in
         this.broadcastHandState()
         return this.startHandRoutine()
@@ -796,7 +860,7 @@ class Table {
         logger.log("removePlayer()")
         if (!player) return
         logger.log(player.name)
-        // this.sendEmptyTable(player)
+        // if (!player.tableClosed) this.tableManager.playerPoolManager.sendEmptyTable(player)
         player.tableID = undefined
         const playerIndex = this.playerIDByPositionIndex.indexOf(player.id)
         logger.log("playerIndex " + playerIndex)
@@ -808,7 +872,7 @@ class Table {
         delete this.socketsByUserID[player.userID]
         this.playerIDByPositionIndex[playerIndex] = null
         this.broadcastHandState()
-        this.startHandRoutine()
+        if (!this.currentHand.handIsBeingPlayed) this.startHandRoutine()
     }
     startNewHand() {
         logger.log("startNewHand()")
@@ -820,6 +884,14 @@ class Table {
         } else {
             this.currentHand.dealerPos = this.findNextPlayer(this.currentHand.dealerPos)
         }
+        const tournament = this.tableManager.playerPoolManager.tournaments[this.tournamentID]
+        if (!tournament) return logger.log("tournament is undefined, something went wrong.")
+        this.sb = new Decimal(tournament.sb);
+        this.bb = new Decimal(tournament.bb);
+        this.ante = new Decimal(tournament.ante) || new Decimal(0);
+        this.currentHand.sb = new Decimal(tournament.sb);
+        this.currentHand.bb = new Decimal(tournament.bb);
+        this.currentHand.ante = new Decimal(tournament.ante) || new Decimal(0);
         this.waitingForPlayers = false;
         this.currentHand.handIsBeingPlayed = true;
         this.currentHand.isShowdown = false;
@@ -890,7 +962,9 @@ class Table {
         logger.log("updating player hand history arrays and saving on DB")
         for (let i = 0; i < this.playerIDByPositionIndex.length; i++) {
             if (this.playerIDByPositionIndex[i] === null) continue
-            const player = this.tableManager.playerPoolManager.playersByPool[this.poolID][this.playerIDByPositionIndex[i]]
+            const player = this.players[this.playerIDByPositionIndex[i]]
+            // const player = this.tableManager.playerPoolManager.tournaments[this.tournamentID].players[this.playerIDByPositionIndex[i]]
+            if (!player) logger.log("player not found")
             if (!player) continue
             insertQuery += `INSERT INTO handsByUser(userid, handid, created_on) VALUES (${player.userID}, ${handID}, '${new Date(created_on).toISOString()}');`
             logger.log(`sending hand history to ${player.name}`)

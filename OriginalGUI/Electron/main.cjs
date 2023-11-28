@@ -255,6 +255,26 @@ socket.on("updateGameState", gameState => {
       } 
     }
 })
+socket.on("updateTournamentInfo", tournamentInfo => {
+    console.log("updateTournamentInfo")
+    console.log(tournamentInfo)
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i]
+      const table = tables[i]
+      if (player.tournamentID === tournamentInfo.tournamentID) {
+        if (table) return table.addMessage("updateTournamentInfo", tournamentInfo)
+      } 
+    }
+    console.log("didnt find the table")
+})
+socket.on("tournamentFinishMessage", finishMessage => {
+    console.log("tournamentFinishMessage")
+    console.log(finishMessage)
+    if (!finishMessage.player) return
+    const playerIndex = playersID.indexOf(finishMessage.player.id)
+    const table = tables[playerIndex]
+    if (table) return table.addMessage("tournamentFinishMessage", {place: finishMessage.place, wonAmount: finishMessage.wonAmount})
+})
 socket.on("updateUserInfo", response => {
     console.log("updateUserInfo")
     console.log(response)
@@ -276,7 +296,7 @@ socket.on("updatePlayerInfo", player => {
     const playerIndex = playersID.indexOf(player.id)
     const table = tables[playerIndex]
     players[playerIndex] = player
-  user.isTransactionsUpdated = false
+    user.isTransactionsUpdated = false
     if (table) table.addMessage("updatePlayer", player)
 })
 socket.on("sitoutUpdate", data => {
@@ -340,6 +360,11 @@ socket.on("updatePools", (pools) => {
     // console.log(mainLobby)
     console.log("chamando send message 2")
     if (mainLobby) mainLobby.addMessage("updatePools", pools)
+})
+socket.on("updateTournamentList", (tournamentsList) => {
+    console.log("updateTournamentList")
+    console.log(tournamentsList)
+    if (mainLobby) mainLobby.addMessage("updateTournamentList", tournamentsList)
 })
 socket.on('disconnect', () => {
   console.log('Disconnected from server');
@@ -611,6 +636,14 @@ ipcMain.on('minimize-window', (event) => {
   }
   // newWindow.minimize()
 });
+ipcMain.on("registerOnTournament", (event, tournamentID) => {
+  console.log("registering on tournament: " + tournamentID)
+  socket.emit("registerOnTournament", tournamentID)
+})
+ipcMain.on("unregisterOnTournament", (event, tournamentID) => {
+  console.log("unregistering on tournament: " + tournamentID)
+  socket.emit("unregisterOnTournament", tournamentID)
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

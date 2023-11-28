@@ -30,47 +30,59 @@ class TableManager {
         //     this.createNewTable(poolID)
         // })
     }
-    createNewTable(poolID) {
-        logger.log("createNewTable(poolID)")
-        logger.log(poolID)
-        const pool = this.playerPoolManager.pools[poolID]
-        const newTable = new Table(this, pool, poolID)
-        if (poolID in this.tables === false) this.tables[poolID] = {}
-        this.tables[poolID][newTable.id] = newTable
+    //tableManager
+    organizeTables(tournament) {
+        logger.log(`organizeTables(${tournament.id})`)
+        const tablesNeeded = Math.ceil(tournament.currentPlayers.length/tournament.tableSize)
+        // const maxPlayersPerTable = Math.ceil(tournament.currentPlayers/tablesNeeded)
+        // if (tablesNeeded===tournament.tables.length) return logger.log("there is no need to reorganize the tables.")
+        for (let i = tournament.tables.length; i<tablesNeeded; i++) {
+            logger.log(`creating table ${i}`)
+            tournament.tables.push(this.createNewTable(tournament))
+        }
+        for (let i = tournament.tables.length; i>tablesNeeded; i--) {
+            logger.log(`deleting table ${i-1}`)
+            tournament.tables.pop()
+        }
+        logger.log("organizeTables 1")
+        let playerIndex = 0
+        Object.values(tournament.playersByUserID).forEach(playersArray => {
+            const player = playersArray[playersArray.length-1]
+            if (player.leftPosition) return logger.log("player already left the tournament")
+            logger.log(`sitting player ${player.id} at table ${playerIndex%tablesNeeded}`)
+            const table = tournament.tables[playerIndex%tablesNeeded]
+            if (player.tableID) player.nextTableID = table.id
+            if (!player.tableID) this.placePlayerIntoTable(player, table.id)
+            playerIndex++
+        })
+        logger.log("organizeTables 2")
+    }
+    createNewTable(tournament) {
+        logger.log(`createNewTable(${tournament.id})`)
+        const newTable = new Table(this, tournament)
+        logger.log("createNewTable 1")
+        if (tournament.id in this.tables === false) this.tables[tournament.id] = {}
+        logger.log(JSON.stringify(newTable.id))
+        this.tables[tournament.id][newTable.id] = newTable
+        logger.log("createNewTable 2")
         return newTable
         // this.tables.push(new Table())
     }
-    placePlayerIntoTable(player) {
-        logger.log("placePlayerIntoTable(player)")
-        // let playerJoined = false
-        //check if player can join table
-
+    placePlayerIntoTable(player, tableID) {
+        logger.log("placePlayerIntoTable(player, table)")
         if (!player) return logger.log("player is undefined, something went wrong.")
-        if (player.isSitout) return player.tableID = undefined
-        if (player.stackSize.equals(0)) return player.tableID = undefined//ask if wants to rebuy
-        // logger.log(player.poolID)
-        // logger.log(this.tables[player.poolID])
-        for (const key in this.tables[player.poolID]) {
-            const table = this.tables[player.poolID][key]
-            if (!table) continue
-            if (!table.waitingForPlayers) continue
-            if (player.userID in table.socketsByUserID) continue
-            if (table.countPlayers() === table.tableSize) continue
-            table.sitPlayer(player)
-            return
-        }
-        // if (!playerJoined) {
-            // }
-        const table = this.createNewTable(player.poolID)
+        const table = this.tables[player.tournamentID][tableID]
+        if (!table) return logger.log("table is undefined, something went wrong.")
         table.sitPlayer(player)
-        return 
+        if (player.nextTableID) delete player.nextTableID
     }
     parseAction(socket, player, action) {
         logger.log("parseAction(socket, player, action)")
         logger.log(socket.id)
         logger.log(player.name)
+        logger.log(player.tournamentID)
         logger.log(action)
-        const table = this.tables[player.poolID][player.tableID]
+        const table = this.tables[player.tournamentID][player.tableID]
         if (!table.validateAction(player, action)) return logger.log("failed to make action")
         // this.socketManager.to(`table:${table.id}`).emit("updateGameState", {tableID : table.id, gameState : table.currentHand})
         if (socket) socket.emit("parseActionResponse", {response: "action received", status: 200, action: action, player: player})

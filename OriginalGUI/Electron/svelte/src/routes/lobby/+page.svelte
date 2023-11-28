@@ -4,19 +4,23 @@
 	import Login from "$lib/Login.svelte";
     import TitleBar from "$lib/Title_Bar.svelte";
     import ChooseAvatar from "$lib/ChooseAvatar.svelte";
+    import TournamentInfo from "$lib/TournamentInfo.svelte";
     import { onMount } from 'svelte';
     let winHeight = 0;
     let displaySize
     let api
     let balanceHidden = false;
-    let tabSelected = 0
+    let tabSelected = 2
     let callChangeAds
+    let callUpdateTournamentInfo
     let tabSelectionTitles = ["LIGHTNING CASH", "VORTEX SNG", "INSTANT TOURNEYS"]
-    let userName, userBalance, userAvatar, userEmail, userTransactions = [], userTransactionsOffset = 0, isUserTransactionsLocked = false
+    let userID, userName, userBalance, userAvatar, userEmail, userTransactions = [], userTransactionsOffset = 0, isUserTransactionsLocked = false
     let userLoggedIn = false
-    let displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
+    let currentClock = new Date()
+    let displayClock = `${("0" + currentClock.getUTCHours()).slice(-2)}:${("0" + currentClock.getUTCMinutes()).slice(-2)}`
     let clockUpdateInterval = setInterval(()=>{
-        displayClock = `${("0" + new Date().getUTCHours()).slice(-2)}:${("0" + new Date().getUTCMinutes()).slice(-2)}`
+        currentClock = new Date()
+        displayClock = `${("0" + currentClock.getUTCHours()).slice(-2)}:${("0" + currentClock.getUTCMinutes()).slice(-2)}`
     }, 60000)
    
     let gamesAvaiable = {
@@ -25,6 +29,112 @@
         "lightning3" : {gameTitle: "NL 100", blinds: "$0.50 / $1.00", players: 0, minBuyIn: 20, maxBuyIn: 100, buyInAmount: -1},
         "lightning4" : {gameTitle: "NL 200", blinds: "$1.00 / $2.00", players: 0, minBuyIn: 40, maxBuyIn: 200, buyInAmount: -1}
     }
+    let tournamentSelected = 0
+    let tournamentsList = [
+        {title: "$10 super especial tournament",
+        state: "Registering",
+        buyIn: 10,
+        tableSize: 9,
+        pokerVariant: "texas",
+        playersLeft: 2,
+        totalEntries: 5,
+        startingChips: 5000,
+        prizeStructure: [50],
+        startAt: "Running",
+        playersList: [
+            {name: "joao", stackSize: 15000},
+            {name: "jose", stackSize: 10000},
+        ],
+        blindStructure: [
+            {sb: 10, bb: 20, ante: 0},
+            {sb: 15, bb: 30, ante: 0},
+            {sb: 20, bb: 40, ante: 0},
+            {sb: 30, bb: 60, ante: 0},
+            {sb: 40, bb: 80, ante: 0},
+            {sb: 50, bb: 100, ante: 0},
+            {sb: 60, bb: 120, ante: 0},
+            {sb: 80, bb: 160, ante: 0},
+            {sb: 100, bb: 200, ante: 0},
+            {sb: 125, bb: 250, ante: 0},
+            {sb: 150, bb: 300, ante: 0},
+            {sb: 200, bb: 400, ante: 0},
+            {sb: 250, bb: 500, ante: 0},
+            {sb: 300, bb: 600, ante: 0},
+            {sb: 400, bb: 800, ante: 0},
+            {sb: 500, bb: 1000, ante: 0},
+        ],
+        blindLevel: 1,
+        blindLevelUpTime: 180000},
+        {title: "$15 super especial tournament",
+        buyIn: 15,
+        tableSize: 9,
+        pokerVariant: "texas",
+        playersLeft: 2,
+        totalEntries: 5,
+        startingChips: 5000,
+        prizeStructure: [50],
+        startAt: "Running",
+        playersList: [
+            {name: "joao", stackSize: 15000},
+            {name: "jose", stackSize: 10000}
+        ],
+        blindStructure: [
+            {sb: 10, bb: 20, ante: 0},
+            {sb: 15, bb: 30, ante: 0},
+            {sb: 20, bb: 40, ante: 0},
+            {sb: 30, bb: 60, ante: 0},
+            {sb: 40, bb: 80, ante: 0},
+            {sb: 50, bb: 100, ante: 0},
+            {sb: 60, bb: 120, ante: 0},
+            {sb: 80, bb: 160, ante: 0},
+            {sb: 100, bb: 200, ante: 0},
+            {sb: 125, bb: 250, ante: 0},
+            {sb: 150, bb: 300, ante: 0},
+            {sb: 200, bb: 400, ante: 0},
+            {sb: 250, bb: 500, ante: 0},
+            {sb: 300, bb: 600, ante: 0},
+            {sb: 400, bb: 800, ante: 0},
+            {sb: 500, bb: 1000, ante: 0},
+        ],
+        blindLevel: 1,
+        blindLevelUpTime: 180000},
+        {title: "$20 super especial tournament",
+        buyIn: 20,
+        tableSize: 9,
+        pokerVariant: "texas",
+        playersLeft: 2,
+        totalEntries: 5,
+        startingChips: 5000,
+        prizeStructure: [50],
+        startAt: "Running",
+        playersList: [
+            {name: "joao", stackSize: 15000},
+            {name: "jose", stackSize: 10000}
+        ],
+        blindStructure: [
+            {sb: 10, bb: 20, ante: 0},
+            {sb: 15, bb: 30, ante: 0},
+            {sb: 20, bb: 40, ante: 0},
+            {sb: 30, bb: 60, ante: 0},
+            {sb: 40, bb: 80, ante: 0},
+            {sb: 50, bb: 100, ante: 0},
+            {sb: 60, bb: 120, ante: 0},
+            {sb: 80, bb: 160, ante: 0},
+            {sb: 100, bb: 200, ante: 0},
+            {sb: 125, bb: 250, ante: 0},
+            {sb: 150, bb: 300, ante: 0},
+            {sb: 200, bb: 400, ante: 0},
+            {sb: 250, bb: 500, ante: 0},
+            {sb: 300, bb: 600, ante: 0},
+            {sb: 400, bb: 800, ante: 0},
+            {sb: 500, bb: 1000, ante: 0},
+        ],
+        blindLevel: 1,
+        blindLevelUpTime: 180000},
+    ]
+    // for (let i = 0; i<100; i++) {
+    //     tournamentsList.push(tournamentsList[0])
+    // }
     let menuIndexSelected = 0
     let menuItens = ["games", "profile", "settings"]
     let svgMenuColorSelected = "#0080ff"
@@ -70,6 +180,7 @@
             api.on("updateUser", (user) => {
                 console.log("updateUser")
                 console.log(user)
+                userID = user.id
                 userName = user.name
                 userBalance = Math.round(user.balance * 100)/100
                 userAvatar = user.avatar
@@ -90,6 +201,11 @@
                     if (gamePool.buyInAmount === -1) gamePool.buyInAmount = pool.maxBuyIn
                 })
                 gamesAvaiable = newGamesAvaiable
+            })
+            api.on("updateTournamentList", (newTournamentsList) => {
+                console.log(newTournamentsList)
+                tournamentsList = newTournamentsList
+                // callUpdateTournamentInfo()
             })
             // displaySize = window.api.getDisplaySize()
             api.send("window-ready")
@@ -227,6 +343,9 @@
             userSettings.presetButtons[street][index].display = `BB`
         }
         // sendUserSettings()
+    }
+    function registerTournament(){
+        api.send("registerOnTournament", "tournament 1")
     }
 </script>
 
@@ -516,9 +635,10 @@
         display: flex;
         flex-direction: row;
         width: 100%;
-        height: 15%;
+        height: 7%;
         justify-content: center;
         align-items: flex-start;
+        // background-color: green;
         // padding-top: 3%;
         gap: 5%;
         .tabSelection {
@@ -532,9 +652,10 @@
         display: flex;
         flex-direction: row;
         width: 100%;
-        height: 65%;
+        height: 73%;
         gap: 3%;
-        // padding: 0 3%;
+        margin-top: 6%;
+        // padding-top: 4%;
     }
     .wrapper {
         position: relative;
@@ -747,7 +868,7 @@
         align-items: center;
         // padding: 3%;
         width: 100%;
-        height: 25%;
+        height: 20%;
     }
     .avaiableSoonDiv {
         display: flex;
@@ -801,6 +922,75 @@
     }
     .doordashDiv.show {
         top: -16%;
+    }
+    .tournamentsDiv {
+        width: 100%;
+        height: 73%;
+        display: flex;
+        flex-direction: row;
+    }
+    .tournamentsList {
+        width: 70%;
+        height: 99%;
+        font-size: 0.5em;
+        max-height: 18.5rem;
+        overflow-y: auto;
+        // display: flex;
+        // justify-content: center;
+        // align-items: center;
+        border: 1px solid rgba(255,255,255,0.5);
+        // background-color: grey;
+        table {
+            width: 100%;
+            // height: 100%;
+            border-collapse: collapse;
+            tr:nth-child(odd) {
+                background-color: #383838;
+            }
+            tr {
+                width: 100%;
+                height: 1.1em;
+            }
+            tr.active {
+                background-color: rgb(79,148,217);
+            }
+            .tableHead {
+                position: sticky;
+                top: 0px;
+            }
+            td {
+                width: 5%;
+                text-align: center;
+            }
+            .startColumn {
+                width: 10%;
+                text-align: center;
+            }
+            .buyinColumn {
+                width: 10%;
+                text-align: center;
+            }
+            .prizePoolColumn {
+                width: 10%;
+                text-align: center;
+            }
+            .playersColumn {
+                width: 15%;
+                text-align: center;
+            }
+            .titleColumn {
+                width: 40%;
+                text-align: center;
+            }
+        }
+    }
+    .tournamentInfo {
+        width: 30%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        // background-color: blue;
     }
 
     .profileDiv {
@@ -1397,8 +1587,8 @@
                         {/each}
                     </div>
                 
-                    <div class="gamesAvaiable">
-                        {#if tabSelected === 0}
+                    {#if tabSelected === 0}
+                        <div class="gamesAvaiable">
                             {#each Object.entries(gamesAvaiable) as [key, game], index}
                             <div class="wrapper" on:mouseenter={() => changeDoordashClass(index)} on:mouseleave={() => changeDoordashClass(index)}>
                                 {#if index === 1}
@@ -1429,17 +1619,63 @@
                                     </div>
                                 </div>
                             </div>
-                            {/each}
-                        {:else}
-                            <div class="avaiableSoonDiv">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="483" height="69" viewBox="0 0 483 69">
-                                    <text id="Available_soon" data-name="Available soon" transform="translate(0 55)" fill="#e5e5e5" font-size="57" font-family="Montserrat-Regular, Montserrat" letter-spacing="0.1em"><tspan x="0" y="0">Available soon</tspan></text>
-                                </svg>
-                            </div>
-                        {/if}
-
-                    
+                        {/each}
                     </div>
+                    {:else if tabSelected === 1}
+                        <div class="tournamentsDiv">
+                            <button class="register" on:click={registerTournament}>REGISTER</button>
+                        </div>
+                    {:else if tabSelected === 2}
+                        <div class="tournamentsDiv">
+                            <div class="tournamentsList">
+                                <table>
+                                    <tr class="tableHead">
+                                        <th class="startAtColumn">Start/State</th>
+                                        <th>Game</th>
+                                        <th class="buyinColumn">Buy-in</th>
+                                        <th class="titleColumn">Name</th>
+                                        <th class="prizePoolColumn">Prize Pool</th>
+                                        <th>Speed</th>
+                                        <th class="playersColumn">Players</th>
+                                    </tr>
+                                    {#each tournamentsList as tournament, index}
+                                        <tr class:active={tournamentSelected === index} on:click={()=>{tournamentSelected = index}}>
+                                            <td class="startAtColumn">
+                                                {tournament.state}
+                                            </td>
+                                            <td>
+                                                {tournament.pokerVariant}
+                                            </td>
+                                            <td class="buyinColumn">
+                                                ${tournament.buyIn}
+                                            </td>
+                                            <td class="titleColumn">
+                                                {tournament.title}
+                                            </td>
+                                            <td class="prizePoolColumn">
+                                                ${tournament.totalEntries * tournament.buyIn}
+                                            </td>
+                                            <td>
+                                                Normal
+                                            </td>
+                                            <td class="playersColumn">
+                                                {tournament.playersLeft}/{tournament.totalEntries}
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </table>
+                            </div>
+                            <div class="tournamentInfo">
+                                <TournamentInfo {...tournamentsList[tournamentSelected]} bind:userID bind:updateTournamentInfo={callUpdateTournamentInfo}/>
+                            </div>
+                        </div>
+                    {:else}
+                        <div class="avaiableSoonDiv">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="483" height="69" viewBox="0 0 483 69">
+                                <text id="Available_soon" data-name="Available soon" transform="translate(0 55)" fill="#e5e5e5" font-size="57" font-family="Montserrat-Regular, Montserrat" letter-spacing="0.1em"><tspan x="0" y="0">Available soon</tspan></text>
+                            </svg>
+                        </div>
+                    {/if}
                     <div class="adsDiv">
                         <Ads bind:changeAds={callChangeAds}/>
                     </div>

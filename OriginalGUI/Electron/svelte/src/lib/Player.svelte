@@ -388,9 +388,21 @@
         z-index: 2;
     }
     .playerName.winner {
-        border-top: 1px solid green;
-        border-left: 1px solid green;
-        border-right: 1px solid green;
+        // background-color: #687776;
+        span {
+            width: 100%;
+            height: 100%;
+            color: #2CB459;
+            display: flex;
+            font-weight: bold;
+            justify-content: center;
+            align-items: center;
+            padding-right: 0;
+        }
+        
+        // border-top: 1px solid green;
+        // border-left: 1px solid green;
+        // border-right: 1px solid green;
     }
     
     .playerBalance {
@@ -423,9 +435,11 @@
         left: 5%;
     }
     .playerBalance.winner {
-        border-bottom: 1px solid green;
-        border-left: 1px solid green;
-        border-right: 1px solid green;
+        // background-color: #687776;
+        // background-color: #464c5d;
+        // border-bottom: 1px solid green;
+        // border-left: 1px solid green;
+        // border-right: 1px solid green;
     }
     .playerButton {
         background-image: url('/Dealer.png');
@@ -948,7 +962,9 @@
         </div>
         <div class="playerName" class:winner={isWinner}>
             <span>
-                {#if !showLastAction}
+                {#if isWinner}
+                    WINNER
+                {:else if !showLastAction}
                     {name.length >= 10 ? name.substring(0, 7) + "..." : name}
                 {:else}
                     {lastActionShowed.toUpperCase()}

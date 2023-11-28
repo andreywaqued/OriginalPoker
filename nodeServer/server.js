@@ -3,14 +3,7 @@ const cors = require('@fastify/cors')
 fastify.register(cors, { 
   // put your options here
 })
-const socketManager = require('socket.io')(fastify.server, {
-  cors: {
-    // CAUTION !!!!!!!
-    // ORIGIN NEEDS TO BE THE DOMAIN OF ORIGINAL POKER APP
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true
-  }});
+const socketManager = require('socket.io')(fastify.server);
 const Decimal = require('decimal.js');
 const Logger = require("./logger")
 const logger = new Logger("Server")
@@ -18,7 +11,7 @@ const logger = new Logger("Server")
 // fastify.register(require('@fastify/postgres'), {
 //   connectionString: 'postgresql://postgres:dbpass@db:5432/original_poker'
 // })
-//internal render acess
+// internal render acess
 fastify.register(require('@fastify/postgres'), {
   connectionString: 'postgres://original:fSuZdEE7T6fTqVCOlEobSioKlfwR4Rrb@dpg-ckdeitsgonuc73cmsucg-a/original_db'
 })
@@ -112,22 +105,52 @@ async function tryReconnect(socket, user) {
       player.tableClosed = false;
       player.isDisconnected = false;
       // player.isSitout = false;
-      const table = lightningPoolManager.tableManager.tables[player.poolID][player.tableID];
-      if (!table) {
-        logger.log("table is undefined, sending empty table");
-        lightningPoolManager.sendEmptyTable(player)
-        lightningPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
-        continue
+      if (player.poolID) {
+        const table = lightningPoolManager.tableManager.tables[player.poolID][player.tableID];
+        if (!table) {
+          logger.log("table is undefined, sending empty table");
+          lightningPoolManager.sendEmptyTable(player)
+          lightningPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
+          continue
+        }
+        if (table.socketsByUserID[player.userID]) table.socketsByUserID[player.userID] = socket //check if is not undefined, and then change it on the table
+        if (!table.broadcastHandState(player.id)) {
+          logger.log("failed to broadcast hand state, sending empty table.")
+          lightningPoolManager.sendEmptyTable(player)
+          lightningPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
+          // lightningPoolManager.leavePool(socket, player, true)
+          // socket.emit("closeTable", player.id)
+          // logger.log("closing table, because player is not there anymore.")
+          continue
+        }
       }
-      if (table.socketsByUserID[player.userID]) table.socketsByUserID[player.userID] = socket //check if is not undefined, and then change it on the table
-      if (!table.broadcastHandState(player.id)) {
-        logger.log("failed to broadcast hand state, sending empty table.")
-        lightningPoolManager.sendEmptyTable(player)
-        lightningPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
-        // lightningPoolManager.leavePool(socket, player, true)
-        // socket.emit("closeTable", player.id)
-        // logger.log("closing table, because player is not there anymore.")
-        continue
+      else if (player.tournamentID) {
+        const tournament = tournamentPoolManager.tournaments[player.tournamentID]
+        if (!tournament) {
+          logger.log("tournament is undefined")
+          continue
+        }
+        if (!tournament.started) {
+          logger.log("tournament has not started yet.")
+          continue
+        }
+        const table = tournamentPoolManager.tournaments[player.tournamentID].tables.filter((table) => table.id === player.tableID)[0];
+        if (!table) {
+          logger.log("table is undefined, sending empty table");
+          tournamentPoolManager.sendEmptyTable(player)
+          tournamentPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
+          continue
+        }
+        if (table.socketsByUserID[player.userID]) table.socketsByUserID[player.userID] = socket //check if is not undefined, and then change it on the table
+        if (!table.broadcastHandState(player.id)) {
+          logger.log("failed to broadcast hand state, sending empty table.")
+          tournamentPoolManager.sendEmptyTable(player)
+          tournamentPoolManager.sitoutUpdate(player.id, player.poolID, player.isSitout)
+          // lightningPoolManager.leavePool(socket, player, true)
+          // socket.emit("closeTable", player.id)
+          // logger.log("closing table, because player is not there anymore.")
+          continue
+        }
       }
     }
     return userRecovered
@@ -329,7 +352,9 @@ fastify.get('/tables', async (request, reply) => {
 socketManager.on('connection', (socket) => {
   logger.log('New connection:', socket.id);
   socket.join("lobby")
+  socket.join("tournamentLobby")
   socket.emit("updatePools", lightningPoolManager.pools)
+  tournamentPoolManager.broadcastTournamentList(socket)
   if (socket.recovered) {
     // recovery was successful: socket.id, socket.rooms and socket.data were restored
     logger.log("socket recovered: " + socket.id)
@@ -356,6 +381,7 @@ socketManager.on('connection', (socket) => {
         socket.emit("signInResponse", {response : "user logged in", status: 200, user})
         logger.log("signIn 2")
         socket.emit("updatePools", lightningPoolManager.pools)
+        tournamentPoolManager.broadcastTournamentList(socket)
       }).catch((err) => {
         logger.log(err)
         socket.emit("signInResponse", {response : "failed to log in", status: 403, error: err.message})
@@ -416,7 +442,7 @@ socketManager.on('connection', (socket) => {
   })
   socket.on("leavePool", (player) => {
     try {
-      logger.log(`received leavePool: ${player.name} ${player.poolID}`)
+      logger.log(`received leavePool: ${player.name} ${player.poolID ? player.poolID : player.tournamentID}`)
       const user = usersConnected[player.userID]
       if (!user) {
         logger.log("user not find, something went wrong")
@@ -425,7 +451,7 @@ socketManager.on('connection', (socket) => {
         return
       }
       if (socket.id != user.socketID) return logger.log("socket mismatch on leavepool")
-      return lightningPoolManager.leavePool(player, true)
+      if (player.poolID) return lightningPoolManager.leavePool(player, true)
     } catch (error) {
       logger.log(error)
     }
@@ -476,8 +502,8 @@ socketManager.on('connection', (socket) => {
   socket.on("sitoutUpdate", (player) => {
     try {
       logger.log(`sitoutUpdate: ${player.playerID} ${player.isSitout}`)
-      if (player.player.poolID) return lightningPoolManager.tableManager.sitoutUpdate(player.playerID, player.poolID, player.isSitout)
-      if (player.player.tournamentID) return tournamentPoolManager.tableManager.sitoutUpdate(player.playerID, player.tournamentID, player.isSitout)
+      if (player.poolID) return lightningPoolManager.sitoutUpdate(player.playerID, player.poolID, player.isSitout)
+      if (player.tournamentID) return tournamentPoolManager.sitoutUpdate(player.playerID, player.tournamentID, player.isSitout)
       // return lightningPoolManager.sitoutUpdate(player.playerID, player.poolID, player.isSitout)
     } catch (error) {
       logger.log(error)

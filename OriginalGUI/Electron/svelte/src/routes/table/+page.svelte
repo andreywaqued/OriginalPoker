@@ -11,6 +11,20 @@
   //  * @type {number}
   //  */
   // export let sbSize = 5;
+  let currentClock = new Date()
+  let blindDisplayClock = ""
+  let clockUpdateInterval = setInterval(()=>{
+      console.log("clockUpdateInterval")
+      currentClock = new Date()
+      if (!currentTournamentInfo) return
+      if (!currentTournamentInfo.nextBlindTime || currentTournamentInfo.nextBlindTime - currentClock.getTime()<0) return clearInterval(clockUpdateInterval)
+      let minutesLeft = Math.floor((currentTournamentInfo.nextBlindTime - currentClock.getTime())/60000)
+      let secondsLeft = Math.floor(((currentTournamentInfo.nextBlindTime - currentClock.getTime())%60000)/1000)
+      blindDisplayClock = `${("0" + minutesLeft).slice(-2)}:${("0" + secondsLeft).slice(-2)}`
+      // console.log(minutesLeft)
+      // console.log(secondsLeft)
+      // console.log(blindDisplayClock)
+  }, 1000)
   let sbSize = 5
   let bbSize = 10
   let winHeight = 0;
@@ -19,7 +33,8 @@
   let winTitle = ""
   let handHistories = []
   let hhIndex = 0
-  let hero = { id: "", poolID: "", position : 0, cards: [], betSize: 0, stackSize : 0};
+  let hero = { id: "", poolID: undefined, tournamentID: undefined, position : 0, cards: [], betSize: 0, stackSize : 0};
+  let currentTournamentInfo = undefined
   let players = {};
   let playersComponents = {};
   let possibleActions = [];
@@ -43,6 +58,8 @@
   let callChangeAds
   let presetButtonsRound = "preflop"
   let balance = 0
+  let showFinishPopoverActive = false
+  let finishInfoDisplay = {place: 0, wonAmount: 0}
   let userSettings = {
     sounds: true,
     preferedSeat: {"3max": 0, "6max": 0, "9max": 0},
@@ -90,12 +107,14 @@
           if (userSettings.showValuesInBB) hero.possibleActions[1].amount = Math.round(hero.possibleActions[1].amount/bbSize*100)/100
           if (hero.possibleActions[1].amount > hero.betSize + hero.stackSize) hero.possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize)*100)/100
           callAmount = hero.possibleActions[1].amount
-          betValue = userSettings.showValuesInBB ? Math.round(hero.possibleActions[2].amount/bbSize*100)/100 : Math.round(hero.possibleActions[2].amount * 100) / 100
-          if (betValue > hero.betSize + hero.stackSize) betValue = Math.round((hero.betSize + hero.stackSize)*100)/100
-          minBet = betValue;
-          maxBet = Math.round((hero.betSize + hero.stackSize)*100)/100;
-          api.send("focusOnWindow")
-          api.send("playSound", "hora_de_jogar.wav")
+          if (possibleActions.length <2 || possibleActions[1].amount != hero.possibleActions[1].amount) {
+            betValue = userSettings.showValuesInBB ? Math.round(hero.possibleActions[2].amount/bbSize*100)/100 : Math.round(hero.possibleActions[2].amount * 100) / 100
+            if (betValue > hero.betSize + hero.stackSize) betValue = Math.round((hero.betSize + hero.stackSize)*100)/100
+            minBet = betValue;
+            maxBet = Math.round((hero.betSize + hero.stackSize)*100)/100;
+            api.send("focusOnWindow")
+            api.send("playSound", "hora_de_jogar.wav")
+          }
         }
         if (!playerSitout) possibleActions = hero.possibleActions
         tableRotateAmount = hero.position
@@ -103,6 +122,20 @@
         players = playersTemp
         console.log(hero)
       });
+      api.on("updateTournamentInfo", tournamentInfo => {
+        console.log("updateTournamentInfo")
+        console.log(tournamentInfo)
+        currentTournamentInfo = tournamentInfo
+      }) 
+      api.on("tournamentFinishMessage", finishInfo => {
+        console.log("tournamentFinishMessage")
+        console.log(finishInfo)
+        showFinishPopoverActive = true
+        finishInfoDisplay = finishInfo
+        const target = document.getElementById("showFinishPopover")
+        target?.showPopover()
+        // alert(`Finished at ${finishInfo.place} and won ${finishInfo.wonAmount}`)
+      }) 
       api.on("updateUserBalance", (userBalance) => {
         console.log("updateUserBalance")
         balance = parseFloat(userBalance)
@@ -438,7 +471,7 @@
     console.log("toggleSitout()")
     playerSitout = !playerSitout
     if (!playerSitout) sitoutPopover(playerSitout)
-    api.send("sitoutUpdate", {playerID: hero.id, poolID: hero.poolID, isSitout: playerSitout})
+    api.send("sitoutUpdate", {playerID: hero.id, tournamentID: hero.tournamentID, poolID: hero.poolID, isSitout: playerSitout})
   }
   let playerSitout = false;
   let sitoutPopoverActive = false;
@@ -1070,6 +1103,24 @@ button:disabled {
       }
     }
   }
+  .showFinishPopover {
+    width: 35%;
+    height: 35%;
+    // display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+    .popoverTitle {
+      height: 10%;
+    }
+    .popoverMain {
+      display: flex;
+      flex-direction: column;
+      color: #181818;
+      justify-content: space-evenly;
+      align-items: center;
+    }
+  }
   .hhPopover {
     width: 80%;
     height: 80%;
@@ -1139,7 +1190,11 @@ button:disabled {
 
     
   }
-  
+  .tournamentInfo {
+    position: absolute;
+    right: 0;
+    top: 20px;
+  }
   // ::backdrop {
   // }
 </style>
@@ -1239,18 +1294,31 @@ button:disabled {
         <span>{handStrength}</span>
       </div>
     {/if}
+    {#if currentTournamentInfo}
+      <div class="tournamentInfo">
+        <div class="blindLevel"><span>Level: {currentTournamentInfo.blindLevel} ({currentTournamentInfo.sb}/{currentTournamentInfo.bb}) - {currentTournamentInfo.ante}</span></div>
+        <div class="nextBlindTime"><span>Next Blind in: {blindDisplayClock}</span></div>
+        <div class="playerPosition"><span>Position: {hero.tournamentPosition}/{currentTournamentInfo.playersLeft}</span></div>
+        <div class="playersITM"><span>Players ITM: {currentTournamentInfo.prizedPlayers}</span></div>
+        <div class="nextPrize"><span>nextPrize: {currentTournamentInfo.nextPrize}</span></div>
+      </div>
+    {/if}
     
-    <!-- <div class="popoverOverlay" class:active={sitoutPopoverActive} on:click={() => sitoutPopover(false)}></div>
-    <div class="sitoutPopover" popover id="sitoutPopover">
+    <div class="popoverOverlay" class:active={showFinishPopoverActive}></div>
+    <div class="showFinishPopover" popover id="showFinishPopover">
       <div class="popoverTitle">
-        <span>Sitout</span>
-        <button class="closeButton" on:click={() => sitoutPopover(false)}>X</button>
+        <span>{winTitle}</span>
       </div>
       <div class="popoverMain">
-        You are sitout
-        <button on:click={toggleSitout}>I`m Back!`</button>
+        {#if finishInfoDisplay.wonAmount > 0}
+          <span>You left in {finishInfoDisplay.place} and WON {finishInfoDisplay.wonAmount}</span>
+          <span>Congrats!!!</span>
+        {:else}
+          <span>You left in {finishInfoDisplay.place}</span>
+          <span>Good luck next time!</span>
+        {/if}
       </div>
-    </div> -->
+    </div>
     <div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
     <div class="hhPopover" popover id="hhPopover">
       <div class="popoverTitle">
