@@ -2,13 +2,17 @@
 	import socket from '$lib/services/socket';
 	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
 	import userStore from '$lib/stores/userStore';
+	import { handleSwipe } from '$lib/utils/Swiper';
 	import Ads from '$lib/components/table/Ads.svelte';
 	import Card from '$lib/components/table/Card.svelte';
 	import Player from '$lib/components/table/Player.svelte';
 	import Pot from '$lib/components/table/Pot.svelte';
+	import PreloadImages from './PreloadImages.svelte';
 
-	export let playerID;
-	$: isSelected = playerID === $navSelectedItemStore;
+	/**
+	 * @type {Object.<string, any>}
+	 */
+	export let hero;
 
 	// /**
 	//  * @type {number}
@@ -21,7 +25,6 @@
 	let winTitle = '';
 	let handHistories = [];
 	let hhIndex = 0;
-	let hero = { id: '', poolID: '', position: 0, cards: [], betSize: 0, stackSize: 0 };
 	let players = {};
 	let playersComponents = {};
 	let possibleActions = [];
@@ -69,7 +72,12 @@
 	socket.on('updatePlayerInfo', (player) => {
 		console.log('updatePlayerInfo');
 		console.log(player);
-		if (playerID !== player.id) return;
+		if (hero.id !== player.id) return;
+		// set userStore to track player cards on navBar
+		userStore.update((user) => {
+			user.players[player.id] = player;
+			return user;
+		});
 		let playersTemp = JSON.parse(JSON.stringify(players));
 		hero = player;
 		hero.isHero = true;
@@ -98,8 +106,8 @@
 				betValue = Math.round((hero.betSize + hero.stackSize) * 100) / 100;
 			minBet = betValue;
 			maxBet = Math.round((hero.betSize + hero.stackSize) * 100) / 100;
-			// api.send("focusOnWindow")
-			// api.send("playSound", "hora_de_jogar.wav")
+			audioTurn.currentTime = 0;
+			audioTurn.play();
 		}
 		if (!playerSitout) possibleActions = hero.possibleActions;
 		tableRotateAmount = hero.position;
@@ -107,9 +115,10 @@
 		players = playersTemp;
 		console.log(hero);
 	});
-	socket.on('updateUserBalance', (userBalance) => {
-		console.log('updateUserBalance');
-		balance = parseFloat(userBalance);
+	socket.on('updateUserInfo', ({ user }) => {
+		console.log('updateUserInfo');
+		console.log(user);
+		balance = parseFloat(user.balance);
 	});
 	socket.on('updateUserSettings', (settings) => {
 		console.log('updateUserSettings');
@@ -172,7 +181,7 @@
 	socket.on('updateGameState', (gameState) => {
 		console.log('updateGameState');
 		console.log(gameState);
-		if (!(playerID in gameState.players)) return;
+		if (!(hero.id in gameState.players)) return;
 
 		currentGameState = JSON.parse(JSON.stringify(gameState));
 		sumOfBetSizes = 0;
@@ -248,29 +257,43 @@
 	});
 	socket.on('handTransition', (player) => {
 		console.log('handTransition');
-		if (playerID !== player.id) return;
+		if (hero.id !== player.id) return;
 		possibleActions = [];
 		handStrength = '';
 		transitionBackground();
 		callChangeAds();
 	});
-	socket.on('updateHandHistory', (handHistory) => {
+	socket.on('updateHandHistory', (data) => {
 		console.log('updateHandHistory');
-		handHistories.push(handHistory);
-		handHistories = handHistories; //forcing the update
+		if (!data.player) return console.log('player is undefined');
+		if (!data.handHistory) return console.log('handHistory is undefined');
+		const player = data.player;
+		const handHistory = data.handHistory;
+		// check if the event is for this component
+		if (player.id !== hero.id) return;
+		handHistories = [...handHistories, handHistory];
 		if (hhIndex === -1) hhIndex = handHistories.length - 1;
 	});
 	socket.on('askRebuy', (data) => {
 		toggleRebuy();
 	});
 	socket.on('sitoutUpdate', (data) => {
-		if (playerID !== data.playerID) return;
+		console.log('sitoutUpdate');
+		if (hero.id !== data.playerID) return;
 		playerSitout = data.isSitout;
 		sitoutPopover(playerSitout);
 	});
 	socket.on('updatePlayerCards', (cards) => {
 		console.log('updatePlayerCards');
 		hero.cards = cards;
+	});
+	socket.on('leavePoolResponse', ({ status }) => {
+		console.log('leavePoolResponse');
+		switch (status) {
+			case 200:
+				navSelectedItemStore.set('lobby');
+				break;
+		}
 	});
 	// function registerPlayer(id, component) {
 	//   playersComponents[id] = component;
@@ -401,14 +424,14 @@
 		}
 	}
 
-	let actualBet = 0;
+	// let actualBet = 0;
 	// let sidePots = [0, 0]
 	// let playerTurn = true; //only for testing, this should come from the server
 	// players = [
-	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["As", "5c"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
 	//   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
 	//   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["As", "Kd"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
 	//   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
 	//   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
 	//   // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
@@ -445,8 +468,8 @@
 	//   restartTable()
 	// }, 2000)
 	function toggleSitout() {
-		console.log(hero)
 		console.log('toggleSitout()');
+		console.log(hero);
 		playerSitout = !playerSitout;
 		if (!playerSitout) sitoutPopover(playerSitout);
 		socket.emit('sitoutUpdate', { playerID: hero.id, poolID: hero.poolID, isSitout: playerSitout });
@@ -478,9 +501,6 @@
 		if (minRebuyAmount < 0) minRebuyAmount = 0;
 		if (rebuyAmount < 0) rebuyAmount = 0;
 		maxRebuyAmount = rebuyAmount;
-		const target = document.getElementById('rebuyPopover');
-		if (rebuyPopoverActive) target?.hidePopover();
-		if (!rebuyPopoverActive) target?.showPopover();
 		rebuyPopoverActive = !rebuyPopoverActive;
 		// popovertarget="test"
 	}
@@ -494,9 +514,6 @@
 	}
 	let hhPopoverActive = false;
 	function toggleHH() {
-		const target = document.getElementById('hhPopover');
-		if (hhPopoverActive) target?.hidePopover();
-		if (!hhPopoverActive) target?.showPopover();
 		hhPopoverActive = !hhPopoverActive;
 		hhIndex = handHistories.length - 1;
 		// popovertarget="test"
@@ -527,16 +544,74 @@
 		console.log(`setRebuyAmount(${presetRebuyAmount})`);
 		rebuyAmount = presetRebuyAmount;
 	}
+	function leavePool() {
+		console.log('leavePool');
+		socket.emit('leavePool', hero);
+	}
+	let auxiliarButtonsPopoverActive = false;
+	function toggleAuxiliarButtons() {
+		auxiliarButtonsPopoverActive = !auxiliarButtonsPopoverActive;
+	}
+
+	/** @type {HTMLAudioElement} */
+	let audioTurn;
 </script>
 
-<main class:hidden={!isSelected} class="relative">
-	<div class="auxiliarButtons">
+<!-- SET IMAGES PRELOAD HEAD -->
+<PreloadImages />
+
+<!-- player turn audio-->
+<audio bind:this={audioTurn}>
+	<source src="sounds/hora_de_jogar.wav" type="audio/mp3" />
+	Your browser does not support audio.
+</audio>
+
+<!-- THIS IS TAILWIND -->
+<section class:hide={$navSelectedItemStore !== hero.id} on:wheel={handleScroll}>
+	<!-- TRANSITION ANIMATION -->
+	<div class:transitioning></div>
+	<!-- OVERLAYS -->
+	<div
+		class="popoverOverlay"
+		class:active={auxiliarButtonsPopoverActive}
+		on:click={toggleAuxiliarButtons}
+	></div>
+	<div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
+	<div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
+	<button on:click={toggleAuxiliarButtons} class="auxiliarButtonsHamburger">
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			fill="none"
+			viewBox="0 0 24 24"
+			stroke-width="1.5"
+			stroke="currentColor"
+			class="h-6 w-6"
+		>
+			<path
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+			/>
+		</svg>
+	</button>
+	<div class:active={auxiliarButtonsPopoverActive} class="auxiliarButtons">
+		<button on:click={leavePool}>Leave Table</button>
 		<button on:click={toggleHH}>Hand History</button>
 		<button on:click={toggleRebuy}>Rebuy</button>
 		<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
 	</div>
-	<div class="bg-table" class:doordash={doordashTable} on:wheel={handleScroll}>
-		<div class:transitioning></div>
+	<div class="table">
+		{#if doordashTable}
+			<!--<img />-->
+		{:else}
+			<img
+				on:touchstart|self={(event) => handleSwipe(event, hero.id)}
+				on:touchmove|self={(event) => handleSwipe(event, hero.id)}
+				on:touchend|self={(event) => handleSwipe(event, hero.id)}
+				alt="Table background"
+				src="/mesa.png"
+			/>
+		{/if}
 		{#if waitingForPlayers && !playerSitout}
 			<div class="centerInfoDiv">
 				<span class="centerInfoText">Waiting for players...</span>
@@ -577,56 +652,30 @@
 		{:else}
 			<!-- <Player bind:tableSize = {tableSize} bind:tableRotateAmount = {tableRotateAmount} bind:player = {heroPlaceHolder}/> -->
 		{/if}
+		{#if handStrength && handStrength != ''}
+			<div class="handStrengthDiv">
+				<span>{handStrength}</span>
+			</div>
+		{/if}
+
+		<!-- <div class="popoverOverlay" class:active={sitoutPopoverActive} on:click={() => sitoutPopover(false)}></div>
+    <div class="sitoutPopover" popover id="sitoutPopover">
+      <div class="popoverTitle">
+        <span>Sitout</span>
+        <button class="closeButton" on:click={() => sitoutPopover(false)}>X</button>
+      </div>
+      <div class="popoverMain">
+        You are sitout
+        <button on:click={toggleSitout}>I`m Back!`</button>
+      </div>
+    </div> -->
+	</div>
+
+	<div class="bottomContainer">
+		<!-- PLAY BUTTONs -->
 		{#if possibleActions.length > 0}
 			<div class="playButtonsContainer">
 				<!--transition:slide={{duration: 250, axis:"x"}}-->
-				{#if possibleActions.length > 1}
-					<div class="betDisplayRow">
-						<div class="presetButtons">
-							{#each userSettings.presetButtons[presetButtonsRound] as presetButton}
-								<button class="presetBetSizeButton" on:click={() => updateBetValue(presetButton)}
-									>{presetButton.value > 0 ? presetButton.value : ''}{presetButton.display}</button
-								>
-							{/each}
-							<!-- <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
-              <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
-              <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button> -->
-						</div>
-						<label class="dolarSign">{userSettings.showValuesInBB ? 'BB' : '$'}</label>
-						<input
-							class="betDisplay"
-							bind:value={betValue}
-							type="number"
-							step="0.01"
-							on:keydown={() => (betValue = Number(betValue.toFixed(1)))}
-						/>
-					</div>
-					<div class="betSlider">
-						<button class="betSliderButton" on:click={minusBetSlider}
-							><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-								><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-									d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
-								/></svg
-							></button
-						>
-						<input
-							type="range"
-							min={minBet}
-							max={maxBet}
-							step="0.01"
-							bind:value={betValue}
-							class="slider"
-							id="myRange"
-						/>
-						<button class="betSliderButton" on:click={plusBetSlider}
-							><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-								><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-									d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"
-								/></svg
-							></button
-						>
-					</div>
-				{/if}
 				<div class="buttons">
 					{#each possibleActions as action, index}
 						{#if index < 2}
@@ -661,152 +710,190 @@
 						{/if}
 					{/each}
 					<!-- <button class="playButton" on:click={callAction}><span>Call</span><span class="value">0123456789</span></button>
-            <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button> -->
+		        <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button> -->
 				</div>
 			</div>
 		{/if}
-		{#if handStrength && handStrength != ''}
-			<div class="handStrengthDiv">
-				<span>{handStrength}</span>
-			</div>
-		{/if}
-
-		<!-- <div class="popoverOverlay" class:active={sitoutPopoverActive} on:click={() => sitoutPopover(false)}></div>
-    <div class="sitoutPopover" popover id="sitoutPopover">
-      <div class="popoverTitle">
-        <span>Sitout</span>
-        <button class="closeButton" on:click={() => sitoutPopover(false)}>X</button>
-      </div>
-      <div class="popoverMain">
-        You are sitout
-        <button on:click={toggleSitout}>I`m Back!`</button>
-      </div>
-    </div> -->
-		<div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
-		<div class="hhPopover" popover id="hhPopover">
-			<div class="popoverTitle">
-				<button
-					disabled={hhIndex <= 0}
-					on:click={() => {
-						changeHandHistoryIndex(-1);
-					}}
-					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-							d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"
-						/></svg
-					></button
-				>
-				<span><pre>Hand History {hhIndex + 1}/{handHistories.length}</pre></span>
-				<button
-					disabled={hhIndex >= handHistories.length - 1}
-					on:click={() => {
-						changeHandHistoryIndex(1);
-					}}
-					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-							d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"
-						/></svg
-					></button
-				>
-				<button class="closeButton" on:click={toggleHH}>X</button>
-			</div>
-			<div class="popoverMain">
-				{#if handHistories.length > 0}
-					<div class="handHistory">{handHistories[hhIndex]}</div>
-				{:else}
-					<div class="handHistory">Hand History Is Empty</div>
-				{/if}
-			</div>
-		</div>
-		<div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
-		<div class="rebuyPopover" popover id="rebuyPopover">
-			<div class="popoverTitle">
-				<span>REBUY {winTitle}</span>
-			</div>
-			<div class="popoverMain">
-				<div class="balanceBlock">
-					<span>AVAIABLE BALANCE:</span>
-					<span>${balance}</span>
-				</div>
-				<div class="rebuyBlock">
-					<div class="rebuyInputBlock">
-						<label for="rebuyAmount">REBUY AMOUNT:</label>
-						<div class="inputWrapper">
-							<span>$</span>
-							<input
-								placeholder="Amount to Rebuy"
-								id="rebuyAmount"
-								bind:value={rebuyAmount}
-								min={minRebuyAmount}
-								max={maxRebuyAmount}
-								step="0.01"
-								type="number"
-								on:keydown={() => (rebuyAmount = Number(rebuyAmount.toFixed(2)))}
-							/>
-						</div>
-					</div>
-					<div class="rebuyButtonsBlock">
-						<button
-							class="rebuyPresetButton"
-							on:click={() => {
-								setRebuyAmount(minRebuyAmount);
-							}}
-						>
-							<span>MIN</span>
-							<span class="value">${minRebuyAmount}</span>
-						</button>
-						<button
-							class="rebuyPresetButton"
-							on:click={() => {
-								setRebuyAmount(maxRebuyAmount);
-							}}
-						>
-							<span>MAX</span>
-							<span class="value">${maxRebuyAmount}</span>
-						</button>
-					</div>
-				</div>
-				<div class="rebuyConfirmButtonsBlock">
-					<button
-						class="rebuyConfirmButtons confirm"
-						on:click={tryRebuy}
-						disabled={rebuyAmount > balance ||
-							rebuyAmount > maxRebuyAmount ||
-							rebuyAmount < minRebuyAmount}>OK</button
-					>
-					<button class="rebuyConfirmButtons cancel" on:click={toggleRebuy}>CANCEL</button>
-				</div>
-			</div>
-		</div>
+		<!-- TODO ads will be unique each table or persist the same every table? -->
 		<div class="adsContainer">
 			{#if !doordashTable}
 				<Ads bind:changeAds={callChangeAds} />
 			{/if}
 		</div>
 	</div>
-</main>
+
+	<!-- REBUY -->
+	<div class="rebuyPopover" class:active={rebuyPopoverActive} id="rebuyPopover">
+		<div class="popoverTitle">
+			<span>REBUY {winTitle}</span>
+		</div>
+		<div class="popoverMain">
+			<div class="balanceBlock">
+				<span>AVAIABLE BALANCE:</span>
+				<span>${balance}</span>
+			</div>
+			<div class="rebuyBlock">
+				<div class="rebuyInputBlock">
+					<label for="rebuyAmount">REBUY AMOUNT:</label>
+					<div class="inputWrapper">
+						<span>$</span>
+						<input
+							placeholder="Amount to Rebuy"
+							id="rebuyAmount"
+							bind:value={rebuyAmount}
+							min={minRebuyAmount}
+							max={maxRebuyAmount}
+							step="0.01"
+							type="number"
+							on:keydown={() => (rebuyAmount = Number(rebuyAmount.toFixed(2)))}
+						/>
+					</div>
+				</div>
+				<div class="rebuyButtonsBlock">
+					<button
+						class="rebuyPresetButton"
+						on:click={() => {
+							setRebuyAmount(minRebuyAmount);
+						}}
+					>
+						<span>MIN</span>
+						<span class="value">${minRebuyAmount}</span>
+					</button>
+					<button
+						class="rebuyPresetButton"
+						on:click={() => {
+							setRebuyAmount(maxRebuyAmount);
+						}}
+					>
+						<span>MAX</span>
+						<span class="value">${maxRebuyAmount}</span>
+					</button>
+				</div>
+			</div>
+			<div class="rebuyConfirmButtonsBlock">
+				<button
+					class="rebuyConfirmButtons confirm"
+					on:click={tryRebuy}
+					disabled={rebuyAmount > balance ||
+						rebuyAmount > maxRebuyAmount ||
+						rebuyAmount < minRebuyAmount}>OK</button
+				>
+				<button class="rebuyConfirmButtons cancel" on:click={toggleRebuy}>CANCEL</button>
+			</div>
+		</div>
+	</div>
+	<!-- HAND HISTORY -->
+	<div class="hhPopover" class:active={hhPopoverActive} id="hhPopover">
+		<div class="popoverTitle">
+			<button
+				disabled={hhIndex <= 0}
+				on:click={() => {
+					changeHandHistoryIndex(-1);
+				}}
+				><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+					><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+						d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"
+					/></svg
+				></button
+			>
+			<span><pre>Hand History {hhIndex + 1}/{handHistories.length}</pre></span>
+			<button
+				disabled={hhIndex >= handHistories.length - 1}
+				on:click={() => {
+					changeHandHistoryIndex(1);
+				}}
+				><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+					><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+						d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"
+					/></svg
+				></button
+			>
+			<button class="closeButton" on:click={toggleHH}>X</button>
+		</div>
+		<div class="popoverMain">
+			{#if handHistories.length > 0}
+				<div class="handHistory">{handHistories[hhIndex]}</div>
+			{:else}
+				<div class="handHistory">Hand History Is Empty</div>
+			{/if}
+		</div>
+	</div>
+
+	<!-- BET VALUE CONTAINER -->
+	{#if possibleActions.length > 1}
+		<div class="betContainer">
+			<div class="betDisplayRow">
+				<div class="presetButtons">
+					{#each userSettings.presetButtons[presetButtonsRound] as presetButton}
+						<button class="presetBetSizeButton" on:click={() => updateBetValue(presetButton)}
+							>{presetButton.value > 0 ? presetButton.value : ''}{presetButton.display}</button
+						>
+					{/each}
+					<!-- <button class="presetBetSizeButton" on:click={()=>updateBetValue(50)}>50%</button>
+          <button class="presetBetSizeButton" on:click={()=>updateBetValue(75)}>75%</button>
+          <button class="presetBetSizeButton" on:click={()=>updateBetValue(100)}>100%</button> -->
+				</div>
+				<label class="dolarSign">{userSettings.showValuesInBB ? 'BB' : '$'}</label>
+				<input
+					class="betDisplay"
+					bind:value={betValue}
+					type="number"
+					step="0.01"
+					on:keydown={() => (betValue = Number(betValue.toFixed(1)))}
+				/>
+			</div>
+			<div class="betSlider">
+				<button class="betSliderButton" on:click={plusBetSlider}
+					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+							d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM200 344V280H136c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H248v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"
+						/></svg
+					></button
+				>
+				<input
+					type="range"
+					min={minBet}
+					max={maxBet}
+					step="0.01"
+					bind:value={betValue}
+					class="slider"
+					id="myRange"
+				/>
+				<button class="betSliderButton" on:click={minusBetSlider}
+					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+							d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zM152 232H296c13.3 0 24 10.7 24 24s-10.7 24-24 24H152c-13.3 0-24-10.7-24-24s10.7-24 24-24z"
+						/></svg
+					></button
+				>
+			</div>
+		</div>
+	{/if}
+</section>
 
 <style lang="scss">
-	:root {
-		font-family: 'Roboto', sans-serif;
-		-webkit-user-select: none;
-	}
-	main {
+	section {
 		width: 100%;
 		height: 100%;
+		display: flex;
+		position: relative;
+		flex-direction: column;
+		background-image: url('/fundo.png');
+		background-position: center;
+		background-size: cover;
+		overflow: hidden;
 	}
-	.bg-table {
+	.hide {
+		display: none;
+	}
+	.table {
 		all: unset;
 		position: relative;
 		height: 100%;
-		width: 50vh;
+		aspect-ratio: 10/16;
 		max-width: 100%;
-		overflow: hidden;
-		background-image: url('/fundo-mobile.png');
-		background-position: center;
-		background-size: contain;
-		background-repeat: no-repeat;
 		margin: auto;
+		overflow: hidden;
 		display: flex;
 		flex-direction: column;
 		// transition: 0.1s;
@@ -814,15 +901,28 @@
 		// border-radius: 4px;
 		// border-top-left-radius: 3px;
 		// border-top-right-radius: 3px;
+		img {
+			height: 100%;
+			width: 100%;
+			padding: 10%;
+		}
 	}
-	.bg-table.doordash {
-		background-image: url('/fundo doordash.png');
+	.bottomContainer {
+		height: 10%;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+	.adsContainer {
+		width: 100%;
+		height: 100%;
 	}
 	.centerInfoDiv {
 		position: absolute;
 		width: 100%;
 		top: 55%;
 		// left: 40%;
+		font-size: 2vh;
 		z-index: 1;
 		display: flex;
 		justify-content: center;
@@ -854,7 +954,7 @@
 		left: -200%;
 		background-image: url('/transitionBackground.png');
 		background-position: center;
-		background-size: contain;
+		background-size: cover;
 		background-repeat: no-repeat;
 		animation-name: slideInOut;
 		animation-timing-function: linear;
@@ -873,41 +973,42 @@
 	.potLine {
 		position: absolute;
 		// background-color: rgba(255,255,255, 0.05);
-		height: 3%;
-		width: 26%;
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		flex-direction: row;
+		width: 20%;
 		.value::before {
 			content: '$';
 		}
 	}
 
 	.potsParalelos {
-		top: 37%;
-		left: 37%;
-		font-size: 0.8em;
+		top: 35%;
+		left: 50%;
+		transform: translateX(-50%);
+		font-size: 2vh;
 		justify-content: space-around;
 		// background-color: blue;
 	}
 	.potPrincipal {
 		top: 50%;
-		left: 37%;
-		font-size: 1.2em;
+		left: 50%;
+		transform: translateX(-50%);
+		font-size: 2vh;
 	}
 	.board {
 		position: absolute;
 		// background-color: rgba(255,255,255,0.1);
-		height: 10%;
+		height: 8%;
 		top: 40%;
 		left: 50%;
 		transform: translateX(-50%);
+		width: 50%;
 		// opacity: 0.1;
 		z-index: 1;
-		display: flex;
-		flex-direction: row;
-		justify-content: flex-start;
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
 		align-items: center;
 		gap: 1.5%;
 	}
@@ -928,7 +1029,7 @@
 		border: none;
 		border-bottom: 0.4vh solid #c1c1c1;
 		background-color: #e3e3e3;
-		border-radius: 1.3vw;
+		border-radius: 0.25rem;
 	}
 	button:hover {
 		background-color: white;
@@ -938,50 +1039,43 @@
 	}
 	.handStrengthDiv {
 		position: absolute;
-		display: flex;
-		justify-content: center;
-		align-items: center;
 		color: #c1c1c1;
-		width: 10%;
-		top: 90%;
-		left: 45%;
+		font-size: 2vh;
+		bottom: 4%;
+		right: 70%;
+		text-align: right;
 	}
-	.playButtonsContainer {
+	.betContainer {
 		position: absolute;
-		left: 61%;
-		top: 84%;
-		width: 38%;
-		height: 15%;
-		// background-color: white;
 		display: flex;
-		flex-direction: column;
+		justify-content: end;
+		align-items: end;
 		gap: 5%;
-		z-index: 10;
+		bottom: 11%;
+		right: 1%;
+		width: 20%;
+		height: 50%;
 		.betDisplayRow {
 			display: flex;
 			width: 100%;
-			height: 30%;
-			flex-direction: row;
-			// background-color: blue;
-			align-items: center;
-			gap: 1%;
-			input::-webkit-outer-spin-button,
-			input::-webkit-inner-spin-button {
-				-webkit-appearance: none;
-				margin: 0;
-			}
+			height: 100%;
+			flex-direction: column;
+			justify-content: end;
+			align-items: end;
+			gap: 2%;
 		}
 		.presetButtons {
-			width: 50%;
-			height: 100%;
+			width: 100%;
+			height: 30%;
 			display: flex;
-			flex-direction: row;
-			gap: 1%;
+			flex-direction: column;
+			gap: 0.15em;
 			.presetBetSizeButton {
 				// all: unset;
 				width: 100%;
+				height: 100%;
 				// margin: 0 1%;
-				font-size: 0.5em;
+				font-size: 1.5vh;
 				border-radius: 5px;
 				background-color: #c1c1c1;
 				display: flex;
@@ -993,8 +1087,8 @@
 			/* Chrome, Safari, Edge, Opera */
 			all: unset;
 			background-color: rgba(0, 0, 0, 0.5);
-			width: 46%;
-			height: 100%;
+			width: 100%;
+			height: 10%;
 			// transform: translateX(80%);
 			display: flex;
 			justify-content: flex-end;
@@ -1022,8 +1116,7 @@
 			}
 		}
 		.dolarSign {
-			position: absolute;
-			left: 52%;
+			padding-right: 2%;
 			color: rgba(255, 255, 255, 0.7);
 			font-size: 0.7em;
 		}
@@ -1036,12 +1129,78 @@
 		.betDisplay:focus {
 			color: rgba(255, 255, 255, 1);
 		}
+
+		.betSlider {
+			// border: 1px solid black;
+			border-radius: 5px;
+			position: relative;
+			background-color: rgba(0, 0, 0, 0.5);
+			height: 100%;
+			width: 50%;
+			max-width: 3em;
+			display: flex;
+			flex-direction: column;
+			justify-content: space-around;
+			align-items: center;
+			margin: 0;
+			z-index: 100;
+			.betSliderButton {
+				// all:unset;
+				border: none;
+				background-color: rgba(0, 0, 0, 0.5);
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				// background-color: green;
+				// border: 1px solid whitesmoke;
+				margin: auto;
+				padding: 10% 0;
+				width: 100%;
+				// border-radius: 50%;
+				svg {
+					fill: #c1c1c1;
+				}
+			}
+			.slider {
+				writing-mode: vertical-lr;
+				width: 100%;
+				height: 100%;
+				border-radius: 5px;
+				background: #d3d3d3;
+				margin: 20% 0;
+				// outline: none;
+				opacity: 0.7;
+				-webkit-transition: 0.2s;
+				transition: opacity 0.2s;
+			}
+			.slider:hover {
+				opacity: 1;
+			}
+			.betSliderButton:hover {
+				svg {
+					fill: white !important;
+				}
+				// background-color: white;
+			}
+		}
+	}
+	.playButtonsContainer {
+		width: 100%;
+		max-width: 40rem;
+		height: 100%;
+		margin: auto;
+		display: flex;
+		flex-direction: column;
+		justify-content: end;
+		gap: 0.25em;
+		z-index: 10;
 		.buttons {
 			display: flex;
 			gap: 2%;
-			flex-direction: row;
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 			width: 100%;
-			height: 70%;
+			height: 100%;
 		}
 		.playButton:hover,
 		.presetBetSizeButton:hover {
@@ -1056,9 +1215,8 @@
 		.playButton {
 			position: relative;
 			border: none;
-			width: 33%;
-			border-radius: 1.3vw;
-			font-size: 0.6rem;
+			width: 100%;
+			font-size: 1.5vh;
 			// border-top: 0;
 			border-bottom: 0.4vh solid #c1c1c1;
 			// border: 3px groove #e3e3e3;
@@ -1070,11 +1228,6 @@
 			margin: 0;
 			// padding: 0.2vh 0;
 			background-color: #e3e3e3;
-			:first-child {
-				font-size: 1.3em;
-				text-transform: uppercase;
-				// font-weight: bold;
-			}
 			.fastFold {
 				text-decoration: underline;
 				font-weight: bold;
@@ -1083,6 +1236,7 @@
 			}
 			span {
 				transform: translateY(0.2vh);
+				text-wrap: nowrap;
 			}
 		}
 		.allin {
@@ -1097,115 +1251,64 @@
 		.valueInBB::before {
 			content: 'BB ';
 		}
-		.betSlider {
-			// border: 1px solid black;
-			border-radius: 5px;
-			position: relative;
-			background-color: rgba(0, 0, 0, 0.5);
-			width: 100%;
-			height: 20%;
-			display: flex;
-			justify-content: space-around;
-			align-items: center;
-			margin: 0;
-			.betSliderButton {
-				// all:unset;
-				border: none;
-				color: whitesmoke;
-				font-size: 1.2em;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				// background-color: green;
-				// border: 1px solid whitesmoke;
-				margin: 0;
-				padding: 0;
-				width: 5%;
-				height: 60%;
-				// border-radius: 50%;
-				svg {
-					fill: #c1c1c1;
-				}
-			}
-		}
-	}
-	.slider {
-		-webkit-app-region: no-drag;
-		-webkit-appearance: none;
-		width: 80%;
-		height: 25%;
-		border-radius: 5px;
-		background: #d3d3d3;
-		// outline: none;
-		opacity: 0.7;
-		-webkit-transition: 0.2s;
-		transition: opacity 0.2s;
 	}
 
-	.slider:hover {
-		opacity: 1;
-	}
-
-	.slider::-webkit-slider-thumb {
-		// position: absolute;
-		-webkit-appearance: none;
-		appearance: none;
-		height: calc(var(--height) * 0.025);
-		aspect-ratio: 1;
-		border-radius: 50%;
-		background: white;
-		cursor: pointer;
-		top: 0;
-		left: 0;
-	}
-	.adsContainer {
+	.auxiliarButtonsHamburger {
+		z-index: 1000;
 		position: absolute;
-		width: 35%;
-		height: 15%;
-		top: 82%;
-		left: 1%;
-		z-index: 1;
-	}
-
-	.betSliderButton:hover {
+		top: 2%;
+		right: 2%;
+		width: 10%;
+		max-width: 1.75rem;
+		aspect-ratio: 1/1;
+		font-size: 100%;
 		svg {
-			fill: white !important;
+			margin: auto;
+			height: 100%;
+			width: 100%;
+			padding: 10%;
 		}
-		// background-color: white;
 	}
-	// .hidden {
-	//   display: none;
-	// }
-	.auxiliarButtons {
-		position: absolute;
-		width: 100%;
-		height: 4.5%;
-		top: 20px;
+	.auxiliarButtons.active {
 		display: flex;
-		z-index: 100;
-		gap: 0.5%;
-		padding-top: 0.5%;
-		padding-left: 0.5%;
+	}
+	.auxiliarButtons {
+		display: none;
+		position: absolute;
+		width: 30%;
+		max-width: fit-content;
+		text-wrap: nowrap;
+		top: 10%;
+		right: 2%;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding-left: 0.5rem;
+		z-index: 10000;
 		button {
-			width: 8%;
-			font-size: 0.6em;
-			display: flex;
-			align-items: center;
-			justify-content: center;
+			padding: 0.25em;
+			text-align: center;
+			font-size: 2vh;
 		}
 		.sitout {
 			background-color: lightcoral;
 		}
 	}
-
+	.rebuyPopover.active {
+		display: unset;
+	}
 	.rebuyPopover {
-		width: 35%;
-		height: 35%;
-		// display: flex;
+		display: none;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		width: 40%;
+		height: 40%;
+		z-index: 10000;
 		flex-direction: column;
 		overflow: hidden;
 		padding: 0;
-		font-size: 0.8rem;
+		font-size: 2vh;
 		background-color: white;
 		border-radius: 1rem;
 		border: 1px solid #dddddd;
@@ -1255,11 +1358,6 @@
 						height: 1.2em;
 						border: 1px solid #181818;
 						border-radius: 0.2em;
-						input::-webkit-outer-spin-button,
-						input::-webkit-inner-spin-button {
-							-webkit-appearance: none;
-							margin: 0;
-						}
 						span {
 							display: flex;
 							justify-content: center;
@@ -1346,17 +1444,24 @@
 			}
 		}
 	}
+	.hhPopover.active {
+		display: unset;
+	}
 	.hhPopover {
-		width: 80%;
+		display: none;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		z-index: 10000;
+		transform: translate(-50%, -50%);
+		width: 70%;
 		height: 80%;
-		// display: flex;
 		flex-direction: column;
 		overflow: hidden;
 		padding: 0;
 	}
 	.popoverTitle {
-		width: 98%;
-		height: 5%;
+		width: 100%;
 		// background-color: blue;
 		display: flex;
 		flex-direction: row;
@@ -1397,8 +1502,8 @@
 			font-size: 0.75em;
 			white-space: pre-line;
 			background-color: #2d2d2d;
-			width: 96%;
-			height: 95%;
+			width: 100%;
+			height: 100%;
 			border-radius: 5px;
 			padding: 1%;
 			overflow-y: auto;
@@ -1407,8 +1512,7 @@
 	.popoverOverlay.active {
 		position: absolute;
 		background-color: rgba(0, 0, 0, 0.5);
-		top: 20px;
-		height: calc(100% - 20px);
+		height: 100%;
 		width: 100%;
 		z-index: 10000;
 	}

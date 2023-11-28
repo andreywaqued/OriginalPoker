@@ -33,7 +33,6 @@
 		width: 100%;
 		height: 100%;
 		/* z-index: 100; */
-		border-radius: 5px;
 		/* border: 1px solid black; */
 		/* padding: 1%; */
 		/* background-color: rgba(255,255,255, 0.5); */
@@ -45,9 +44,8 @@
 	.adsImage {
 		background-image: var(--ads-image-url);
 		background-position: center;
-		background-repeat: no-repeat;
-		background-size: cover;
-		border-radius: 5px;
+		/* background-repeat: no-repeat; */
+		background-size: contain;
 		width: 100%;
 		height: 100%;
 		cursor: pointer;

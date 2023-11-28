@@ -1,7 +1,6 @@
 <script>
 	import socket from '$lib/services/socket';
 	import userStore from '$lib/stores/userStore';
-	import navItemsStore from '$lib/stores/navItemsStore';
 	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
 	import Wrapper from '$lib/components/Wrapper.svelte';
 	import Auth from '$lib/components/auth/index.svelte';
@@ -34,9 +33,12 @@
 	{:else}
 		<Banner />
 		<Navbar />
-		<Lobby />
-		{#each Object.entries($userStore.players) as [id, player]}
-			<Table playerID={id} />
+		{#each Object.entries({ lobby: {}, ...$userStore?.players }) as [id, player] (id)}
+			{#if id === 'lobby'}
+				<Lobby />
+			{:else}
+				<Table hero={player} />
+			{/if}
 		{/each}
 	{/if}
 </Wrapper>

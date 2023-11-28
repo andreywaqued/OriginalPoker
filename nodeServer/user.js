@@ -52,17 +52,14 @@ class User {
     /**
      *
      * @param {number} amount 
-     * @param {number} id 
+     * @param {number} userID 
      * @param {string} source
      * @param {any} db 
      *
     */
-    static async handleMoney(amount, user, socket, source, db) {
+    static async handleMoney(amount, userID, source, db) {
         logger.log("handleMoney")
-        logger.log(user)
-        user.balance = user.balance.plus(amount)
-        if (socket) socket.emit("updateUserInfo", {user: user, status: 200})
-        await updateUserBalanceInDB(amount, user.id, source, db)
+        await updateUserBalanceInDB(amount, userID, source, db)
     }
     static async updateUserSettings(userid, settings, db) {
         logger.log("updateUserSettings()")
@@ -242,15 +239,20 @@ async function fetchUserTransactionsFromDB(id, offset, db) {
      *
     */
 async function updateUserBalanceInDB(amount, id, source, db) {
-    await db.transact(async client => {
-        const req = await Promise.all([
-            db.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
-                [amount, id]),    
-            db.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
-                [id, amount, source])
-        ])
-        return req
-    })
+    try {
+        await db.transact(async client => {
+            const req = await Promise.all([
+                client.query("UPDATE users SET balance = balance + $1 WHERE userid = $2;",
+                    [amount, id]),    
+                client.query("INSERT INTO moneyTransactions(userid, amount, source) VALUES($1, $2, $3);",
+                    [id, amount, source])
+            ])
+            return req
+        })
+    } catch (err) {
+        console.log("Something bad happen on updateUserBalanceInDB")
+        console.log(err)
+    }
 }
 
 module.exports = User
