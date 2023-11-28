@@ -1126,6 +1126,7 @@
 			border-radius: 5px;
 			position: relative;
 			background-color: rgba(0, 0, 0, 0.5);
+			height: 100%;
 			width: 50%;
 			max-width: 3em;
 			display: flex;
@@ -1152,7 +1153,7 @@
 				}
 			}
 			.slider {
-				appearance: slider-vertical;
+				writing-mode: vertical-lr;
 				width: 100%;
 				height: 100%;
 				border-radius: 5px;
