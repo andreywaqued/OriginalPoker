@@ -173,6 +173,8 @@
 			// clearInterval(timer)
 			if (playerTurn === false) return;
 			if (timeLeftPerc <= 50 && !attentionSoundPlayed && isHero) {
+				audioTurnWarning.currentTime = 0;
+				audioTurnWarning.play();
 				attentionSoundPlayed = true;
 			}
 			if (timeLeftPerc > 1) return (timeLeftPerc -= 1);
@@ -210,7 +212,16 @@
 	// $: changePositionClass();
 
 	// url('/player1.png')
+
+	/** @type {HTMLAudioElement} */
+	let audioTurnWarning;
 </script>
+
+<!-- player turn warning -->
+<audio bind:this={audioTurnWarning}>
+	<source src="sounds/aviso_de_atencao.wav" type="audio/mp3" />
+	Your browser does not support audio.
+</audio>
 
 <div class={positioningClass}>
 	<div
@@ -580,8 +591,7 @@
 		.playerButton {
 			top: 15%;
 		}
-		.playerBet{
-
+		.playerBet {
 		}
 	}
 	.pos1 {

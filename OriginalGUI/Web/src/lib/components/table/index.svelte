@@ -106,8 +106,8 @@
 				betValue = Math.round((hero.betSize + hero.stackSize) * 100) / 100;
 			minBet = betValue;
 			maxBet = Math.round((hero.betSize + hero.stackSize) * 100) / 100;
-			// api.send("focusOnWindow")
-			// api.send("playSound", "hora_de_jogar.wav")
+			audioTurn.currentTime = 0;
+			audioTurn.play();
 		}
 		if (!playerSitout) possibleActions = hero.possibleActions;
 		tableRotateAmount = hero.position;
@@ -552,10 +552,19 @@
 	function toggleAuxiliarButtons() {
 		auxiliarButtonsPopoverActive = !auxiliarButtonsPopoverActive;
 	}
+
+	/** @type {HTMLAudioElement} */
+	let audioTurn;
 </script>
 
 <!-- SET IMAGES PRELOAD HEAD -->
 <PreloadImages />
+
+<!-- player turn audio-->
+<audio bind:this={audioTurn}>
+	<source src="sounds/hora_de_jogar.wav" type="audio/mp3" />
+	Your browser does not support audio.
+</audio>
 
 <!-- THIS IS TAILWIND -->
 <section class:hide={$navSelectedItemStore !== hero.id} on:wheel={handleScroll}>
