@@ -549,7 +549,7 @@ socketManager.on('connection', (socket) => {
     Object.values(user.players).forEach((player) => {
       logger.log("player disconnected: " + player.id + " - " + player.poolID)
 
-      lightningPoolManager.leavePool(player, false)
+      if (player.poolID) lightningPoolManager.leavePool(player, false)
     })
   });
 
