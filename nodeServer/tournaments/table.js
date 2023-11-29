@@ -801,7 +801,7 @@ class Table {
             if (!player) continue
             if (player.stackSize.equals(0)) {
                 this.tableManager.playerPoolManager.sendEmptyTable(player)
-                this.removePlayer(player) //remove player if stack === 0
+                if (tournament) this.removePlayer(player) //remove player if stack === 0
                 continue
             }
             if (player.nextTableID && player.nextTableID!=this.id) {
@@ -820,7 +820,7 @@ class Table {
             player.lastAction = ""
             if (tournament) player.tournamentPosition = tournament.playersList.indexOf(player)+1
         } //now im resetting these info when the player sits in
-        this.broadcastHandState()
+        if (tournament) this.broadcastHandState()
         return this.startHandRoutine()
         logger.log("closeHand() 2")
         // this.tableManager.socketManager.socketsLeave(`table:${this.id}`)

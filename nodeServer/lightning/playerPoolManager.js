@@ -82,9 +82,9 @@ class PlayerPoolManager {
             this.tableManager.placePlayerIntoTable(player)
             this.socketManager.to("lobby").emit("updatePools", this.pools)
             logger.log("log4")
-            user.balance = user.balance.minus(stackSize)
+            // user.balance = user.balance.minus(stackSize)
             logger.log("updating balance")
-            User.handleMoney(-stackSize.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
+            User.handleMoney(-stackSize.toNumber(), user, socket, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
             // this.fastify.pg.connect().then(async (client) => {
             //     logger.log("updating balance")
             //     try {
@@ -98,7 +98,7 @@ class PlayerPoolManager {
             //     client.release();
             // });
             // if (socket) socket.emit("updatePlayerInfo", player)
-            if (socket) socket.emit("updateUserInfo", { user : user, status: 200})
+            // if (socket) socket.emit("updateUserInfo", { user : user, status: 200})
             return 
         }
         if (socket) socket.emit("enterPoolResponse", { response: "stacksize not valid", status: 403 })
@@ -299,9 +299,9 @@ class PlayerPoolManager {
             if (rebuyAmount > 0) {
                 logger.log("rebuyAmount > 0")
                 player.stackSize = player.stackSize.plus(rebuyAmount)
-                user.balance = user.balance.minus(rebuyAmount)
+                // user.balance = user.balance.minus(rebuyAmount)
                 logger.log("updating balance")
-                User.handleMoney(-rebuyAmount.toNumber(), user.id, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
+                User.handleMoney(-rebuyAmount.toNumber(), user, socket, `⚡ ${this.pools[poolID].gameTitle}`, this.fastify.pg)
                 // this.fastify.pg.connect().then(async (client) => {
                 //     logger.log("updating balance")
                 //     const result = await client.query(`UPDATE users SET balance = balance - ${rebuyAmount.toNumber()} WHERE username = '${user.name}'`);
@@ -310,7 +310,7 @@ class PlayerPoolManager {
                 // });
                 player.rebuyAmount = new Decimal(0)
                 player.isSitout = false
-                socket.emit("updateUserInfo", { user : user, status: 200})
+                // socket.emit("updateUserInfo", { user : user, status: 200})
                 if (table) {
                     if (table.waitingForPlayers) return table.broadcastHandState()
                 }
@@ -360,15 +360,15 @@ class PlayerPoolManager {
         if (!table || player.tableClosed || !player.tableID) {
             if (this.leavePoolTimeout[player.id]) clearTimeout(this.leavePoolTimeout[player.id])
             logger.log("leavePool() 2 table undefined or player.tableClosed or player.tableID undefined")
-            user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
+            // user.balance = user.balance.plus(player.stackSize) //devolver o balance pro jogador no banco de dados
             logger.log("updating balance")
             delete user.players[player.id]
             delete this.playersByPool[player.poolID][player.id]
-            User.handleMoney(player.stackSize.toNumber(), user.id, `⚡ ${this.pools[player.poolID].gameTitle}`, this.fastify.pg)
             const socket = this.socketsByUserID[player.userID]
+            User.handleMoney(player.stackSize.toNumber(), user, socket, `⚡ ${this.pools[player.poolID].gameTitle}`, this.fastify.pg)
             if (socket) {
                 socket.emit("leavePoolResponse", { response : "player left the pool", status: 200})
-                socket.emit("updateUserInfo", { user : user, status: 200})
+                // socket.emit("updateUserInfo", { user : user, status: 200})
             }
             this.pools[player.poolID].currentPlayers = Object.keys(this.playersByPool[player.poolID]).length
             this.socketManager.to("lobby").emit("updatePools", this.pools)
