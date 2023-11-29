@@ -6,6 +6,13 @@
 	import { handleSwipe } from '$lib/utils/Swiper';
 	import PreloadImages from './PreloadImages.svelte';
 
+	let buyInAmount = {
+		lightning1: -1,
+		lightning2: -1,
+		lightning3: -1,
+		lightning4: -1
+	};
+
 	socket.on('updatePools', (p) => {
 		console.log('updatePools');
 		let gamesAvailable = $gamesAvailableStore;
@@ -17,7 +24,9 @@
 			gamePool.minBuyIn = pool.minBuyIn;
 			gamePool.maxBuyIn = pool.maxBuyIn;
 			gamePool.players = pool.currentPlayers;
-			if (gamePool.buyInAmount === -1) gamePool.buyInAmount = pool.maxBuyIn;
+
+			// set component variable of the buy in amount
+			buyInAmount[key] = pool.minBuyIn;
 		});
 		console.log(gamesAvailable);
 		gamesAvailableStore.set(gamesAvailable);
@@ -54,7 +63,7 @@
 	 */
 	function openNewTable(poolID) {
 		console.log('openNewTable');
-		let stackSize = parseFloat($gamesAvailableStore[poolID].buyInAmount.toString());
+		let stackSize = parseFloat(buyInAmount[poolID].toString());
 		stackSize = Math.round(stackSize * 100) / 100;
 		const balance = $userStore?.balance || 0;
 		console.log(stackSize);
@@ -81,15 +90,15 @@
 <section
 	class="h-full w-full"
 	class:hidden={$navSelectedItemStore !== 'lobby'}
-	on:touchstart|self={(event) => handleSwipe(event, 'lobby')}
-	on:touchmove|self={(event) => handleSwipe(event, 'lobby')}
-	on:touchend|self={(event) => handleSwipe(event, 'lobby')}
+	on:touchstart|self|passive={(event) => handleSwipe(event, 'lobby')}
+	on:touchmove|self|passive={(event) => handleSwipe(event, 'lobby')}
+	on:touchend|self|passive={(event) => handleSwipe(event, 'lobby')}
 >
 	<h2 class="pb-2 pl-6 pt-4 text-lg font-bold uppercase tracking-widest text-white">
 		Lightning Cash
 	</h2>
 	<div class="grid max-w-fit grid-flow-col gap-x-2 overflow-x-auto px-3">
-		{#each Object.entries($gamesAvailableStore) as [key, game]}
+		{#each Object.entries($gamesAvailableStore) as [key, game] (key)}
 			<div
 				class="w-36 space-y-2 rounded-lg border-2 border-[rgb(69,69,69)] bg-[rgb(49,49,49)] p-2 text-white"
 			>
@@ -119,9 +128,21 @@
 						</div>
 					</div>
 				</div>
+				<div>
+					<p class="text-center">${buyInAmount[key]}</p>
+					<input
+						class="text-black"
+						type="range"
+						step="0.01"
+						min={game.minBuyIn}
+						max={game.maxBuyIn}
+						bind:value={buyInAmount[key]}
+					/>
+				</div>
 				<button
 					on:click={openNewTable(key)}
-					class="mx-auto !mb-2 !mt-4 w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase"
+					disabled={$userStore?.balance < game.minBuyIn}
+					class="mx-auto !mb-2 w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase"
 				>
 					Join now
 				</button>
