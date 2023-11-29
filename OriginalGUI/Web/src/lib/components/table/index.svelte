@@ -713,13 +713,14 @@
 		        <button class="playButton" on:click={raiseAction}><span>Raise</span><span class="value">{betValue}</span></button> -->
 				</div>
 			</div>
+		{:else}
+			<!-- TODO ?ads will be unique each table or persist the same every table? -->
+			<div class="adsContainer">
+				{#if !doordashTable}
+					<Ads bind:changeAds={callChangeAds} />
+				{/if}
+			</div>
 		{/if}
-		<!-- TODO ads will be unique each table or persist the same every table? -->
-		<div class="adsContainer">
-			{#if !doordashTable}
-				<Ads bind:changeAds={callChangeAds} />
-			{/if}
-		</div>
 	</div>
 
 	<!-- REBUY -->
@@ -1068,7 +1069,7 @@
 			width: 100%;
 			height: 30%;
 			display: flex;
-			flex-direction: column;
+			flex-direction: column-reverse;
 			gap: 0.15em;
 			.presetBetSizeButton {
 				// all: unset;
@@ -1187,12 +1188,13 @@
 	.playButtonsContainer {
 		width: 100%;
 		max-width: 40rem;
-		height: 100%;
+		height: 75%;
 		margin: auto;
 		display: flex;
 		flex-direction: column;
 		justify-content: end;
 		gap: 0.25em;
+		padding: 0 2%;
 		z-index: 10;
 		.buttons {
 			display: flex;
