@@ -8,6 +8,9 @@ export default {
 				'gray-dark': 'rgb(49,49,49)',
 				'gray': 'rgb(69,69,69)'
 			},
+			fontSize: {
+				'2xs': "0.5rem"
+			}
 		}
 	},
 	plugins: []
