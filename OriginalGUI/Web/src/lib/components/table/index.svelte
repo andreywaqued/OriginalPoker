@@ -781,7 +781,7 @@
 	<!-- MODALS -->
 
 	<!-- HAMBURGER MENU -->
-	<Modal showModal={menuVisibility} class="w-1/3 bg-transparent">
+	<Modal showModal={menuVisibility} class="w-1/3 min-w-fit max-w-xs bg-transparent">
 		<div class="auxiliarButtons">
 			<button on:click={leavePool}>Leave Table</button>
 			<button on:click={toggleHH}>Hand History</button>
@@ -790,7 +790,7 @@
 		</div>
 	</Modal>
 	<!-- REBUY -->
-	<Modal showModal={rebuyVisibility} class="w-1/2 h-1/3 bg-transparent">
+	<Modal showModal={rebuyVisibility} class="w-1/2 max-w-xs h-1/3 bg-transparent">
 		<div class="rebuyPopover" id="rebuyPopover">
 			<div class="popoverTitle">
 				<span>REBUY {winTitle}</span>
@@ -852,7 +852,7 @@
 		</div>
 	</Modal>
 	<!-- HAND HISTORY -->
-	<Modal class="w-2/3 h-2/3 bg-transparent" showModal={hhVisibility}>
+	<Modal class="w-2/3 min-w-fit h-2/3 bg-transparent" showModal={hhVisibility}>
 		<div class="hhPopover" id="hhPopover">
 			<div class="popoverTitle">
 				<button
@@ -1286,13 +1286,12 @@
 	}
 	.auxiliarButtons {
 		display: flex;
+		background-color: white;
+		padding: 1.5rem;
 		width: 100%;
-		max-width: fit-content;
 		text-wrap: nowrap;
 		flex-direction: column;
 		gap: 0.25rem;
-		margin: auto;
-		z-index: 10000;
 		button {
 			padding: 0.25em;
 			text-align: center;
@@ -1305,7 +1304,6 @@
 	.rebuyPopover {
 		width: 100%;
 		height: 100%;
-		z-index: 10000;
 		overflow: hidden;
 		padding: 0;
 		font-size: 2vh;
@@ -1373,7 +1371,7 @@
 					align-items: center;
 					color: #707070;
 					.rebuyPresetButton {
-					width: 40%;
+						width: 40%;
 						padding: 1% 2%;
 						border-radius: 0.5em;
 						border: 1px solid #181818;
@@ -1432,33 +1430,29 @@
 		height: 100%;
 		flex-direction: column;
 		overflow: hidden;
-		padding: 0;
 	}
 	.popoverTitle {
 		width: 100%;
 		// background-color: blue;
 		display: flex;
-		flex-direction: row;
 		justify-content: space-around;
 		align-items: center;
 		border-bottom: 1px solid #888888;
-		padding: 0 1%;
 		background-color: #1d1d1d;
 		color: #e5e5e5;
+		padding-right: 1.5rem;
+		font-size: 0.75em;
+		height: 2em;
 		button {
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			height: 90%;
 			aspect-ratio: 1;
-			font-size: 1em;
+			width: 1.5em;
 		}
 		.closeButton {
 			position: absolute;
 			color: #1d1d1d;
-			height: 4%;
-			right: 0.25%;
-			top: 0.25%;
 		}
 	}
 	.popoverMain {

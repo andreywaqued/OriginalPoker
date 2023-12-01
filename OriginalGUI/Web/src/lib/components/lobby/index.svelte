@@ -121,7 +121,7 @@
 <PreloadImages />
 
 <!-- MODALS -->
-<Modal class="w-1/3 bg-transparent" showModal={gameModal.visibility}>
+<Modal class="w-1/3 max-w-xs bg-transparent" showModal={gameModal.visibility}>
 	<div class="flex w-full flex-col rounded bg-white py-4">
 		<p class="text-center">⚡{gameModal.gameTitle}</p>
 		<input
@@ -139,7 +139,7 @@
 			<p>
 				${gameModal.buyInAmount}
 			</p>
-			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+			<svg class="rounded" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
 				><path
 					d="M0 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v6h8V5l5 5-5 5v-3z"
 				/></svg
