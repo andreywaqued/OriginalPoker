@@ -7,6 +7,7 @@
 	import Card from '$lib/components/table/Card.svelte';
 	import Player from '$lib/components/table/Player.svelte';
 	import Pot from '$lib/components/table/Pot.svelte';
+	import Modal from '$lib/components/Modal.svelte';
 	import PreloadImages from './PreloadImages.svelte';
 
 	/**
@@ -486,7 +487,10 @@
 		sitoutPopoverActive = isSitout;
 		// popovertarget="test"
 	}
-	let rebuyPopoverActive = false;
+	/**
+	 * @type {(Boolean | undefined)}
+	 */
+	let rebuyVisibility = false;
 	let rebuyAmount = 0;
 	let minRebuyAmount = 0;
 	let maxRebuyAmount = 0;
@@ -501,7 +505,8 @@
 		if (minRebuyAmount < 0) minRebuyAmount = 0;
 		if (rebuyAmount < 0) rebuyAmount = 0;
 		maxRebuyAmount = rebuyAmount;
-		rebuyPopoverActive = !rebuyPopoverActive;
+		rebuyVisibility = undefined;
+		rebuyVisibility = true;
 		// popovertarget="test"
 	}
 	function tryRebuy() {
@@ -510,11 +515,16 @@
 		// TODO THIS NEED TO BE REVIEWED
 		if (rebuy > 0)
 			socket.emit('tryRebuy', { playerID: hero.id, poolID: hero.poolID, stackSize: rebuy });
-		toggleRebuy();
+		rebuyVisibility = false;
 	}
-	let hhPopoverActive = false;
+
+	/**
+	 * @type {(Boolean | undefined)}
+	 */
+	let hhVisibility = false;
 	function toggleHH() {
-		hhPopoverActive = !hhPopoverActive;
+		hhVisibility = undefined;
+		hhVisibility = true;
 		hhIndex = handHistories.length - 1;
 		// popovertarget="test"
 	}
@@ -548,9 +558,14 @@
 		console.log('leavePool');
 		socket.emit('leavePool', hero);
 	}
-	let auxiliarButtonsPopoverActive = false;
-	function toggleAuxiliarButtons() {
-		auxiliarButtonsPopoverActive = !auxiliarButtonsPopoverActive;
+
+	/**
+	 * @type {(Boolean | undefined)}
+	 */
+	let menuVisibility = false;
+	function openMenuModal() {
+		menuVisibility = undefined;
+		menuVisibility = true;
 	}
 
 	/** @type {HTMLAudioElement} */
@@ -570,15 +585,9 @@
 <section class:hide={$navSelectedItemStore !== hero.id} on:wheel={handleScroll}>
 	<!-- TRANSITION ANIMATION -->
 	<div class:transitioning></div>
-	<!-- OVERLAYS -->
-	<div
-		class="popoverOverlay"
-		class:active={auxiliarButtonsPopoverActive}
-		on:click={toggleAuxiliarButtons}
-	></div>
-	<div class="popoverOverlay" class:active={hhPopoverActive} on:click={toggleHH}></div>
-	<div class="popoverOverlay" class:active={rebuyPopoverActive} on:click={toggleRebuy}></div>
-	<button on:click={toggleAuxiliarButtons} class="auxiliarButtonsHamburger">
+
+	<!-- HAMBURGER MENU BUTTON -->
+	<button on:click={openMenuModal} class="auxiliarButtonsHamburger">
 		<svg
 			xmlns="http://www.w3.org/2000/svg"
 			fill="none"
@@ -594,12 +603,7 @@
 			/>
 		</svg>
 	</button>
-	<div class:active={auxiliarButtonsPopoverActive} class="auxiliarButtons">
-		<button on:click={leavePool}>Leave Table</button>
-		<button on:click={toggleHH}>Hand History</button>
-		<button on:click={toggleRebuy}>Rebuy</button>
-		<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
-	</div>
+
 	<div class="table">
 		{#if doordashTable}
 			<!--<img />-->
@@ -723,103 +727,6 @@
 		{/if}
 	</div>
 
-	<!-- REBUY -->
-	<div class="rebuyPopover" class:active={rebuyPopoverActive} id="rebuyPopover">
-		<div class="popoverTitle">
-			<span>REBUY {winTitle}</span>
-		</div>
-		<div class="popoverMain">
-			<div class="balanceBlock">
-				<span>AVAIABLE BALANCE:</span>
-				<span>${balance}</span>
-			</div>
-			<div class="rebuyBlock">
-				<div class="rebuyInputBlock">
-					<label for="rebuyAmount">REBUY AMOUNT:</label>
-					<div class="inputWrapper">
-						<span>$</span>
-						<input
-							placeholder="Amount to Rebuy"
-							id="rebuyAmount"
-							bind:value={rebuyAmount}
-							min={minRebuyAmount}
-							max={maxRebuyAmount}
-							step="0.01"
-							type="number"
-							on:keydown={() => (rebuyAmount = Number(rebuyAmount.toFixed(2)))}
-						/>
-					</div>
-				</div>
-				<div class="rebuyButtonsBlock">
-					<button
-						class="rebuyPresetButton"
-						on:click={() => {
-							setRebuyAmount(minRebuyAmount);
-						}}
-					>
-						<span>MIN</span>
-						<span class="value">${minRebuyAmount}</span>
-					</button>
-					<button
-						class="rebuyPresetButton"
-						on:click={() => {
-							setRebuyAmount(maxRebuyAmount);
-						}}
-					>
-						<span>MAX</span>
-						<span class="value">${maxRebuyAmount}</span>
-					</button>
-				</div>
-			</div>
-			<div class="rebuyConfirmButtonsBlock">
-				<button
-					class="rebuyConfirmButtons confirm"
-					on:click={tryRebuy}
-					disabled={rebuyAmount > balance ||
-						rebuyAmount > maxRebuyAmount ||
-						rebuyAmount < minRebuyAmount}>OK</button
-				>
-				<button class="rebuyConfirmButtons cancel" on:click={toggleRebuy}>CANCEL</button>
-			</div>
-		</div>
-	</div>
-	<!-- HAND HISTORY -->
-	<div class="hhPopover" class:active={hhPopoverActive} id="hhPopover">
-		<div class="popoverTitle">
-			<button
-				disabled={hhIndex <= 0}
-				on:click={() => {
-					changeHandHistoryIndex(-1);
-				}}
-				><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-					><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-						d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"
-					/></svg
-				></button
-			>
-			<span><pre>Hand History {hhIndex + 1}/{handHistories.length}</pre></span>
-			<button
-				disabled={hhIndex >= handHistories.length - 1}
-				on:click={() => {
-					changeHandHistoryIndex(1);
-				}}
-				><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-					><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-						d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"
-					/></svg
-				></button
-			>
-			<button class="closeButton" on:click={toggleHH}>X</button>
-		</div>
-		<div class="popoverMain">
-			{#if handHistories.length > 0}
-				<div class="handHistory">{handHistories[hhIndex]}</div>
-			{:else}
-				<div class="handHistory">Hand History Is Empty</div>
-			{/if}
-		</div>
-	</div>
-
 	<!-- BET VALUE CONTAINER -->
 	{#if possibleActions.length > 1}
 		<div class="betContainer">
@@ -870,6 +777,117 @@
 			</div>
 		</div>
 	{/if}
+
+	<!-- MODALS -->
+
+	<!-- HAMBURGER MENU -->
+	<Modal showModal={menuVisibility} class="w-1/3 bg-transparent">
+		<div class="auxiliarButtons">
+			<button on:click={leavePool}>Leave Table</button>
+			<button on:click={toggleHH}>Hand History</button>
+			<button on:click={toggleRebuy}>Rebuy</button>
+			<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
+		</div>
+	</Modal>
+	<!-- REBUY -->
+	<Modal showModal={rebuyVisibility} class="w-1/2 h-1/3 bg-transparent">
+		<div class="rebuyPopover" id="rebuyPopover">
+			<div class="popoverTitle">
+				<span>REBUY {winTitle}</span>
+			</div>
+			<div class="popoverMain">
+				<div class="balanceBlock">
+					<span>AVAIABLE BALANCE:</span>
+					<span>${balance}</span>
+				</div>
+				<div class="rebuyBlock">
+					<div class="rebuyInputBlock">
+						<label for="rebuyAmount">REBUY AMOUNT:</label>
+						<div class="inputWrapper">
+							<span>$</span>
+							<input
+								placeholder="Amount to Rebuy"
+								id="rebuyAmount"
+								bind:value={rebuyAmount}
+								min={minRebuyAmount}
+								max={maxRebuyAmount}
+								step="0.01"
+								type="number"
+								on:keydown={() => (rebuyAmount = Number(rebuyAmount.toFixed(2)))}
+							/>
+						</div>
+					</div>
+					<div class="rebuyButtonsBlock">
+						<button
+							class="rebuyPresetButton"
+							on:click={() => {
+								setRebuyAmount(minRebuyAmount);
+							}}
+						>
+							<span>MIN</span>
+							<span class="value">${minRebuyAmount}</span>
+						</button>
+						<button
+							class="rebuyPresetButton"
+							on:click={() => {
+								setRebuyAmount(maxRebuyAmount);
+							}}
+						>
+							<span>MAX</span>
+							<span class="value">${maxRebuyAmount}</span>
+						</button>
+					</div>
+				</div>
+				<div class="rebuyConfirmButtonsBlock">
+					<button
+						class="rebuyConfirmButtons confirm"
+						on:click={tryRebuy}
+						disabled={rebuyAmount > balance ||
+							rebuyAmount > maxRebuyAmount ||
+							rebuyAmount < minRebuyAmount}>OK</button
+					>
+					<button class="rebuyConfirmButtons cancel" on:click={toggleRebuy}>CANCEL</button>
+				</div>
+			</div>
+		</div>
+	</Modal>
+	<!-- HAND HISTORY -->
+	<Modal class="w-2/3 h-2/3 bg-transparent" showModal={hhVisibility}>
+		<div class="hhPopover" id="hhPopover">
+			<div class="popoverTitle">
+				<button
+					disabled={hhIndex <= 0}
+					on:click={() => {
+						changeHandHistoryIndex(-1);
+					}}
+					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+							d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"
+						/></svg
+					></button
+				>
+				<span><pre>Hand History {hhIndex + 1}/{handHistories.length}</pre></span>
+				<button
+					disabled={hhIndex >= handHistories.length - 1}
+					on:click={() => {
+						changeHandHistoryIndex(1);
+					}}
+					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+							d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"
+						/></svg
+					></button
+				>
+			</div>
+			<div class="popoverMain">
+				{#if handHistories.length > 0}
+					<div class="handHistory">{handHistories[hhIndex]}</div>
+				{:else}
+					<div class="handHistory">Hand History Is Empty</div>
+				{/if}
+			</div>
+		</div>
+	</Modal>
 </section>
 
 <style lang="scss">
@@ -888,7 +906,6 @@
 		display: none;
 	}
 	.table {
-		all: unset;
 		position: relative;
 		height: 100%;
 		aspect-ratio: 10/16;
@@ -1026,7 +1043,6 @@
 		transform: scale(0.95);
 	}
 	button {
-		all: unset;
 		border: none;
 		border-bottom: 0.4vh solid #c1c1c1;
 		background-color: #e3e3e3;
@@ -1072,7 +1088,6 @@
 			flex-direction: column-reverse;
 			gap: 0.15em;
 			.presetBetSizeButton {
-				// all: unset;
 				width: 100%;
 				height: 100%;
 				// margin: 0 1%;
@@ -1086,7 +1101,6 @@
 		}
 		.betDisplay {
 			/* Chrome, Safari, Edge, Opera */
-			all: unset;
 			background-color: rgba(0, 0, 0, 0.5);
 			width: 100%;
 			height: 10%;
@@ -1212,7 +1226,6 @@
 			transform: scale(0.95);
 		}
 		button {
-			all: unset;
 		}
 		.playButton {
 			position: relative;
@@ -1271,20 +1284,14 @@
 			padding: 10%;
 		}
 	}
-	.auxiliarButtons.active {
-		display: flex;
-	}
 	.auxiliarButtons {
-		display: none;
-		position: absolute;
-		width: 30%;
+		display: flex;
+		width: 100%;
 		max-width: fit-content;
 		text-wrap: nowrap;
-		top: 10%;
-		right: 2%;
 		flex-direction: column;
 		gap: 0.25rem;
-		padding-left: 0.5rem;
+		margin: auto;
 		z-index: 10000;
 		button {
 			padding: 0.25em;
@@ -1295,69 +1302,50 @@
 			background-color: lightcoral;
 		}
 	}
-	.rebuyPopover.active {
-		display: unset;
-	}
 	.rebuyPopover {
-		display: none;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		width: 40%;
-		height: 40%;
+		width: 100%;
+		height: 100%;
 		z-index: 10000;
-		flex-direction: column;
 		overflow: hidden;
 		padding: 0;
 		font-size: 2vh;
 		background-color: white;
 		border-radius: 1rem;
 		border: 1px solid #dddddd;
+		display: flex;
+		flex-direction: column;
 		.popoverTitle {
-			height: 15%;
 			background-color: #f2f2f2;
 			color: #181818;
 			font-weight: bold;
 			text-transform: uppercase;
 		}
 		.popoverMain {
-			width: 90%;
-			height: 85%;
 			display: flex;
+			justify-content: space-evenly;
+			align-items: center;
 			flex-direction: column;
 			color: #181818;
-			margin-left: 5%;
 			.balanceBlock {
 				display: flex;
 				flex-direction: row;
-				width: 100%;
-				height: 25%;
 				justify-content: space-between;
 				align-items: center;
-				border-bottom: 1px solid #dddddd;
 			}
 			.rebuyBlock {
 				display: flex;
 				flex-direction: column;
-				width: 100%;
-				height: 50%;
 				justify-content: center;
 				align-items: flex-start;
-				gap: 1%;
-				font-size: 0.8em;
+				gap: 5%;
 				.rebuyInputBlock {
 					display: flex;
 					flex-direction: row;
-					width: 100%;
-					height: 40%;
 					justify-content: space-between;
 					align-items: center;
 					font-weight: bold;
 					.inputWrapper {
 						position: relative;
-						width: 40%;
-						height: 1.2em;
 						border: 1px solid #181818;
 						border-radius: 0.2em;
 						span {
@@ -1370,7 +1358,6 @@
 							color: #181818;
 						}
 						input {
-							all: unset;
 							width: 100%;
 							height: 100%;
 							text-align: right;
@@ -1380,21 +1367,18 @@
 				}
 				.rebuyButtonsBlock {
 					display: flex;
-					flex-direction: row;
 					width: 100%;
-					height: 60%;
-					justify-content: space-between;
+					flex-direction: row;
+					justify-content: space-evenly;
 					align-items: center;
 					color: #707070;
 					.rebuyPresetButton {
-						all: unset;
-						width: 45%;
-						height: 80%;
+					width: 40%;
+						padding: 1% 2%;
 						border-radius: 0.5em;
 						border: 1px solid #181818;
 						display: flex;
 						flex-direction: column;
-						justify-content: center;
 						align-items: center;
 						.value {
 							font-weight: bold;
@@ -1413,14 +1397,11 @@
 				display: flex;
 				flex-direction: row;
 				width: 100%;
-				height: 25%;
 				justify-content: space-around;
 				align-items: center;
 				font-size: 0.6em;
 				.rebuyConfirmButtons {
-					all: unset;
-					width: 35%;
-					height: 30%;
+					width: 40%;
 					border-radius: 5em;
 					border: 1px solid #181818;
 				}
@@ -1446,18 +1427,9 @@
 			}
 		}
 	}
-	.hhPopover.active {
-		display: unset;
-	}
 	.hhPopover {
-		display: none;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		z-index: 10000;
-		transform: translate(-50%, -50%);
-		width: 70%;
-		height: 80%;
+		width: 100%;
+		height: 100%;
 		flex-direction: column;
 		overflow: hidden;
 		padding: 0;
@@ -1491,7 +1463,7 @@
 	}
 	.popoverMain {
 		width: 100%;
-		height: 95%;
+		height: 100%;
 		// background-color: yellow;
 		display: flex;
 		flex-direction: column;
@@ -1510,13 +1482,6 @@
 			padding: 1%;
 			overflow-y: auto;
 		}
-	}
-	.popoverOverlay.active {
-		position: absolute;
-		background-color: rgba(0, 0, 0, 0.5);
-		height: 100%;
-		width: 100%;
-		z-index: 10000;
 	}
 
 	// ::backdrop {

@@ -4,14 +4,36 @@
 	import socket from '$lib/services/socket';
 	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
 	import { handleSwipe } from '$lib/utils/Swiper';
+	import Modal from '$lib/components/Modal.svelte';
 	import PreloadImages from './PreloadImages.svelte';
 
-	let buyInAmount = {
-		lightning1: -1,
-		lightning2: -1,
-		lightning3: -1,
-		lightning4: -1
+	// TYPES
+
+	/**
+	 * @typedef {import('$lib/stores/gamesAvailableStore').Game} Game
+	 *
+	 * @typedef {Object} Modal
+	 * @property {Boolean} visibility
+	 * @property {String} key
+	 */
+
+	// VARIABLES
+
+	/**
+	 * @type {Game & Modal}
+	 */
+	let gameModal = {
+		blinds: '',
+		gameTitle: '',
+		players: 0,
+		maxBuyIn: 0,
+		minBuyIn: 0,
+		buyInAmount: 0,
+		visibility: false,
+		key: ''
 	};
+
+	// SOCKET HANDLERS
 
 	socket.on('updatePools', (p) => {
 		console.log('updatePools');
@@ -24,9 +46,6 @@
 			gamePool.minBuyIn = pool.minBuyIn;
 			gamePool.maxBuyIn = pool.maxBuyIn;
 			gamePool.players = pool.currentPlayers;
-
-			// set component variable of the buy in amount
-			buyInAmount[key] = pool.minBuyIn;
 		});
 		console.log(gamesAvailable);
 		gamesAvailableStore.set(gamesAvailable);
@@ -58,27 +77,41 @@
 		}
 	});
 
+	// FUNCTIONS
+
 	/**
-	 * @param {('lightning1'|'lightning2'|'lightning3'|'lightning4')} poolID
+	 * @param {string} key
+	 * @param {import('$lib/stores/gamesAvailableStore').Game} game
 	 */
-	function openNewTable(poolID) {
-		console.log('openNewTable');
-		let stackSize = parseFloat(buyInAmount[poolID].toString());
+	function openAndSetupGameModal(key, game) {
+		// standard amount value to enter the game;
+		game.buyInAmount = game.minBuyIn;
+		gameModal = { ...game, key, visibility: true };
+		return null;
+	}
+
+	/**
+	 * @param {Game & Modal} game
+	 */
+	function enterPool(game) {
+		console.log('enterPool');
+		gameModal.visibility = false;
+		let stackSize = parseFloat(game.buyInAmount.toString());
 		stackSize = Math.round(stackSize * 100) / 100;
 		const balance = $userStore?.balance || 0;
 		console.log(stackSize);
 		console.log(balance);
-		console.log($gamesAvailableStore[poolID].minBuyIn);
-		console.log($gamesAvailableStore[poolID].maxBuyIn);
+		console.log(game.minBuyIn);
+		console.log(game.maxBuyIn);
 		console.log(
-			balance < $gamesAvailableStore[poolID].buyInAmount ||
-				$gamesAvailableStore[poolID].buyInAmount < $gamesAvailableStore[poolID].minBuyIn ||
-				$gamesAvailableStore[poolID].buyInAmount > $gamesAvailableStore[poolID].maxBuyIn
+			balance < game.buyInAmount ||
+				game.buyInAmount < game.minBuyIn ||
+				game.buyInAmount > game.maxBuyIn
 		);
 		// if (stackSize < gamesAvailable[poolID].minBuyIn ) stackSize = gamesAvailable[poolID].minBuyIn
 		// if (stackSize > gamesAvailable[poolID].maxBuyIn ) stackSize = gamesAvailable[poolID].maxBuyIn
 		if (stackSize > 0 && Object.keys($userStore?.players).length < 4)
-			socket.emit('enterPool', { poolID: poolID, stackSize: stackSize });
+			socket.emit('enterPool', { poolID: game.key, stackSize: stackSize });
 
 		return null;
 	}
@@ -86,6 +119,34 @@
 
 <!-- SET IMAGES PRELOAD HEAD -->
 <PreloadImages />
+
+<!-- MODALS -->
+<Modal class="w-1/3 bg-transparent" showModal={gameModal.visibility}>
+	<div class="flex w-full flex-col rounded bg-white py-4">
+		<p class="text-center">⚡{gameModal.gameTitle}</p>
+		<input
+			class="mx-auto mb-2 mt-1 w-2/3 text-black"
+			type="range"
+			step="0.01"
+			min={gameModal.minBuyIn}
+			max={gameModal.maxBuyIn}
+			bind:value={gameModal.buyInAmount}
+		/>
+		<button
+			on:click={enterPool(gameModal)}
+			class="mx-auto flex w-2/3 justify-between rounded-lg bg-blue-400 py-1 px-2 text-center text-sm font-extrabold uppercase active:scale-95"
+		>
+			<p>
+				${gameModal.buyInAmount}
+			</p>
+			<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+				><path
+					d="M0 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v6h8V5l5 5-5 5v-3z"
+				/></svg
+			>
+		</button>
+	</div>
+</Modal>
 
 <section
 	class="h-full w-full"
@@ -128,21 +189,10 @@
 						</div>
 					</div>
 				</div>
-				<div>
-					<p class="text-center">${buyInAmount[key]}</p>
-					<input
-						class="text-black"
-						type="range"
-						step="0.01"
-						min={game.minBuyIn}
-						max={game.maxBuyIn}
-						bind:value={buyInAmount[key]}
-					/>
-				</div>
 				<button
-					on:click={openNewTable(key)}
+					on:click={openAndSetupGameModal(key, game)}
 					disabled={$userStore?.balance < game.minBuyIn}
-					class="mx-auto !mb-2 w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase"
+					class="mx-auto !mb-2 w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
 				>
 					Join now
 				</button>
