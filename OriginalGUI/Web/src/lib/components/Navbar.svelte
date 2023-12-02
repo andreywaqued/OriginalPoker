@@ -17,23 +17,28 @@
 		<button
 			on:click={() => handleSelected(id)}
 			class:!bg-gray={$navSelectedItemStore === id}
-			class="relative rounded bg-gray-dark px-1.5 py-1 text-sm font-bold uppercase text-white flex"
+			class="relative flex rounded bg-gray-dark px-2 py-1 text-sm font-bold uppercase text-white"
 		>
 			{#if id === 'lobby'}
 				<p class="whitespace-nowrap">Lobby</p>
-			{:else if !player || player.cards.length === 0 || $navSelectedItemStore === id}
+			{:else}
 				<p class="whitespace-nowrap">
 					{$gamesAvailable[player.poolID].gameTitle}
 				</p>
-			{:else}
-				{#if player.possibleActions.length > 0}
-					<div class="rounded-full border-2 border-amber-700 bg-amber-600 px-1.5 text-xs mr-1">!</div>
+				{#if id !== $navSelectedItemStore}
+					{#if player.cards.length > 0}
+						<div class="ml-1 grid aspect-video h-5 grid-cols-2">
+							{#each player.cards as card}
+								<Card cardString={card} deck={'boardDeck'} />
+							{/each}
+						</div>
+					{/if}
+					{#if player.possibleActions.length > 0}
+						<div class="ml-1 rounded-full border-2 border-amber-700 bg-amber-600 px-1.5 text-xs">
+							!
+						</div>
+					{/if}
 				{/if}
-				<div class="grid aspect-video h-5 grid-cols-2">
-					{#each player.cards as card}
-						<Card cardString={card} deck={'boardDeck'} />
-					{/each}
-				</div>
 			{/if}
 		</button>
 	{/each}

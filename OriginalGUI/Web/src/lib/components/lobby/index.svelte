@@ -134,7 +134,7 @@
 		/>
 		<button
 			on:click={enterPool(gameModal)}
-			class="mx-auto flex w-2/3 justify-between rounded-lg bg-blue-400 py-1 px-2 text-center text-sm font-extrabold uppercase active:scale-95"
+			class="mx-auto flex w-2/3 justify-between rounded-lg bg-blue-400 px-2 py-1 text-center text-sm font-extrabold uppercase active:scale-95"
 		>
 			<p>
 				${gameModal.buyInAmount}
@@ -149,7 +149,7 @@
 </Modal>
 
 <section
-	class="h-full w-full"
+	class="flex h-full w-full flex-col"
 	class:hidden={$navSelectedItemStore !== 'lobby'}
 	on:touchstart|self|passive={(event) => handleSwipe(event, 'lobby')}
 	on:touchmove|self|passive={(event) => handleSwipe(event, 'lobby')}
@@ -158,44 +158,48 @@
 	<h2 class="pb-2 pl-6 pt-4 text-lg font-bold uppercase tracking-widest text-white">
 		Lightning Cash
 	</h2>
-	<div class="grid max-w-fit grid-flow-col gap-x-2 overflow-x-auto px-3">
+	<div class="grid w-full grid-cols-2 gap-2 overflow-y-auto px-3 md:grid-cols-3 lg:grid-cols-4">
 		{#each Object.entries($gamesAvailableStore) as [key, game] (key)}
 			<div
-				class="w-36 space-y-2 rounded-lg border-2 border-[rgb(69,69,69)] bg-[rgb(49,49,49)] p-2 text-white"
+				class="grid h-fit w-full grid-cols-6 items-center gap-y-1.5 rounded-lg border-2 border-[rgb(69,69,69)] bg-[rgb(49,49,49)] p-2 text-white shadow"
 			>
-				<h3 class="text-center text-2xl font-extrabold">{game.gameTitle}</h3>
-				<div class="space-y-4 border-y-2 border-zinc-600 py-2 text-center">
-					<div>
-						<p class="description">Blinds</p>
-						<p class="title">{game.blinds}</p>
-					</div>
-					<div>
-						<p class="description">Players</p>
-						<p class="title">{game.players}</p>
-					</div>
+				<h3 class="col-span-3 text-center text-lg font-extrabold md:text-2xl">
+					{game.gameTitle}
+				</h3>
+				<div class="col-span-3">
+					<p class="description">Blinds</p>
+					<p class="item">{game.blinds}</p>
+				</div>
+				<div class="col-span-2">
+					<p class="description">Players</p>
+					<p class="item !text-base font-bold md:!text-xl">{game.players}</p>
+				</div>
+				<div class="col-span-2">
+					<p class="description">Min</p>
+					<p class="item">
+						${game.minBuyIn}
+					</p>
+				</div>
+				<div class="col-span-2">
+					<p class="description">Max</p>
+					<p class="item">
+						${game.maxBuyIn}
+					</p>
+				</div>
+				<!--<div class="space-y-4 border-y-2 border-zinc-600 py-2 text-center">
 
 					<div class="flex justify-around">
-						<div>
-							<p class="description">Min</p>
-							<p class="title">
-								${game.minBuyIn}
-							</p>
-						</div>
-						<div>
-							<p class="description">Max</p>
-							<p class="title">
-								${game.maxBuyIn}
-							</p>
-						</div>
 					</div>
+				</div>-->
+				<div class="w-full col-span-6 py-2 border-t-2 border-gray">
+					<button
+						on:click={openAndSetupGameModal(key, game)}
+						disabled={$userStore?.balance < game.minBuyIn}
+						class="mx-auto w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
+					>
+						Join now
+					</button>
 				</div>
-				<button
-					on:click={openAndSetupGameModal(key, game)}
-					disabled={$userStore?.balance < game.minBuyIn}
-					class="mx-auto !mb-2 w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
-				>
-					Join now
-				</button>
 			</div>
 		{/each}
 	</div>
