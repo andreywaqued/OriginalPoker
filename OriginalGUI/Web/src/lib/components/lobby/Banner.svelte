@@ -10,7 +10,7 @@
 	}, 1000 * 1); // seconds
 </script>
 
-<div class="flex items-center w-full justify-between px-2 py-5 text-white" class:hidden={!isSelected}>
+<div class="flex items-center w-full justify-between px-2 py-5 text-white bg-gray-darkest bg-gradient-to-b from-gray" class:hidden={!isSelected}>
 	<div class="ml-2 h-12">
 		<img class="w-full h-full" src="/logos/OriginalLogoWhite.png" />
 	</div>
