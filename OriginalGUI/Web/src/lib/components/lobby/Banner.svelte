@@ -17,7 +17,7 @@
 	<div class="grid text-center w-32">
 		<p class="text-2xl">{now.toLocaleTimeString(undefined, {hour: "2-digit", minute: "2-digit"})}</p>
 		<!--<button class="rounded-md bg-zinc-700 px-2 py-0.5">CASHIER</button>-->
-		<div class="bg-light-gray px-2 text-sm rounded-full relative shadow font-bold tracking-wider">
+		<div class="bg-gray-light px-2 text-sm rounded-full relative shadow font-bold tracking-wider">
 			<p class="text-right">{$userStore?.balance.toFixed(2)}</p>
 			<img class="absolute h-7 w-7 top-1/2 -left-1 -translate-y-1/2" src="/ficha.png" />
 		</div>

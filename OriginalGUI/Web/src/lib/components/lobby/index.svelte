@@ -191,13 +191,15 @@
 					<div class="flex justify-around">
 					</div>
 				</div>-->
-				<button
-					on:click={openAndSetupGameModal(key, game)}
-					disabled={$userStore?.balance < game.minBuyIn}
-					class="col-span-6 mx-auto !mb-2 w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
-				>
-					Join now
-				</button>
+				<div class="w-full col-span-6 py-2 border-t-2 border-gray">
+					<button
+						on:click={openAndSetupGameModal(key, game)}
+						disabled={$userStore?.balance < game.minBuyIn}
+						class="mx-auto w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
+					>
+						Join now
+					</button>
+				</div>
 			</div>
 		{/each}
 	</div>
