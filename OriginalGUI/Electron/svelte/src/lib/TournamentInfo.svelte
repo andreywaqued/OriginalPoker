@@ -15,6 +15,8 @@
         console.log("updateStackAverage()")
         stackAverage = 0
         playersList.forEach(player => {
+            console.log("reading player")
+            console.log(player)
             stackAverage += player.stackSize/playersLeft
         })
     }
@@ -44,7 +46,7 @@
             const player = playersList[i]
             console.log("comparing userID")
             console.log(`${userID} === ${player.userID}: ${userID === player.userID}`)
-            if (userID === player.userID) {
+            if (userID === player.userID && !player.leftPosition) {
                 heroRegistered = true
                 return
             }
@@ -410,7 +412,7 @@
                     <div class="tournamentStack row">
                         <div class="largest column">
                             <span>Largest Stack</span>
-                            <span>{playersList.length>1 ? playersList[0].stackSize : 0}</span>
+                            <!-- <span>{playersList.length>1 ? playersList[0].stackSize : 0}</span> -->
                         </div>
                         <div class="average column">
                             <span>Average Stack</span>
@@ -418,7 +420,7 @@
                         </div>
                         <div class="smallest column">
                             <span>Smallest Stack</span>
-                            <span>{playersList.length>1 ? playersList[playersLeft-1].stackSize : 0}</span>
+                            <!-- <span>{playersList.length>1 ? playersList[playersLeft-1].stackSize : 0}</span> -->
                         </div>
                     </div>
                     <div class="playersAndPrize row">

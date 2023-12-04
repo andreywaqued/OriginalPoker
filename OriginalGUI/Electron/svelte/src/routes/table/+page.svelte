@@ -38,6 +38,7 @@
   let players = {};
   let playersComponents = {};
   let possibleActions = [];
+  let originalPossibleActions = [];
   let boardCards = [];
   let pots = [0];
   let callAmount = 0;
@@ -103,6 +104,7 @@
         playerSitout = hero.isSitout
         if (hero.isSitout) sitoutPopover(hero.isSitout)
         if (hero.finalHandRank) handStrength = hero.finalHandRank.combination
+        originalPossibleActions = JSON.parse(JSON.stringify(hero.possibleActions))
         if (hero.possibleActions.length > 1) {
           if (userSettings.showValuesInBB) hero.possibleActions[1].amount = Math.round(hero.possibleActions[1].amount/bbSize*100)/100
           if (hero.possibleActions[1].amount > hero.betSize + hero.stackSize) hero.possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize)*100)/100
@@ -534,9 +536,12 @@
   function parseAction(index) {
     let action = possibleActions[index]
     if (action.type === "I`m Back") return toggleSitout()
-    betValue = parseFloat(betValue.toString().replace(",", "."))
-    if (index === 2) action.amount = Math.round(betValue * 100) / 100
-    if (action.amount != 0 && userSettings.showValuesInBB) action.amount = Math.round(action.amount * bbSize * 100) / 100
+    if (index===1) action = originalPossibleActions[index]
+    if (index===2) {
+      betValue = parseFloat(betValue.toString().replace(",", "."))
+      if (index === 2) action.amount = Math.round(betValue * 100) / 100
+      if (action.amount != 0 && userSettings.showValuesInBB) action.amount = Math.round(action.amount * bbSize * 100) / 100
+    }
     api.send("parseAction", {player: hero, action: action})
     possibleActions = []
   }
@@ -1192,8 +1197,10 @@ button:disabled {
   }
   .tournamentInfo {
     position: absolute;
-    right: 0;
+    right: 1%;
     top: 20px;
+    color: white;
+    font-size: 0.8em;
   }
   // ::backdrop {
   // }

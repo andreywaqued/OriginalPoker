@@ -60,6 +60,7 @@ class Table {
         this.playerIDByPositionIndex = new Array(this.tableSize).fill(null);
         this.tableManager = TableManager;
         this.socketManager = TableManager.socketManager;
+        this.playersWaitingToJoin = 0,
         this.currentHand = {
             title: this.title,
             tableSize : this.tableSize,
@@ -137,6 +138,7 @@ class Table {
         
         // if (!this.currentHand.handIsBeingPlayed) this.broadcastHandState()
         this.broadcastHandState()
+        if (this.currentHand.handIsBeingPlayed) this.playersWaitingToJoin++
         if (!this.currentHand.handIsBeingPlayed) this.startHandRoutine()
         // this.socketManager.to(`table:${this.id}`).emit("updateGameState", this.currentHand);
         
@@ -547,7 +549,7 @@ class Table {
         logger.log("prepareNextPlayerTurn()")
         if (!this.currentHand.handIsBeingPlayed) return logger.log("hand is over")
         
-        if (this.currentHand.playersFolded === this.countPlayers() - 1) {
+        if (this.currentHand.playersFolded+this.playersWaitingToJoin === this.countPlayers() - 1) {
             this.currentHand.positionActing = -1 //sending this only for showing the moment when the player acts before showing the new round
             this.broadcastHandState() //sending this only for showing the moment when the player acts before showing the new round
             return setTimeout(() => {this.startNewRound()}, 500)
@@ -746,7 +748,7 @@ class Table {
     startNewRound(timeout = 500) {
         logger.log("startNewRound()")
         this.putBetsIntoPot()
-        if (this.currentHand.playersFolded === this.countPlayers() - 1) return this.evaluateHand()
+        if (this.currentHand.playersFolded+this.playersWaitingToJoin === this.countPlayers() - 1) return this.evaluateHand()
         // for (let i = 0; i<this.currentHand.playersToRemoveThisRound.length; i++) {
         //     const index = this.currentHand.playersToRemoveThisRound[i]
         //     this.playerIDByPositionIndex.splice(index, 1)
@@ -893,6 +895,7 @@ class Table {
         this.currentHand.bb = new Decimal(tournament.bb);
         this.currentHand.ante = new Decimal(tournament.ante) || new Decimal(0);
         this.waitingForPlayers = false;
+        this.playersWaitingToJoin = 0;
         this.currentHand.handIsBeingPlayed = true;
         this.currentHand.isShowdown = false;
         this.currentHand.pots = [new Decimal(0)];

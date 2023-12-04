@@ -355,6 +355,7 @@ class PlayerPoolManager {
         mergeSort(tournament.currentPlayers, 0, tournament.currentPlayers.length-1)
         tournament.playersList = tournament.currentPlayers.concat(tournament.finishedPlayers)
         logger.log(tournament.playersList)
+        this.broadcastTournamentList()
     }
     // getTournamentsList(){}
 
