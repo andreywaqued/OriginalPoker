@@ -15,11 +15,11 @@
 	button.auth.ringed {
 		@apply rounded-full border-2 border-zinc-200 text-white hover:bg-blue-700;
 	}
-	p.title {
-		@apply text-xl leading-6;
+	p.item {
+		@apply text-center text-xs md:text-sm;
 	}
 	p.description {
-		@apply w-full text-xs font-bold uppercase leading-3 tracking-wider text-zinc-500;
+		@apply text-center text-2xs font-bold uppercase leading-3 tracking-wider text-zinc-500 md:text-xs;
 	}
 }
 

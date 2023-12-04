@@ -1,21 +1,19 @@
 import { writable } from 'svelte/store';
 /**
- * @typedef {{
- *   gameTitle: string,
- *   blinds: string,
- *   players: number,
- *   minBuyIn: number,
- *   maxBuyIn: number,
- *   buyInAmount: -1,
- * }} Game
+ * @typedef {Object} Game
+ * @property {string} gameTitle
+ * @property {string} blinds
+ * @property {number} players
+ * @property {number} minBuyIn
+ * @property {number} maxBuyIn
+ * @property {number} buyInAmount
  */
 /**
- * @typedef {{
- *   lightning1: Game,
- *   lightning2: Game,
- *   lightning3: Game,
- *   lightning4: Game,
- * }} GamesAvailable
+ * @typedef {Object} GamesAvailable
+ * @property {Game} lightning1
+ * @property {Game} lightning2
+ * @property {Game} lightning3
+ * @property {Game} lightning4
  */
 /**
  * @typedef {import('svelte/store').Writable<GamesAvailable>} GamesAvailableStore
