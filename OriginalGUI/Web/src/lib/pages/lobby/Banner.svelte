@@ -1,8 +1,8 @@
 <script>
-	import { navSelectedItem } from '$lib/stores/tabs';
+	import { activeSlot } from '$lib/stores/tabs';
 	import { user } from '$lib/stores/user';
 
-	$: isSelected = 'lobby' === $navSelectedItem;
+	$: isSelected = 'lobby' === $activeSlot;
 
 	let now = new Date();
 	setInterval(() => {

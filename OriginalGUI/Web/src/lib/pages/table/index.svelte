@@ -1,12 +1,12 @@
 <script lang="ts">
 	import socket from '$lib/services/socket';
-	import { navSelectedItem } from '$lib/stores/tabs';
+	import { activeSlot } from '$lib/stores/tabs';
 	import { user } from '$lib/stores/user';
 	import { handleSwipe } from '$lib/utils/Swiper';
-	import Ads from '$lib/components/table/Ads.svelte';
-	import Card from '$lib/components/table/Card.svelte';
-	import Player from '$lib/components/table/Player.svelte';
-	import Pot from '$lib/components/table/Pot.svelte';
+	import Ads from './Ads.svelte';
+	import Card from './Card.svelte';
+	import Player from './Player.svelte';
+	import Pot from './Pot.svelte';
 	import Modal from '$lib/components/Modal.svelte';
 	import PreloadImages from './PreloadImages.svelte';
 
@@ -286,7 +286,7 @@
 		console.log('leavePoolResponse');
 		switch (status) {
 			case 200:
-				navSelectedItem.set('lobby');
+				activeSlot.set('lobby');
 				break;
 		}
 	});
@@ -562,7 +562,7 @@
 </audio>
 
 <!-- THIS IS TAILWIND -->
-<section class:hide={$navSelectedItem !== hero.id} on:wheel={handleScroll}>
+<section class:hide={$activeSlot !== hero.id} on:wheel={handleScroll}>
 	<!-- TRANSITION ANIMATION -->
 	<div class:transitioning></div>
 

@@ -1,13 +1,13 @@
 <script>
 	import socket from '$lib/services/socket';
 	import { user } from '$lib/stores/user';
-	import { navSelectedItem } from '$lib/stores/tabs';
+	import { activeSlot } from '$lib/stores/tabs';
+	import Navbar from './Navbar.svelte';
 	import Wrapper from '$lib/components/Wrapper.svelte';
-	import Auth from '$lib/components/auth/index.svelte';
-	import Navbar from '$lib/components/Navbar.svelte';
-	import Lobby from '$lib/components/lobby/index.svelte';
-	import Banner from '$lib/components/lobby/Banner.svelte';
-	import Table from '$lib/components/table/index.svelte';
+	import Auth from '$lib/pages/auth/index.svelte';
+	import Lobby from '$lib/pages/lobby/index.svelte';
+	import Banner from '$lib/pages/lobby/Banner.svelte';
+	import Table from '$lib/pages/table/index.svelte';
 
 	socket.on('updateUserInfo', ({ user: updatedUser, status }) => {
 		console.log('updateUserInfo');
@@ -24,7 +24,7 @@
 		}
 	});
 
-	navSelectedItem.set('lobby');
+	activeSlot.set('lobby');
 </script>
 
 <Wrapper>

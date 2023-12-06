@@ -1,4 +1,4 @@
-import { navSelectedItem } from '$lib/stores/tabs';
+import { activeSlot } from '$lib/stores/tabs';
 import { user } from '$lib/stores/user';
 import type { User } from '$lib/types/User';
 
@@ -32,7 +32,7 @@ export function handleSwipe(event: TouchEvent, id: string) {
 				if (i === 0 || !isSwiping) return;
 				event.target.style.transform = 'none';
 				console.log('Swiped left to id: ', keys[i - 1]);
-				navSelectedItem.set(keys[i - 1]);
+				activeSlot.set(keys[i - 1]);
 				isSwiping = false;
 			} else if (deltaX < -PIXELS_NEEDED) {
 				// return if is the last item or is already swiped
@@ -40,7 +40,7 @@ export function handleSwipe(event: TouchEvent, id: string) {
 				event.target.style.transform = 'none';
 				console.log('Swiped right to id: ', keys[i + 1]);
 				// event.target.style.transform = `translateX(${-i * 100}%)`
-				navSelectedItem.set(keys[i + 1]);
+				activeSlot.set(keys[i + 1]);
 				isSwiping = false;
 			}
 			break;

@@ -1,4 +1,4 @@
 import { writable } from 'svelte/store';
 
-export const navSelectedItem = writable<string>();
-export const lobbySelectedItem = writable<string>();
+export const activeSlot = writable<string>();
+export const activeLobbyTab = writable<string>();

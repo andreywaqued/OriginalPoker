@@ -2,7 +2,7 @@
 	import { user } from '$lib/stores/user';
 	import { lightningAvailable } from '$lib/stores/games';
 	import socket from '$lib/services/socket';
-	import { navSelectedItem, lobbySelectedItem } from '$lib/stores/tabs';
+	import { activeSlot, activeLobbyTab } from '$lib/stores/tabs';
 	import { handleSwipe } from '$lib/utils/Swiper';
 	import Modal from '$lib/components/Modal.svelte';
 	import PreloadImages from './PreloadImages.svelte';
@@ -18,6 +18,8 @@
 		visibility: false,
 		key: ''
 	};
+
+	const GAMES_TABS = ['lightning cash', 'vortex sng', 'instant tourneys'];
 
 	// SOCKET HANDLERS
 
@@ -51,7 +53,7 @@
 				console.log(oudatedUser);
 				return oudatedUser;
 			});
-			navSelectedItem.set(playerID);
+			activeSlot.set(playerID);
 			// table.player = response.player;
 			// console.log('chamando send message 1');
 			// if (table) table.addMessage('updateUserSettings', user.settings);
@@ -94,6 +96,12 @@
 
 		return null;
 	}
+	function handleSelectTab(id: string) {
+		activeLobbyTab.set(id);
+		return null;
+	}
+
+	activeLobbyTab.set(GAMES_TABS[0]);
 </script>
 
 <!-- SET IMAGES PRELOAD HEAD -->
@@ -129,57 +137,71 @@
 
 <section
 	class="flex h-full w-full flex-col"
-	class:hidden={$navSelectedItem !== 'lobby'}
+	class:hidden={$activeSlot !== 'lobby'}
 	on:touchstart|self|passive={(event) => handleSwipe(event, 'lobby')}
 	on:touchmove|self|passive={(event) => handleSwipe(event, 'lobby')}
 	on:touchend|self|passive={(event) => handleSwipe(event, 'lobby')}
 >
-	<h2 class="pb-2 pl-6 pt-4 text-lg font-bold uppercase tracking-widest text-white">
-		Lightning Cash
-	</h2>
-	<div class="grid w-full grid-cols-2 gap-2 overflow-y-auto px-3 md:grid-cols-3 lg:grid-cols-4">
-		{#each Object.entries($lightningAvailable) as [key, game] (key)}
-			<div
-				class="grid h-fit w-full grid-cols-6 items-center gap-y-1.5 rounded-lg border-2 border-[rgb(69,69,69)] bg-[rgb(49,49,49)] p-2 text-white shadow"
+	<div class="mb-4 mt-2 grid w-full grid-flow-col gap-x-4 leading-4">
+		{#each GAMES_TABS as tab}
+			<button
+				class="font-bold uppercase text-white"
+				class:text-red-300={tab === $activeLobbyTab}
+				on:click={() => handleSelectTab(tab)}><span>{tab}</span></button
 			>
-				<h3 class="col-span-3 text-center text-lg font-extrabold md:text-2xl">
-					{game.gameTitle}
-				</h3>
-				<div class="col-span-3">
-					<p class="description">Blinds</p>
-					<p class="item">{game.blinds}</p>
-				</div>
-				<div class="col-span-2">
-					<p class="description">Players</p>
-					<p class="item !text-base font-bold md:!text-xl">{game.players}</p>
-				</div>
-				<div class="col-span-2">
-					<p class="description">Min</p>
-					<p class="item">
-						${game.minBuyIn}
-					</p>
-				</div>
-				<div class="col-span-2">
-					<p class="description">Max</p>
-					<p class="item">
-						${game.maxBuyIn}
-					</p>
-				</div>
-				<!--<div class="space-y-4 border-y-2 border-zinc-600 py-2 text-center">
-
-					<div class="flex justify-around">
-					</div>
-				</div>-->
-				<div class="col-span-6 w-full border-t-2 border-gray py-2">
-					<button
-						on:click={openAndSetupGameModal(key, game)}
-						disabled={$user?.balance < game.minBuyIn}
-						class="mx-auto w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
-					>
-						Join now
-					</button>
-				</div>
-			</div>
 		{/each}
 	</div>
+	{#if $activeLobbyTab === 'lightning cash'}
+		<div class="grid w-full grid-cols-2 gap-2 overflow-y-auto px-3 md:grid-cols-3 lg:grid-cols-4">
+			{#each Object.entries($lightningAvailable) as [key, game] (key)}
+				<div
+					class="grid h-fit w-full grid-cols-6 items-center gap-y-1.5 rounded-lg border-2 border-[rgb(69,69,69)] bg-[rgb(49,49,49)] p-2 text-white shadow"
+				>
+					<h3 class="col-span-3 text-center text-lg font-extrabold md:text-2xl">
+						{game.gameTitle}
+					</h3>
+					<div class="col-span-3">
+						<p class="description">Blinds</p>
+						<p class="item">{game.blinds}</p>
+					</div>
+					<div class="col-span-2">
+						<p class="description">Players</p>
+						<p class="item !text-base font-bold md:!text-xl">{game.players}</p>
+					</div>
+					<div class="col-span-2">
+						<p class="description">Min</p>
+						<p class="item">
+							${game.minBuyIn}
+						</p>
+					</div>
+					<div class="col-span-2">
+						<p class="description">Max</p>
+						<p class="item">
+							${game.maxBuyIn}
+						</p>
+					</div>
+					<!--<div class="space-y-4 border-y-2 border-zinc-600 py-2 text-center">
+
+						<div class="flex justify-around">
+						</div>
+					</div>-->
+					<div class="col-span-6 w-full border-t-2 border-gray py-2">
+						<button
+							on:click={openAndSetupGameModal(key, game)}
+							disabled={$user?.balance < game.minBuyIn}
+							class="mx-auto w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
+						>
+							Join now
+						</button>
+					</div>
+				</div>
+			{/each}
+		</div>
+	{/if}
+	{#if $activeLobbyTab === 'vortex sng'}
+		<p class="text-white text-center">SOON</p>
+	{/if}
+	{#if $activeLobbyTab === 'instant tourneys'}
+		<p class="text-white text-center">SOON</p>
+	{/if}
 </section>
