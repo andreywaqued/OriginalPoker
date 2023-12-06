@@ -1,4 +1,4 @@
-import userStore from '$lib/stores/userStore';
+import {user} from '$lib/stores/user';
 import io from 'socket.io-client';
 
 // const socket = io('http://192.168.237.73:3000');
@@ -16,7 +16,7 @@ socket.on('connect', () => {
 
 socket.on('disconnect', () => {
 	console.log('User disconnected');
-	userStore.set(null);
+	user.set(null);
 });
 
 export default socket;

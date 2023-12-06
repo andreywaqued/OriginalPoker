@@ -1,20 +1,9 @@
-<script>
+<script lang="ts">
 	import Card from './Card.svelte';
-	/**
-	 * @type {Number}
-	 */
-	export let tableSize;
-	/**
-	 * @type {Number}
-	 */
-	export let tableRotateAmount;
-
+	export let tableSize: number;
+	export let tableRotateAmount: number;
 	export let handIsBeingPlayed;
 
-	// /**
-	//  * @type {Object.<string,any>}
-	//  */
-	// export let player
 	export let id,
 		name,
 		stackSize,
@@ -51,9 +40,6 @@
 	};
 	$: updateLastActionShowed(lastAction);
 	// export let playerName, balance: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["As", "5c"], deck : "boardDeck", isButton : true, isHero : true, lastAction : "cardDealt"
-	/**
-	 * @type {Object.<Number, String>}
-	 */
 	let positionClassByTableSize = {
 		2: {
 			0: 'playerRow middleColumn pos0 row4',
@@ -189,11 +175,7 @@
 		timeLeftPerc = 100;
 	}
 	$: avatarUrl = `url('../../../avatar/${avatar}.png')`;
-	/**
-	 *
-	 * @param {String} lastAction
-	 */
-	function animateLastAction(lastAction) {
+	function animateLastAction(lastAction: string) {
 		console.log(lastAction);
 	}
 	$: cssVarStyles = `--avatar-url:${avatarUrl};--time-left-perc:${timeLeftPerc}%`;
@@ -213,8 +195,7 @@
 
 	// url('/player1.png')
 
-	/** @type {HTMLAudioElement} */
-	let audioTurnWarning;
+	let audioTurnWarning: HTMLAudioElement;
 </script>
 
 <!-- player turn warning -->

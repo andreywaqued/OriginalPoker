@@ -1,27 +1,13 @@
-<script>
-	import userStore from '$lib/stores/userStore';
-	import gamesAvailableStore from '$lib/stores/gamesAvailableStore';
+<script lang="ts">
+	import { user } from '$lib/stores/user';
+	import { lightningAvailable } from '$lib/stores/games';
 	import socket from '$lib/services/socket';
-	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
+	import { navSelectedItem, lobbySelectedItem } from '$lib/stores/tabs';
 	import { handleSwipe } from '$lib/utils/Swiper';
 	import Modal from '$lib/components/Modal.svelte';
 	import PreloadImages from './PreloadImages.svelte';
+	import type { Cash } from '$lib/types/Games';
 
-	// TYPES
-
-	/**
-	 * @typedef {import('$lib/stores/gamesAvailableStore').Game} Game
-	 *
-	 * @typedef {Object} Modal
-	 * @property {Boolean} visibility
-	 * @property {String} key
-	 */
-
-	// VARIABLES
-
-	/**
-	 * @type {Game & Modal}
-	 */
 	let gameModal = {
 		blinds: '',
 		gameTitle: '',
@@ -37,7 +23,7 @@
 
 	socket.on('updatePools', (p) => {
 		console.log('updatePools');
-		let gamesAvailable = $gamesAvailableStore;
+		let gamesAvailable = $lightningAvailable;
 		Object.keys(p).forEach((key) => {
 			const pool = p[key];
 			const gamePool = gamesAvailable[key];
@@ -48,7 +34,7 @@
 			gamePool.players = pool.currentPlayers;
 		});
 		console.log(gamesAvailable);
-		gamesAvailableStore.set(gamesAvailable);
+		lightningAvailable.set(gamesAvailable);
 	});
 
 	socket.on('enterPoolResponse', (response) => {
@@ -57,15 +43,15 @@
 		if (response.status === 200) {
 			const playerID = response.player.id;
 			if (!playerID) throw new Error("Can't get player ID");
-			userStore.update((user) => {
+			user.update((oudatedUser) => {
 				// safe type check
-				if (user === null) throw new Error("User doesn't exist");
+				if (oudatedUser === null) throw new Error("User doesn't exist");
 				// append new player to object players
-				user['players'] = { ...user['players'], [playerID]: response.player };
-				console.log(user);
-				return user;
+				oudatedUser['players'] = { ...oudatedUser['players'], [playerID]: response.player };
+				console.log(oudatedUser);
+				return oudatedUser;
 			});
-			navSelectedItemStore.set(playerID);
+			navSelectedItem.set(playerID);
 			// table.player = response.player;
 			// console.log('chamando send message 1');
 			// if (table) table.addMessage('updateUserSettings', user.settings);
@@ -79,26 +65,19 @@
 
 	// FUNCTIONS
 
-	/**
-	 * @param {string} key
-	 * @param {import('$lib/stores/gamesAvailableStore').Game} game
-	 */
-	function openAndSetupGameModal(key, game) {
+	function openAndSetupGameModal(key: string, game: Cash) {
 		// standard amount value to enter the game;
 		game.buyInAmount = game.minBuyIn;
 		gameModal = { ...game, key, visibility: true };
 		return null;
 	}
 
-	/**
-	 * @param {Game & Modal} game
-	 */
-	function enterPool(game) {
+	function enterPool(game: Cash) {
 		console.log('enterPool');
 		gameModal.visibility = false;
 		let stackSize = parseFloat(game.buyInAmount.toString());
 		stackSize = Math.round(stackSize * 100) / 100;
-		const balance = $userStore?.balance || 0;
+		const balance = $user?.balance || 0;
 		console.log(stackSize);
 		console.log(balance);
 		console.log(game.minBuyIn);
@@ -110,7 +89,7 @@
 		);
 		// if (stackSize < gamesAvailable[poolID].minBuyIn ) stackSize = gamesAvailable[poolID].minBuyIn
 		// if (stackSize > gamesAvailable[poolID].maxBuyIn ) stackSize = gamesAvailable[poolID].maxBuyIn
-		if (stackSize > 0 && Object.keys($userStore?.players).length < 4)
+		if (stackSize > 0 && Object.keys($user?.players).length < 4)
 			socket.emit('enterPool', { poolID: game.key, stackSize: stackSize });
 
 		return null;
@@ -150,7 +129,7 @@
 
 <section
 	class="flex h-full w-full flex-col"
-	class:hidden={$navSelectedItemStore !== 'lobby'}
+	class:hidden={$navSelectedItem !== 'lobby'}
 	on:touchstart|self|passive={(event) => handleSwipe(event, 'lobby')}
 	on:touchmove|self|passive={(event) => handleSwipe(event, 'lobby')}
 	on:touchend|self|passive={(event) => handleSwipe(event, 'lobby')}
@@ -159,7 +138,7 @@
 		Lightning Cash
 	</h2>
 	<div class="grid w-full grid-cols-2 gap-2 overflow-y-auto px-3 md:grid-cols-3 lg:grid-cols-4">
-		{#each Object.entries($gamesAvailableStore) as [key, game] (key)}
+		{#each Object.entries($lightningAvailable) as [key, game] (key)}
 			<div
 				class="grid h-fit w-full grid-cols-6 items-center gap-y-1.5 rounded-lg border-2 border-[rgb(69,69,69)] bg-[rgb(49,49,49)] p-2 text-white shadow"
 			>
@@ -191,10 +170,10 @@
 					<div class="flex justify-around">
 					</div>
 				</div>-->
-				<div class="w-full col-span-6 py-2 border-t-2 border-gray">
+				<div class="col-span-6 w-full border-t-2 border-gray py-2">
 					<button
 						on:click={openAndSetupGameModal(key, game)}
-						disabled={$userStore?.balance < game.minBuyIn}
+						disabled={$user?.balance < game.minBuyIn}
 						class="mx-auto w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
 					>
 						Join now

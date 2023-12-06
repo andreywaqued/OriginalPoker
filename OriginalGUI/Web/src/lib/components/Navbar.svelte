@@ -1,31 +1,28 @@
-<script>
-	import userStore from '$lib/stores/userStore';
-	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
-	import gamesAvailable from '$lib/stores/gamesAvailableStore';
+<script lang="ts">
+	import { user } from '$lib/stores/user';
+	import { navSelectedItem } from '$lib/stores/tabs';
+	import { lightningAvailable } from '$lib/stores/games';
 	import Card from '$lib/components/table/Card.svelte';
 
-	/**
-	 * @param {import('$lib/stores/navSelectedItemStore').ID} id
-	 */
-	function handleSelected(id) {
-		navSelectedItemStore.set(id);
+	function handleSelected(id: string) {
+		navSelectedItem.set(id);
 	}
 </script>
 
 <div class="flex h-14 w-full items-center gap-x-2 overflow-x-auto bg-gray-darkest px-2">
-	{#each Object.entries({ lobby: {}, ...$userStore?.players }) as [id, player] (id)}
+	{#each Object.entries({ lobby: {}, ...$user?.players }) as [id, player] (id)}
 		<button
 			on:click={() => handleSelected(id)}
-			class:!bg-gray={$navSelectedItemStore === id}
+			class:!bg-gray={$navSelectedItem === id}
 			class="relative flex rounded bg-gray-dark px-2 py-1 text-sm font-bold uppercase text-white"
 		>
 			{#if id === 'lobby'}
 				<p class="whitespace-nowrap">Lobby</p>
 			{:else}
 				<p class="whitespace-nowrap">
-					{$gamesAvailable[player.poolID].gameTitle}
+					{$lightningAvailable[player.poolID].gameTitle}
 				</p>
-				{#if id !== $navSelectedItemStore}
+				{#if id !== $navSelectedItem}
 					{#if player.cards.length > 0}
 						<div class="ml-1 grid aspect-video h-5 grid-cols-2">
 							{#each player.cards as card}

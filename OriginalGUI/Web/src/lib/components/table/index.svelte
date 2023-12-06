@@ -1,7 +1,7 @@
-<script>
+<script lang="ts">
 	import socket from '$lib/services/socket';
-	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
-	import userStore from '$lib/stores/userStore';
+	import { navSelectedItem } from '$lib/stores/tabs';
+	import { user } from '$lib/stores/user';
 	import { handleSwipe } from '$lib/utils/Swiper';
 	import Ads from '$lib/components/table/Ads.svelte';
 	import Card from '$lib/components/table/Card.svelte';
@@ -10,14 +10,8 @@
 	import Modal from '$lib/components/Modal.svelte';
 	import PreloadImages from './PreloadImages.svelte';
 
-	/**
-	 * @type {Object.<string, any>}
-	 */
-	export let hero;
+	export let hero: object;
 
-	// /**
-	//  * @type {number}
-	//  */
 	// export let sbSize = 5;
 	let sbSize = 5;
 	let bbSize = 10;
@@ -75,9 +69,9 @@
 		console.log(player);
 		if (hero.id !== player.id) return;
 		// set userStore to track player cards on navBar
-		userStore.update((user) => {
-			user.players[player.id] = player;
-			return user;
+		user.update((outdatedUser) => {
+			outdatedUser.players[player.id] = player;
+			return outdatedUser;
 		});
 		let playersTemp = JSON.parse(JSON.stringify(players));
 		hero = player;
@@ -292,7 +286,7 @@
 		console.log('leavePoolResponse');
 		switch (status) {
 			case 200:
-				navSelectedItemStore.set('lobby');
+				navSelectedItem.set('lobby');
 				break;
 		}
 	});
@@ -413,11 +407,7 @@
 		betValue = Math.round(betValue * 100) / 100;
 	}
 
-	/**
-	 *
-	 * @param {WheelEvent} event
-	 */
-	function handleScroll(event) {
+	function handleScroll(event: WheelEvent) {
 		if (event.deltaY < 0) {
 			plusBetSlider();
 		} else {
@@ -487,9 +477,6 @@
 		sitoutPopoverActive = isSitout;
 		// popovertarget="test"
 	}
-	/**
-	 * @type {(Boolean | undefined)}
-	 */
 	let rebuyVisibility = false;
 	let rebuyAmount = 0;
 	let minRebuyAmount = 0;
@@ -518,9 +505,6 @@
 		rebuyVisibility = false;
 	}
 
-	/**
-	 * @type {(Boolean | undefined)}
-	 */
 	let hhVisibility = false;
 	function toggleHH() {
 		hhVisibility = undefined;
@@ -559,17 +543,13 @@
 		socket.emit('leavePool', hero);
 	}
 
-	/**
-	 * @type {(Boolean | undefined)}
-	 */
 	let menuVisibility = false;
 	function openMenuModal() {
 		menuVisibility = undefined;
 		menuVisibility = true;
 	}
 
-	/** @type {HTMLAudioElement} */
-	let audioTurn;
+	let audioTurn: HTMLAudioElement;
 </script>
 
 <!-- SET IMAGES PRELOAD HEAD -->
@@ -582,7 +562,7 @@
 </audio>
 
 <!-- THIS IS TAILWIND -->
-<section class:hide={$navSelectedItemStore !== hero.id} on:wheel={handleScroll}>
+<section class:hide={$navSelectedItem !== hero.id} on:wheel={handleScroll}>
 	<!-- TRANSITION ANIMATION -->
 	<div class:transitioning></div>
 
@@ -790,7 +770,7 @@
 		</div>
 	</Modal>
 	<!-- REBUY -->
-	<Modal showModal={rebuyVisibility} class="w-1/2 max-w-xs h-1/3 bg-transparent">
+	<Modal showModal={rebuyVisibility} class="h-1/3 w-1/2 max-w-xs bg-transparent">
 		<div class="rebuyPopover" id="rebuyPopover">
 			<div class="popoverTitle">
 				<span>REBUY {winTitle}</span>
@@ -852,7 +832,7 @@
 		</div>
 	</Modal>
 	<!-- HAND HISTORY -->
-	<Modal class="w-2/3 min-w-fit h-2/3 bg-transparent" showModal={hhVisibility}>
+	<Modal class="h-2/3 w-2/3 min-w-fit bg-transparent" showModal={hhVisibility}>
 		<div class="hhPopover" id="hhPopover">
 			<div class="popoverTitle">
 				<button
