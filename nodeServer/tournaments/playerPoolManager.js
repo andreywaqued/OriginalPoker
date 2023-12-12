@@ -59,7 +59,6 @@ class PlayerPoolManager {
         if (user.tournamentsPlaying[tournamentID]) return logger.log("player already registered")
         if (!user.tournamentsPlaying[tournamentID]) {
             const socket = this.socketsByUserID[user.id]
-            User.handleMoney(-tournament.buyIn, user, socket, tournament.title, this.fastify.pg)
             user.tournamentsPlaying[tournamentID] = tournamentID
             const newPlayer = new Player(user, tournament.startingChips)
             newPlayer.tournamentID = tournamentID
@@ -72,6 +71,7 @@ class PlayerPoolManager {
             tournament.entriesCount += 1
             tournament.currentPlayers.push(newPlayer)
             tournament.totalPrize += tournament.buyIn
+            User.handleMoney(-tournament.buyIn, user, socket, tournament.title, this.fastify.pg)
             socket.join(`tournament:${tournament.id}`)
             this.rankPlayers(tournament.id)
             this.adjustPrizeProol(tournament)
@@ -87,11 +87,11 @@ class PlayerPoolManager {
         if (tournament.started) return logger.log("tournament has already started")
         if (!user.tournamentsPlaying[tournamentID]) return logger.log("player is not registered on this tournament, something went wrong.")
         const socket = this.socketsByUserID[user.id]
-        User.handleMoney(tournament.buyIn, user, socket, tournament.title, this.fastify.pg)
         delete user.tournamentsPlaying[tournamentID]
         const player = tournament.playersByUserID[user.id][0] //only allowed to unregister before the tournament has started, thus, there will be only one player
         delete user.players[player.id]
         delete tournament.playersByUserID[user.id]
+        User.handleMoney(tournament.buyIn, user, socket, tournament.title, this.fastify.pg)
         // this.broadcastTournamentInfo(tournament)
         socket.leave(`tournament:${tournament.id}`)
         tournament.entriesCount -= 1

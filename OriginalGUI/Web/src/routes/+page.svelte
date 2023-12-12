@@ -1,44 +1,42 @@
 <script>
 	import socket from '$lib/services/socket';
-	import userStore from '$lib/stores/userStore';
-	import navSelectedItemStore from '$lib/stores/navSelectedItemStore';
+	import { user } from '$lib/stores/user';
+	import { activeSlot } from '$lib/stores/tabs';
+	import Navbar from './Navbar.svelte';
 	import Wrapper from '$lib/components/Wrapper.svelte';
-	import Auth from '$lib/components/auth/index.svelte';
-	import Navbar from '$lib/components/Navbar.svelte';
-	import Lobby from '$lib/components/lobby/index.svelte';
-	import Banner from '$lib/components/lobby/Banner.svelte';
-	import Table from '$lib/components/table/index.svelte';
+	import Auth from '$lib/pages/auth/index.svelte';
+	import Lobby from '$lib/pages/lobby/index.svelte';
+	import Banner from '$lib/pages/lobby/Banner.svelte';
+	import Table from '$lib/pages/table/index.svelte';
 
-	socket.on('updateUserInfo', ({ user, status }) => {
+	socket.on('updateUserInfo', ({ user: updatedUser, status }) => {
 		console.log('updateUserInfo');
-		console.log(user);
+		console.log(updatedUser);
 		if (status === 200) {
-			userStore.set({
-				name: user.name,
-				balance: Math.round(user.balance * 100) / 100,
-				avatar: user.avatar,
-				email: user.email,
-				settings: user.settings,
-				players: user.players
+			user.set({
+				id: updatedUser.id,
+				name: updatedUser.name,
+				balance: Math.round(updatedUser.balance * 100) / 100,
+				avatar: updatedUser.avatar,
+				email: updatedUser.email,
+				settings: updatedUser.settings,
+				players: updatedUser.players
 			});
 		}
 	});
 
-	navSelectedItemStore.set('lobby');
+	activeSlot.set('lobby');
 </script>
 
 <Wrapper>
-	{#if !$userStore}
+	{#if !$user}
 		<Auth />
 	{:else}
 		<Banner />
 		<Navbar />
-		{#each Object.entries({ lobby: {}, ...$userStore?.players }) as [id, player] (id)}
-			{#if id === 'lobby'}
-				<Lobby />
-			{:else}
-				<Table hero={player} />
-			{/if}
+		<Lobby />
+		{#each Object.entries($user?.players) as [id, player] (id)}
+			<Table hero={player} />
 		{/each}
 	{/if}
 </Wrapper>

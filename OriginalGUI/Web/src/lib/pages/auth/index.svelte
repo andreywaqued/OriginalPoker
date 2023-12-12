@@ -1,6 +1,6 @@
 <script>
-	import Signin from '$lib/components/auth/Signin.svelte';
-	import Signup from '$lib/components/auth/Signup.svelte';
+	import Signin from './Signin.svelte';
+	import Signup from './Signup.svelte';
 
 	const AuthIndexes = {
 		signin: 0,

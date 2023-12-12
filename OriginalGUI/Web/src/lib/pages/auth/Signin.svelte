@@ -1,10 +1,6 @@
-<script>
+<script lang="ts">
 	import socket from '$lib/services/socket';
-	/**
-	 * Request signin handler
-	 * @param {SubmitEvent} event
-	 */
-	async function handleSignin(event) {
+	async function handleSignin(event: SubmitEvent) {
 		formError = {
 			message: '',
 			btnDisabled: true

@@ -1,22 +1,12 @@
-<script>
+<script lang="ts">
 	// reference https://svelte.dev/examples/modal
 
-	/**
-	 * @type {String}
-	 */
-	let className;
+	let className: string;
 	export { className as class };
 
-	/**
-	 * Modal visibility
-	 * @type {(Boolean | undefined)}
-	 */
-	export let showModal;
+	export let showModal: boolean | undefined;
 
-	/**
-	 * @type {HTMLDialogElement}
-	 */
-	let dialog;
+	let dialog: HTMLDialogElement;
 
 	$: if (dialog && showModal) {
 		dialog.showModal();

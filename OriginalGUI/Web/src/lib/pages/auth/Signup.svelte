@@ -1,13 +1,10 @@
-<script>
+<script lang="ts">
 	import socket from '$lib/services/socket';
 
 	// store the user & password on a component scope variable to be used to signin when successfully signed up
 	let user, password;
 
-	/**
-	 * @param {SubmitEvent} event
-	 */
-	async function handleSignup(event) {
+	async function handleSignup(event: SubmitEvent) {
 		formError = {
 			message: '',
 			btnDisabled: true
