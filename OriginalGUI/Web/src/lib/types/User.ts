@@ -1,4 +1,5 @@
 export interface User {
+	id: string;
 	name: string;
 	balance: number;
 	avatar: number;
@@ -25,6 +26,6 @@ export interface User {
 			}[];
 		};
 	};
-	transactions?: {}[],
-	players: {}
+	transactions?: {}[];
+	players: {};
 }

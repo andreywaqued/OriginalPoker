@@ -8,10 +8,7 @@ export interface Cash {
 }
 
 export interface Lightning {
-	lightning1: Cash;
-	lightning2: Cash;
-	lightning3: Cash;
-	lightning4: Cash;
+	[key: string]: Cash;
 }
 
 export interface Tournament {

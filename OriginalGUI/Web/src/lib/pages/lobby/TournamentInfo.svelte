@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import socket from '$lib/services/socket';
 	let tabSelected = 0;
 	export let tournamentID,
 		state,
@@ -16,57 +16,51 @@
 		blindLevelUpTime,
 		blindLevel;
 	export let userID;
-	export const updateTournamentInfo = (playersList) => {
-		console.log('updateTournamentInfo()');
-		checkHeroRegistered();
-		updateStackAverage();
-	};
-	$: updateTournamentInfo(playersList);
+	// export const updateTournamentInfo = (playersList) => {
+	// 	console.log('updateTournamentInfo()');
+	// 	checkHeroRegistered();
+	// 	updateStackAverage();
+	// };
+	// $: updateTournamentInfo(playersList);
 	let stackAverage = 0;
-	let heroRegistered = false;
-	function updateStackAverage() {
-		console.log('updateStackAverage()');
-		stackAverage = 0;
-		playersList.forEach((player) => {
-			stackAverage += player.stackSize / playersLeft;
-		});
-	}
-	onMount(() => {
-		if (window.api) {
-			api = window.api;
-		}
-		// checkHeroRegistered()
-		// updateStackAverage()
-	});
+	$: heroRegistered = playersList.find((player) => player['userID'] === userID);
+	// function updateStackAverage() {
+	// 	console.log('updateStackAverage()');
+	// 	stackAverage = 0;
+	// 	playersList.forEach((player) => {
+	// 		stackAverage += player.stackSize / playersLeft;
+	// 	});
+	// }
 	function register() {
 		console.log('register()');
-		api.send('registerOnTournament', tournamentID);
+		socket.emit('registerOnTournament', tournamentID);
 		// checkHeroRegistered()
 		// updateStackAverage()
 	}
 	function unregister() {
 		console.log('unregister()');
-		api.send('unregisterOnTournament', tournamentID);
+		socket.emit('unregisterOnTournament', tournamentID);
 		// checkHeroRegistered()
 		// updateStackAverage()
 	}
-	function checkHeroRegistered() {
-		console.log('checkHeroRegistered()');
-		for (let i = 0; i < playersList.length; i++) {
-			const player = playersList[i];
-			console.log('comparing userID');
-			console.log(`${userID} === ${player.userID}: ${userID === player.userID}`);
-			if (userID === player.userID) {
-				heroRegistered = true;
-				return;
-			}
-		}
-		console.log('hero is not registered');
-		console.log(userID);
-		console.log(playersList);
-		heroRegistered = false;
-		return;
-	}
+
+	// function checkHeroRegistered() {
+	// 	console.log('checkHeroRegistered()');
+	// 	for (let i = 0; i < playersList.length; i++) {
+	// 		const player = playersList[i];
+	// 		console.log('comparing userID');
+	// 		console.log(`${userID} === ${player.userID}: ${userID === player.userID}`);
+	// 		if (userID === player.userID) {
+	// 			heroRegistered = true;
+	// 			return;
+	// 		}
+	// 	}
+	// 	console.log('hero is not registered');
+	// 	console.log(userID);
+	// 	console.log(playersList);
+	// 	heroRegistered = false;
+	// 	return;
+	// }
 </script>
 
 <container>
@@ -324,7 +318,6 @@
 		height: 100%;
 		width: 100%;
 		flex-direction: column;
-		font-size: 0.7em;
 		padding: 1%;
 	}
 	::-webkit-scrollbar-track {
@@ -410,9 +403,6 @@
 	.homeTab {
 		width: 100%;
 		height: 100%;
-		// min-height: 27.5em;
-		max-height: 15.4rem;
-		// max-height: 27.5rem;
 		display: flex;
 		flex-direction: column;
 		// gap: 0.1em;

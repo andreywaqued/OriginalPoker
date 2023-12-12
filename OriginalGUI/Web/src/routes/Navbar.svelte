@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { user } from '$lib/stores/user';
 	import { activeSlot } from '$lib/stores/tabs';
-	import { lightningAvailable } from '$lib/stores/games';
+	import { lightningsAvailable } from '$lib/stores/games';
 	import Card from '$lib/pages/table/Card.svelte';
 
 	function handleSelectSlot(id: string) {
@@ -19,9 +19,15 @@
 			{#if id === 'lobby'}
 				<p class="whitespace-nowrap">Lobby</p>
 			{:else}
-				<p class="whitespace-nowrap">
-					{$lightningAvailable[player.poolID].gameTitle}
-				</p>
+				{#if player['tournamentID']}
+					<p class="whitespace-nowrap">
+						Tourney
+					</p>
+				{:else}
+					<p class="whitespace-nowrap">
+						{$lightningsAvailable[player.poolID].gameTitle}
+					</p>
+        {/if}
 				{#if id !== $activeSlot}
 					{#if player.cards.length > 0}
 						<div class="ml-1 grid aspect-video h-5 grid-cols-2">

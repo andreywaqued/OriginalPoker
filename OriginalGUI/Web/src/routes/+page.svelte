@@ -14,6 +14,7 @@
 		console.log(updatedUser);
 		if (status === 200) {
 			user.set({
+				id: updatedUser.id,
 				name: updatedUser.name,
 				balance: Math.round(updatedUser.balance * 100) / 100,
 				avatar: updatedUser.avatar,
@@ -33,12 +34,9 @@
 	{:else}
 		<Banner />
 		<Navbar />
-		{#each Object.entries({ lobby: {}, ...$user?.players }) as [id, player] (id)}
-			{#if id === 'lobby'}
-				<Lobby />
-			{:else}
-				<Table hero={player} />
-			{/if}
+		<Lobby />
+		{#each Object.entries($user?.players) as [id, player] (id)}
+			<Table hero={player} />
 		{/each}
 	{/if}
 </Wrapper>

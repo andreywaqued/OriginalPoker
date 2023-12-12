@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import type { Lightning, Tournaments } from '$lib/types/Games';
 
-export const lightningAvailable = writable<Lightning>({
+export const lightningsAvailable = writable<Lightning>({
 	lightning1: {
 		gameTitle: 'NL 10',
 		blinds: '$0.05 / $0.10',

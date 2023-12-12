@@ -1,44 +1,47 @@
 <script lang="ts">
 	import { user } from '$lib/stores/user';
-	import { lightningAvailable } from '$lib/stores/games';
+	import { lightningsAvailable, tournamentsAvailable } from '$lib/stores/games';
 	import socket from '$lib/services/socket';
 	import { activeSlot, activeLobbyTab } from '$lib/stores/tabs';
 	import { handleSwipe } from '$lib/utils/Swiper';
 	import Modal from '$lib/components/Modal.svelte';
 	import PreloadImages from './PreloadImages.svelte';
-	import type { Cash } from '$lib/types/Games';
+	import type { Cash, Tournament } from '$lib/types/Games';
+	import TournamentInfo from './TournamentInfo.svelte';
 
-	let gameModal = {
-		blinds: '',
-		gameTitle: '',
-		players: 0,
-		maxBuyIn: 0,
-		minBuyIn: 0,
-		buyInAmount: 0,
-		visibility: false,
-		key: ''
-	};
+	// MODALS VARIABLES
 
 	const GAMES_TABS = ['lightning cash', 'vortex sng', 'instant tourneys'];
 
+	let selectedLightningModal = {
+		visibility: false,
+		id: ''
+	};
+
+	let selectedTournamentModal = {
+		visibility: false,
+		id: ''
+	};
+
 	// SOCKET HANDLERS
 
-	socket.on('updatePools', (p) => {
+	socket.on('updatePools', (pool) => {
 		console.log('updatePools');
-		let gamesAvailable = $lightningAvailable;
-		Object.keys(p).forEach((key) => {
-			const pool = p[key];
-			const gamePool = gamesAvailable[key];
-			gamePool.gameTitle = pool.gameTitle;
-			gamePool.blinds = `$${pool.sb.toFixed(2)} / $${pool.bb.toFixed(2)}`;
-			gamePool.minBuyIn = pool.minBuyIn;
-			gamePool.maxBuyIn = pool.maxBuyIn;
-			gamePool.players = pool.currentPlayers;
+		lightningsAvailable.update((outdatedLightningsAvailable) => {
+			const updatedLightningsAvailable = outdatedLightningsAvailable;
+			Object.entries(pool).forEach(
+				([id, { gameTitle, sb, bb, minBuyIn, maxBuyIn, currentPlayers }]) => {
+					updatedLightningsAvailable[id].gameTitle = gameTitle;
+					updatedLightningsAvailable[id].blinds = `$${sb.toFixed(2)} / $${bb.toFixed(2)}`;
+					updatedLightningsAvailable[id].minBuyIn = minBuyIn;
+					updatedLightningsAvailable[id].maxBuyIn = maxBuyIn;
+					updatedLightningsAvailable[id].players = currentPlayers;
+					updatedLightningsAvailable[id].buyInAmount = minBuyIn;
+				}
+			);
+			return updatedLightningsAvailable;
 		});
-		console.log(gamesAvailable);
-		lightningAvailable.set(gamesAvailable);
 	});
-
 	socket.on('enterPoolResponse', (response) => {
 		console.log('enterPoolResponse');
 		console.log(response);
@@ -64,19 +67,27 @@
 			// socket.emit("leavePool", response.player)
 		}
 	});
+	socket.on('updateTournamentList', (newTournamentsList) => {
+		console.log('updateTournamentList');
+		console.log(newTournamentsList);
+		tournamentsAvailable.set(newTournamentsList);
+	});
 
 	// FUNCTIONS
 
-	function openAndSetupGameModal(key: string, game: Cash) {
-		// standard amount value to enter the game;
-		game.buyInAmount = game.minBuyIn;
-		gameModal = { ...game, key, visibility: true };
+	function handleOpenLightningModal(key: string) {
+		selectedLightningModal = { id: key, visibility: true };
 		return null;
 	}
 
-	function enterPool(game: Cash) {
+	function handleOpenTournamentModal(index: string) {
+		selectedTournamentModal = { id: index, visibility: true };
+		return null;
+	}
+
+	function enterPool(key: string, game: Cash) {
 		console.log('enterPool');
-		gameModal.visibility = false;
+		selectedLightningModal.visibility = false;
 		let stackSize = parseFloat(game.buyInAmount.toString());
 		stackSize = Math.round(stackSize * 100) / 100;
 		const balance = $user?.balance || 0;
@@ -92,7 +103,7 @@
 		// if (stackSize < gamesAvailable[poolID].minBuyIn ) stackSize = gamesAvailable[poolID].minBuyIn
 		// if (stackSize > gamesAvailable[poolID].maxBuyIn ) stackSize = gamesAvailable[poolID].maxBuyIn
 		if (stackSize > 0 && Object.keys($user?.players).length < 4)
-			socket.emit('enterPool', { poolID: game.key, stackSize: stackSize });
+			socket.emit('enterPool', { poolID: key, stackSize: stackSize });
 
 		return null;
 	}
@@ -101,38 +112,49 @@
 		return null;
 	}
 
-	activeLobbyTab.set(GAMES_TABS[0]);
+	activeLobbyTab.set(GAMES_TABS[2]);
 </script>
 
 <!-- SET IMAGES PRELOAD HEAD -->
 <PreloadImages />
 
 <!-- MODALS -->
-<Modal class="w-1/3 max-w-xs bg-transparent" showModal={gameModal.visibility}>
-	<div class="flex w-full flex-col rounded bg-white py-4">
-		<p class="text-center">⚡{gameModal.gameTitle}</p>
-		<input
-			class="mx-auto mb-2 mt-1 w-2/3 text-black"
-			type="range"
-			step="0.01"
-			min={gameModal.minBuyIn}
-			max={gameModal.maxBuyIn}
-			bind:value={gameModal.buyInAmount}
-		/>
-		<button
-			on:click={enterPool(gameModal)}
-			class="mx-auto flex w-2/3 justify-between rounded-lg bg-blue-400 px-2 py-1 text-center text-sm font-extrabold uppercase active:scale-95"
-		>
-			<p>
-				${gameModal.buyInAmount}
-			</p>
-			<svg class="rounded" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
-				><path
-					d="M0 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v6h8V5l5 5-5 5v-3z"
-				/></svg
+
+<Modal class="w-1/3 max-w-xs bg-white" showModal={selectedLightningModal.visibility}>
+	{#if $lightningsAvailable[selectedLightningModal.id]}
+		<div class="flex w-full flex-col rounded py-4">
+			<p class="text-center">⚡{$lightningsAvailable[selectedLightningModal.id].gameTitle}</p>
+			<input
+				class="mx-auto mb-2 mt-1 w-2/3 text-black"
+				type="range"
+				step="0.01"
+				min={$lightningsAvailable[selectedLightningModal.id].minBuyIn}
+				max={$lightningsAvailable[selectedLightningModal.id].maxBuyIn}
+				bind:value={$lightningsAvailable[selectedLightningModal.id].buyInAmount}
+			/>
+			<button
+				on:click={enterPool(
+					selectedLightningModal.id,
+					$lightningsAvailable[selectedLightningModal.id]
+				)}
+				class="mx-auto flex w-2/3 justify-between rounded-lg bg-blue-400 px-2 py-1 text-center text-sm font-extrabold uppercase active:scale-95"
 			>
-		</button>
-	</div>
+				<p>
+					${$lightningsAvailable[selectedLightningModal.id].buyInAmount}
+				</p>
+				<svg class="rounded" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+					><path
+						d="M0 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v6h8V5l5 5-5 5v-3z"
+					/></svg
+				>
+			</button>
+		</div>
+	{/if}
+</Modal>
+<Modal class="w-11/12 max-w-xl bg-gray" showModal={selectedTournamentModal.visibility}>
+	{#if $tournamentsAvailable[selectedTournamentModal.id]}
+		<TournamentInfo {...$tournamentsAvailable[selectedTournamentModal.id]} userID={$user?.id} />
+	{/if}
 </Modal>
 
 <section
@@ -142,18 +164,18 @@
 	on:touchmove|self|passive={(event) => handleSwipe(event, 'lobby')}
 	on:touchend|self|passive={(event) => handleSwipe(event, 'lobby')}
 >
-	<div class="mb-4 mt-2 grid w-full grid-flow-col gap-x-4 leading-4">
+	<div class="mb-4 mt-2 grid w-full auto-cols-fr grid-flow-col gap-x-1">
 		{#each GAMES_TABS as tab}
 			<button
-				class="font-bold uppercase text-white"
-				class:text-red-300={tab === $activeLobbyTab}
+				class="text-sm font-bold uppercase leading-5 text-white decoration-slate-600 underline-offset-2"
+				class:underline={tab === $activeLobbyTab}
 				on:click={() => handleSelectTab(tab)}><span>{tab}</span></button
 			>
 		{/each}
 	</div>
 	{#if $activeLobbyTab === 'lightning cash'}
 		<div class="grid w-full grid-cols-2 gap-2 overflow-y-auto px-3 md:grid-cols-3 lg:grid-cols-4">
-			{#each Object.entries($lightningAvailable) as [key, game] (key)}
+			{#each Object.entries($lightningsAvailable) as [key, game] (key)}
 				<div
 					class="grid h-fit w-full grid-cols-6 items-center gap-y-1.5 rounded-lg border-2 border-[rgb(69,69,69)] bg-[rgb(49,49,49)] p-2 text-white shadow"
 				>
@@ -187,7 +209,7 @@
 					</div>-->
 					<div class="col-span-6 w-full border-t-2 border-gray py-2">
 						<button
-							on:click={openAndSetupGameModal(key, game)}
+							on:click={() => handleOpenLightningModal(key)}
 							disabled={$user?.balance < game.minBuyIn}
 							class="mx-auto w-full rounded-lg bg-blue-400 py-1 text-center text-sm font-extrabold uppercase active:scale-95 disabled:opacity-75"
 						>
@@ -199,9 +221,41 @@
 		</div>
 	{/if}
 	{#if $activeLobbyTab === 'vortex sng'}
-		<p class="text-white text-center">SOON</p>
+		<p class="text-center text-white">SOON</p>
 	{/if}
 	{#if $activeLobbyTab === 'instant tourneys'}
-		<p class="text-white text-center">SOON</p>
+		<div class="flex w-full justify-center">
+			<table class="w-5/6 table-auto border-collapse bg-gray px-4 text-xs text-white">
+				<thead>
+					<tr class="bg-gray-dark">
+						<th class="whitespace-no-wrap p-1 text-center">Start/State</th>
+						<th class="whitespace-no-wrap p-1 text-center">Name</th>
+						<th class="whitespace-no-wrap p-1 text-center">Prize</th>
+						<th class="whitespace-no-wrap p-1 text-center">Players</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each $tournamentsAvailable as tournament, index}
+						<tr
+							class="h-10 cursor-pointer transition-all hover:backdrop-brightness-110"
+							on:click={() => handleOpenTournamentModal(index.toString())}
+						>
+							<td class="whitespace-no-wrap p-1 text-center">
+								{tournament.state}
+							</td>
+							<td class="whitespace-no-wrap p-1 text-center">
+								{tournament.title}
+							</td>
+							<td class="whitespace-no-wrap p-1 text-center">
+								${tournament.totalEntries * tournament.buyIn}
+							</td>
+							<td class="whitespace-no-wrap p-1 text-center">
+								{tournament.playersLeft}/{tournament.totalEntries}
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 	{/if}
 </section>

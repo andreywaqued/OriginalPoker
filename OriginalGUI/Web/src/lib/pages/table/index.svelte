@@ -12,14 +12,46 @@
 
 	export let hero: object;
 
+	// MODALS VARIABLES
+	let tournamentFinished = {
+		visibility: false,
+		place: 0,
+		wonAmount: 0
+	};
+
+	// GAME VARIABLES
+
 	// export let sbSize = 5;
 	let sbSize = 5;
+	let currentClock = new Date();
+	let blindDisplayClock = '';
+	let clockUpdateInterval = setInterval(() => {
+		console.log('clockUpdateInterval');
+		currentClock = new Date();
+		if (!currentTournamentInfo) return;
+		if (
+			!currentTournamentInfo.nextBlindTime ||
+			currentTournamentInfo.nextBlindTime - currentClock.getTime() < 0
+		)
+			return clearInterval(clockUpdateInterval);
+		let minutesLeft = Math.floor(
+			(currentTournamentInfo.nextBlindTime - currentClock.getTime()) / 60000
+		);
+		let secondsLeft = Math.floor(
+			((currentTournamentInfo.nextBlindTime - currentClock.getTime()) % 60000) / 1000
+		);
+		blindDisplayClock = `${('0' + minutesLeft).slice(-2)}:${('0' + secondsLeft).slice(-2)}`;
+		// console.log(minutesLeft)
+		// console.log(secondsLeft)
+		// console.log(blindDisplayClock)
+	}, 1000);
 	let bbSize = 10;
 	let winHeight = 0;
 	let tableStarted = true;
 	let winTitle = '';
 	let handHistories = [];
 	let hhIndex = 0;
+	let currentTournamentInfo;
 	let players = {};
 	let playersComponents = {};
 	let possibleActions = [];
@@ -64,14 +96,17 @@
 		}
 	};
 
+	// SOCKET HANDLERS
+
 	socket.on('updatePlayerInfo', (player) => {
 		console.log('updatePlayerInfo');
 		console.log(player);
 		if (hero.id !== player.id) return;
 		// set userStore to track player cards on navBar
 		user.update((outdatedUser) => {
-			outdatedUser.players[player.id] = player;
-			return outdatedUser;
+			const updatedUser = outdatedUser;
+			updatedUser.players[player.id] = player;
+			return updatedUser;
 		});
 		let playersTemp = JSON.parse(JSON.stringify(players));
 		hero = player;
@@ -94,11 +129,11 @@
 			if (hero.possibleActions[1].amount > hero.betSize + hero.stackSize)
 				hero.possibleActions[1].amount = Math.round((hero.betSize + hero.stackSize) * 100) / 100;
 			callAmount = hero.possibleActions[1].amount;
+			if (betValue > hero.betSize + hero.stackSize)
+				betValue = Math.round((hero.betSize + hero.stackSize) * 100) / 100;
 			betValue = userSettings.showValuesInBB
 				? Math.round((hero.possibleActions[2].amount / bbSize) * 100) / 100
 				: Math.round(hero.possibleActions[2].amount * 100) / 100;
-			if (betValue > hero.betSize + hero.stackSize)
-				betValue = Math.round((hero.betSize + hero.stackSize) * 100) / 100;
 			minBet = betValue;
 			maxBet = Math.round((hero.betSize + hero.stackSize) * 100) / 100;
 			audioTurn.currentTime = 0;
@@ -250,6 +285,22 @@
 			}, 100);
 		}
 	});
+	socket.on('updateTournamentInfo', (tournamentInfo) => {
+		console.log('updateTournamentInfo');
+		console.log(tournamentInfo);
+		if (tournamentInfo.tournamentID !== hero.tournamentID) return;
+		currentTournamentInfo = tournamentInfo;
+	});
+	socket.on('tournamentFinishMessage', (finishMessage) => {
+		console.log('tournamentFinishMessage');
+		console.log(finishMessage);
+		if (finishMessage.player !== hero.id) return;
+		tournamentFinished = {
+			visibility: true,
+			place: finishMessage.place,
+			wonAmount: finishMessage.wonAmount
+		};
+	});
 	socket.on('handTransition', (player) => {
 		console.log('handTransition');
 		if (hero.id !== player.id) return;
@@ -290,6 +341,9 @@
 				break;
 		}
 	});
+
+	// FUNCTIONS
+
 	// function registerPlayer(id, component) {
 	//   playersComponents[id] = component;
 	// }
@@ -463,7 +517,7 @@
 		console.log(hero);
 		playerSitout = !playerSitout;
 		if (!playerSitout) sitoutPopover(playerSitout);
-		socket.emit('sitoutUpdate', { playerID: hero.id, poolID: hero.poolID, isSitout: playerSitout });
+    socket.emit("sitoutUpdate", {playerID: hero.id, tournamentID: hero.tournamentID, poolID: hero.poolID, isSitout: playerSitout})
 	}
 	let playerSitout = false;
 	let sitoutPopoverActive = false;
@@ -561,6 +615,129 @@
 	Your browser does not support audio.
 </audio>
 
+<!-- MODALS -->
+
+<!-- HAMBURGER MENU -->
+<Modal showModal={menuVisibility} class="w-1/3 min-w-fit max-w-xs bg-transparent">
+	<div class="auxiliarButtons">
+		<button on:click={leavePool}>Leave Table</button>
+		<button on:click={toggleHH}>Hand History</button>
+		<button on:click={toggleRebuy}>Rebuy</button>
+		<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
+	</div>
+</Modal>
+<!-- REBUY -->
+<Modal showModal={rebuyVisibility} class="h-1/3 w-1/2 max-w-xs bg-transparent">
+	<div class="rebuyPopover" id="rebuyPopover">
+		<div class="popoverTitle">
+			<span>REBUY {winTitle}</span>
+		</div>
+		<div class="popoverMain">
+			<div class="balanceBlock">
+				<span>AVAIABLE BALANCE:</span>
+				<span>${balance}</span>
+			</div>
+			<div class="rebuyBlock">
+				<div class="rebuyInputBlock">
+					<label for="rebuyAmount">REBUY AMOUNT:</label>
+					<div class="inputWrapper">
+						<span>$</span>
+						<input
+							placeholder="Amount to Rebuy"
+							id="rebuyAmount"
+							bind:value={rebuyAmount}
+							min={minRebuyAmount}
+							max={maxRebuyAmount}
+							step="0.01"
+							type="number"
+							on:keydown={() => (rebuyAmount = Number(rebuyAmount.toFixed(2)))}
+						/>
+					</div>
+				</div>
+				<div class="rebuyButtonsBlock">
+					<button
+						class="rebuyPresetButton"
+						on:click={() => {
+							setRebuyAmount(minRebuyAmount);
+						}}
+					>
+						<span>MIN</span>
+						<span class="value">${minRebuyAmount}</span>
+					</button>
+					<button
+						class="rebuyPresetButton"
+						on:click={() => {
+							setRebuyAmount(maxRebuyAmount);
+						}}
+					>
+						<span>MAX</span>
+						<span class="value">${maxRebuyAmount}</span>
+					</button>
+				</div>
+			</div>
+			<div class="rebuyConfirmButtonsBlock">
+				<button
+					class="rebuyConfirmButtons confirm"
+					on:click={tryRebuy}
+					disabled={rebuyAmount > balance ||
+						rebuyAmount > maxRebuyAmount ||
+						rebuyAmount < minRebuyAmount}>OK</button
+				>
+				<button class="rebuyConfirmButtons cancel" on:click={toggleRebuy}>CANCEL</button>
+			</div>
+		</div>
+	</div>
+</Modal>
+<!-- HAND HISTORY -->
+<Modal class="h-2/3 w-2/3 min-w-fit bg-transparent" showModal={hhVisibility}>
+	<div class="hhPopover" id="hhPopover">
+		<div class="popoverTitle">
+			<button
+				disabled={hhIndex <= 0}
+				on:click={() => {
+					changeHandHistoryIndex(-1);
+				}}
+				><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+					><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+						d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"
+					/></svg
+				></button
+			>
+			<span><pre>Hand History {hhIndex + 1}/{handHistories.length}</pre></span>
+			<button
+				disabled={hhIndex >= handHistories.length - 1}
+				on:click={() => {
+					changeHandHistoryIndex(1);
+				}}
+				><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
+					><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
+						d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"
+					/></svg
+				></button
+			>
+		</div>
+		<div class="popoverMain">
+			{#if handHistories.length > 0}
+				<div class="handHistory">{handHistories[hhIndex]}</div>
+			{:else}
+				<div class="handHistory">Hand History Is Empty</div>
+			{/if}
+		</div>
+	</div>
+</Modal>
+<!-- TOURNAMENT FINISHED -->
+<Modal class="h-2/3 w-2/3 min-w-fit bg-transparent" showModal={tournamentFinished.visibility}>
+	<div>
+		{#if tournamentFinished.wonAmount > 0}
+			<span>You left in {tournamentFinished.place} and WON {tournamentFinished.wonAmount}</span>
+			<span>Congrats!!!</span>
+		{:else}
+			<span>You left in {tournamentFinished.place}</span>
+			<span>Good luck next time!</span>
+		{/if}
+	</div>
+</Modal>
+
 <!-- THIS IS TAILWIND -->
 <section class:hide={$activeSlot !== hero.id} on:wheel={handleScroll}>
 	<!-- TRANSITION ANIMATION -->
@@ -639,6 +816,23 @@
 		{#if handStrength && handStrength != ''}
 			<div class="handStrengthDiv">
 				<span>{handStrength}</span>
+			</div>
+		{/if}
+
+		{#if currentTournamentInfo}
+			<div class="absolute top-0 left-0">
+				<div class="">
+					<span
+						>Level: {currentTournamentInfo.blindLevel} ({currentTournamentInfo.sb}/{currentTournamentInfo.bb})
+						- {currentTournamentInfo.ante}</span
+					>
+				</div>
+				<div class=""><span>Next Blind in: {blindDisplayClock}</span></div>
+				<div class="">
+					<span>Position: {hero.tournamentPosition}/{currentTournamentInfo.playersLeft}</span>
+				</div>
+				<div class=""><span>Players ITM: {currentTournamentInfo.prizedPlayers}</span></div>
+				<div class=""><span>nextPrize: {currentTournamentInfo.nextPrize}</span></div>
 			</div>
 		{/if}
 
@@ -757,117 +951,6 @@
 			</div>
 		</div>
 	{/if}
-
-	<!-- MODALS -->
-
-	<!-- HAMBURGER MENU -->
-	<Modal showModal={menuVisibility} class="w-1/3 min-w-fit max-w-xs bg-transparent">
-		<div class="auxiliarButtons">
-			<button on:click={leavePool}>Leave Table</button>
-			<button on:click={toggleHH}>Hand History</button>
-			<button on:click={toggleRebuy}>Rebuy</button>
-			<button on:click={toggleSitout} class:sitout={playerSitout}>Sitout</button>
-		</div>
-	</Modal>
-	<!-- REBUY -->
-	<Modal showModal={rebuyVisibility} class="h-1/3 w-1/2 max-w-xs bg-transparent">
-		<div class="rebuyPopover" id="rebuyPopover">
-			<div class="popoverTitle">
-				<span>REBUY {winTitle}</span>
-			</div>
-			<div class="popoverMain">
-				<div class="balanceBlock">
-					<span>AVAIABLE BALANCE:</span>
-					<span>${balance}</span>
-				</div>
-				<div class="rebuyBlock">
-					<div class="rebuyInputBlock">
-						<label for="rebuyAmount">REBUY AMOUNT:</label>
-						<div class="inputWrapper">
-							<span>$</span>
-							<input
-								placeholder="Amount to Rebuy"
-								id="rebuyAmount"
-								bind:value={rebuyAmount}
-								min={minRebuyAmount}
-								max={maxRebuyAmount}
-								step="0.01"
-								type="number"
-								on:keydown={() => (rebuyAmount = Number(rebuyAmount.toFixed(2)))}
-							/>
-						</div>
-					</div>
-					<div class="rebuyButtonsBlock">
-						<button
-							class="rebuyPresetButton"
-							on:click={() => {
-								setRebuyAmount(minRebuyAmount);
-							}}
-						>
-							<span>MIN</span>
-							<span class="value">${minRebuyAmount}</span>
-						</button>
-						<button
-							class="rebuyPresetButton"
-							on:click={() => {
-								setRebuyAmount(maxRebuyAmount);
-							}}
-						>
-							<span>MAX</span>
-							<span class="value">${maxRebuyAmount}</span>
-						</button>
-					</div>
-				</div>
-				<div class="rebuyConfirmButtonsBlock">
-					<button
-						class="rebuyConfirmButtons confirm"
-						on:click={tryRebuy}
-						disabled={rebuyAmount > balance ||
-							rebuyAmount > maxRebuyAmount ||
-							rebuyAmount < minRebuyAmount}>OK</button
-					>
-					<button class="rebuyConfirmButtons cancel" on:click={toggleRebuy}>CANCEL</button>
-				</div>
-			</div>
-		</div>
-	</Modal>
-	<!-- HAND HISTORY -->
-	<Modal class="h-2/3 w-2/3 min-w-fit bg-transparent" showModal={hhVisibility}>
-		<div class="hhPopover" id="hhPopover">
-			<div class="popoverTitle">
-				<button
-					disabled={hhIndex <= 0}
-					on:click={() => {
-						changeHandHistoryIndex(-1);
-					}}
-					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-							d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"
-						/></svg
-					></button
-				>
-				<span><pre>Hand History {hhIndex + 1}/{handHistories.length}</pre></span>
-				<button
-					disabled={hhIndex >= handHistories.length - 1}
-					on:click={() => {
-						changeHandHistoryIndex(1);
-					}}
-					><svg xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 448 512"
-						><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path
-							d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"
-						/></svg
-					></button
-				>
-			</div>
-			<div class="popoverMain">
-				{#if handHistories.length > 0}
-					<div class="handHistory">{handHistories[hhIndex]}</div>
-				{:else}
-					<div class="handHistory">Hand History Is Empty</div>
-				{/if}
-			</div>
-		</div>
-	</Modal>
 </section>
 
 <style lang="scss">
