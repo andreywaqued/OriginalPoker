@@ -55,6 +55,7 @@
 	let players = {};
 	let playersComponents = {};
 	let possibleActions = [];
+	let originalPossibleActions = [];
 	let boardCards = [];
 	let pots = [0];
 	let callAmount = 0;
@@ -122,6 +123,7 @@
 		playerSitout = hero.isSitout;
 		if (hero.isSitout) sitoutPopover(hero.isSitout);
 		if (hero.finalHandRank) handStrength = hero.finalHandRank.combination;
+		originalPossibleActions = JSON.parse(JSON.stringify(hero.possibleActions));
 		if (hero.possibleActions.length > 1) {
 			if (userSettings.showValuesInBB)
 				hero.possibleActions[1].amount =
@@ -517,7 +519,12 @@
 		console.log(hero);
 		playerSitout = !playerSitout;
 		if (!playerSitout) sitoutPopover(playerSitout);
-    socket.emit("sitoutUpdate", {playerID: hero.id, tournamentID: hero.tournamentID, poolID: hero.poolID, isSitout: playerSitout})
+		socket.emit('sitoutUpdate', {
+			playerID: hero.id,
+			tournamentID: hero.tournamentID,
+			poolID: hero.poolID,
+			isSitout: playerSitout
+		});
 	}
 	let playerSitout = false;
 	let sitoutPopoverActive = false;
@@ -581,10 +588,13 @@
 	function parseAction(index) {
 		let action = possibleActions[index];
 		if (action.type === 'I`m Back') return toggleSitout();
-		betValue = parseFloat(betValue.toString().replace(',', '.'));
-		if (index === 2) action.amount = Math.round(betValue * 100) / 100;
-		if (action.amount != 0 && userSettings.showValuesInBB)
-			action.amount = Math.round(action.amount * bbSize * 100) / 100;
+		if (index === 1) action = originalPossibleActions[index];
+		if (index === 2) {
+			betValue = parseFloat(betValue.toString().replace(',', '.'));
+			if (index === 2) action.amount = Math.round(betValue * 100) / 100;
+			if (action.amount != 0 && userSettings.showValuesInBB)
+				action.amount = Math.round(action.amount * bbSize * 100) / 100;
+		}
 		socket.emit('parseAction', { player: hero, action: action });
 		possibleActions = [];
 	}
@@ -820,7 +830,7 @@
 		{/if}
 
 		{#if currentTournamentInfo}
-			<div class="absolute top-0 left-0">
+			<div class="absolute left-0 top-0">
 				<div class="">
 					<span
 						>Level: {currentTournamentInfo.blindLevel} ({currentTournamentInfo.sb}/{currentTournamentInfo.bb})

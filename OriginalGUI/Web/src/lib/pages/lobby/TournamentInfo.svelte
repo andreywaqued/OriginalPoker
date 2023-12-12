@@ -137,7 +137,7 @@
 					<div class="tournamentStack row">
 						<div class="largest column">
 							<span>Largest Stack</span>
-							<span>{playersList.length > 1 ? playersList[0].stackSize : 0}</span>
+							<!-- <span>{playersList.length > 1 ? playersList[0].stackSize : 0}</span> -->
 						</div>
 						<div class="average column">
 							<span>Average Stack</span>
@@ -145,7 +145,7 @@
 						</div>
 						<div class="smallest column">
 							<span>Smallest Stack</span>
-							<span>{playersList.length > 1 ? playersList[playersLeft - 1].stackSize : 0}</span>
+							<!-- <span>{playersList.length > 1 ? playersList[playersLeft - 1].stackSize : 0}</span> -->
 						</div>
 					</div>
 					<div class="playersAndPrize row">
