@@ -296,7 +296,7 @@
 	socket.on('tournamentFinishMessage', (finishMessage) => {
 		console.log('tournamentFinishMessage');
 		console.log(finishMessage);
-		if (finishMessage.player !== hero.id) return;
+		if (!finishMessage.player) return;
 		tournamentFinished = {
 			visibility: true,
 			place: finishMessage.place,
@@ -471,20 +471,20 @@
 		}
 	}
 
-	// let actualBet = 0;
-	// let sidePots = [0, 0]
-	// let playerTurn = true; //only for testing, this should come from the server
-	// players = [
-	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize:  9999999, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
-	//   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  9999999, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	//   // {id: 6, playerName : "asdg", balance: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	//   // {id: 7, playerName : "asdh", balance: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	//   // {id: 8, playerName : "asdi", balance: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false},
-	// ]
+	let actualBet = 0;
+	let sidePots = [0, 0]
+	let playerTurn = true; //only for testing, this should come from the server
+	players = [
+	  {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize: 1, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+	  {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  10, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  100, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  1000, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  10000, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  100000, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  // {id: 7, name : "asdg", stackSize: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  // {id: 8, name : "asdh", stackSize: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	  // {id: 9, name : "asdi", stackSize: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false}
+	]
 	function findHero() {
 		return 0;
 		// let index = players.findIndex(p => p.isHero === true)
@@ -637,7 +637,7 @@
 	</div>
 </Modal>
 <!-- REBUY -->
-<Modal showModal={rebuyVisibility} class="h-1/3 w-1/2 max-w-xs bg-transparent">
+<Modal showModal={rebuyVisibility} class="w-1/2 max-w-xs bg-transparent">
 	<div class="rebuyPopover" id="rebuyPopover">
 		<div class="popoverTitle">
 			<span>REBUY {winTitle}</span>
@@ -699,7 +699,7 @@
 	</div>
 </Modal>
 <!-- HAND HISTORY -->
-<Modal class="h-2/3 w-2/3 min-w-fit bg-transparent" showModal={hhVisibility}>
+<Modal class="w-2/3 min-w-fit bg-transparent" showModal={hhVisibility}>
 	<div class="hhPopover" id="hhPopover">
 		<div class="popoverTitle">
 			<button
@@ -736,7 +736,7 @@
 	</div>
 </Modal>
 <!-- TOURNAMENT FINISHED -->
-<Modal class="h-2/3 w-2/3 min-w-fit bg-transparent" showModal={tournamentFinished.visibility}>
+<Modal class="w-2/3 min-w-fit bg-transparent" showModal={tournamentFinished.visibility}>
 	<div>
 		{#if tournamentFinished.wonAmount > 0}
 			<span>You left in {tournamentFinished.place} and WON {tournamentFinished.wonAmount}</span>

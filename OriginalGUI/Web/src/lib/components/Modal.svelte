@@ -24,7 +24,7 @@
 	class={className}
 >
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
-	<div on:click|stopPropagation class="relative flex h-full w-full flex-col">
+	<div on:click|stopPropagation class="relative flex h-fit w-full flex-col">
 		<!-- svelte-ignore a11y-autofocus -->
 		<button class="absolute right-0 bg-red-500 h-6 rounded-bl aspect-square" autofocus on:click={() => dialog.close()}
 			>X</button
