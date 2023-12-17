@@ -3,8 +3,7 @@
 </script>
 
 <svelte:head>
-	<meta name="theme-color" content="#525252" />
-	<!-- replace #ff0000 with your desired color -->
+	<meta name="theme-color" content="#191919" />
 </svelte:head>
 
 <slot />

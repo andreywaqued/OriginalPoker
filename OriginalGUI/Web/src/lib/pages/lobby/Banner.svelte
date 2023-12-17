@@ -11,10 +11,10 @@
 </script>
 
 <div
-	class="flex w-full items-center justify-between bg-gray-darkest bg-gradient-to-b from-gray px-2 py-5 text-white"
+	class="flex w-full items-center justify-between bg-gray-darkest bg-gradient-to-b from-gray px-2 py-5 text-white gap-x-4"
 	class:hidden={!isSelected}
 >
-	<div class="ml-2 h-12">
+	<div class="ml-2 h-12 w-full max-w-fit">
 		<img class="h-full w-full" src="/logos/OriginalLogoWhite.png" />
 	</div>
 	<div class="grid w-32 text-center">

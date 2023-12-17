@@ -164,12 +164,12 @@
 	on:touchmove|self|passive={(event) => handleSwipe(event, 'lobby')}
 	on:touchend|self|passive={(event) => handleSwipe(event, 'lobby')}
 >
-	<div class="mb-4 mt-2 grid w-full auto-cols-fr grid-flow-col gap-x-1">
+	<div class="mb-4 mt-2 grid w-full auto-cols-fr grid-flow-col gap-x-1 px-2">
 		{#each GAMES_TABS as tab}
 			<button
-				class="text-sm font-bold uppercase leading-5 text-white decoration-slate-600 underline-offset-2"
-				class:underline={tab === $activeLobbyTab}
-				on:click={() => handleSelectTab(tab)}><span>{tab}</span></button
+				class="text-sm font-bold uppercase leading-5 text-white max-w-fit m-auto border-transparent border-b-2 transition-all duration-75 h-fit"
+				class:!border-sky-600={tab === $activeLobbyTab}
+				on:click={() => handleSelectTab(tab)}>{tab}</button
 			>
 		{/each}
 	</div>

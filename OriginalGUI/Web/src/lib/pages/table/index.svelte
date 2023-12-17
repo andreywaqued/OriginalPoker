@@ -471,20 +471,20 @@
 		}
 	}
 
-	let actualBet = 0;
-	let sidePots = [0, 0]
-	let playerTurn = true; //only for testing, this should come from the server
-	players = [
-	  {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize: 1, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
-	  {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  10, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  100, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  1000, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  10000, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  100000, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  // {id: 7, name : "asdg", stackSize: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  // {id: 8, name : "asdh", stackSize: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
-	  // {id: 9, name : "asdi", stackSize: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false}
-	]
+	// let actualBet = 0;
+	// let sidePots = [0, 0]
+	// let playerTurn = true; //only for testing, this should come from the server
+	// players = [
+	//   {id: 1, name : "asd1", stackSize: 1000, avatar: 1, position: 0, betSize: 1, cards: ["AS", "5C"], deck : "boardDeck", isButton : true, isHero : true, showCards: true},
+	//   {id: 4, name : "asdc", stackSize: 1000, avatar: 4, position: 1, betSize:  10, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 6, name : "asde", stackSize: 1000, avatar: 6, position: 2, betSize:  100, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 2, name : "asda", stackSize: 1000, avatar: 2, position: 3, betSize:  1000, cards: ["AS", "KD"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 3, name : "asdb", stackSize: 1000, avatar: 3, position: 4, betSize:  10000, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   {id: 5, name : "asdd", stackSize: 1000, avatar: 5, position: 5, betSize:  100000, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   // {id: 7, name : "asdg", stackSize: 1000, avatar: 7, position: 6, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   // {id: 8, name : "asdh", stackSize: 1000, avatar: 8, position: 7, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false},
+	//   // {id: 9, name : "asdi", stackSize: 1000, avatar: 9, position: 8, betSize:  9999999, cards: ["cb", "cb"], deck : "boardDeck", isButton : true, isHero : false, showCards: false}
+	// ]
 	function findHero() {
 		return 0;
 		// let index = players.findIndex(p => p.isHero === true)
@@ -1393,7 +1393,9 @@
 			text-transform: uppercase;
 		}
 		.popoverMain {
+			padding: 0.5rem 0;
 			display: flex;
+			gap: 0.5rem 0;
 			justify-content: space-evenly;
 			align-items: center;
 			flex-direction: column;
@@ -1409,9 +1411,10 @@
 				flex-direction: column;
 				justify-content: center;
 				align-items: flex-start;
-				gap: 5%;
+				gap: 0.5rem 0;
 				.rebuyInputBlock {
 					display: flex;
+					gap: 0 0.5rem;
 					flex-direction: row;
 					justify-content: space-between;
 					align-items: center;
