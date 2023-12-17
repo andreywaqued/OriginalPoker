@@ -1250,7 +1250,8 @@
 				}
 			}
 			.slider {
-				writing-mode: vertical-lr;
+		    writing-mode: bt-lr;
+		    -webkit-appearance: slider-vertical;
 				width: 100%;
 				height: 100%;
 				border-radius: 5px;
